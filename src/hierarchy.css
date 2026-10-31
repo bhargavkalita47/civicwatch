@@ -1,0 +1,972 @@
+/*
+ * CivicWatch v1.9 — Editorial hierarchy + subtle theme atmosphere
+ *
+ * This file is the single final authority for visual emphasis. Earlier theme
+ * layers still own palette, layout mechanics and the map/category semantics.
+ * Import this AFTER themes.css. Don't add one-off font-size overrides to pages.
+ *
+ * Type roles (desktop):
+ *  Display / page H1     48–68px  Instrument Serif regular
+ *  Major section H2     30–38px  Instrument Serif regular
+ *  Panel heading        23–29px  Instrument Serif regular
+ *  UI / metric           14–16px  Inter 600–800; numerals 34–40px
+ *  Body                  14px     Inter 400–500
+ *  Metadata              12px     Inter 500–700
+ *
+ * Instrument Serif is deliberately restricted to its native regular/italic
+ * weight (400), with synthetic bold disabled. Inter keeps strong UI/data weights.
+ */
+:root {
+  --type-display: clamp(48px, 4.7vw, 68px);
+  --type-section: clamp(30px, 2.5vw, 38px);
+  --type-panel: clamp(24px, 2.05vw, 30px);
+  --type-content: 16px;
+  --type-body: 14px;
+  --type-meta: 12px;
+  --type-label: 11px;
+  --leading-display: 1.045;
+  --leading-heading: 1.13;
+  --leading-body: 1.6;
+  --space-unit: 8px;
+  --space-section: 32px;
+  --space-card: 24px;
+}
+
+/* Consistent readable baseline and a strict serif/sans division. */
+body, button, input, textarea, select {
+  font-family: "Inter", system-ui, sans-serif;
+}
+body { font-size: var(--type-body); line-height: var(--leading-body); }
+p { line-height: var(--leading-body); }
+button, input, textarea, select { line-height: 1.4; }
+
+/* Only actual editorial titles use the serif. Data, controls and dense item
+ * titles remain Inter to preserve scan speed and prevent competing headlines. */
+.intro h1,
+.intro p,
+.workspace-heading h2,
+.overview-panel-heading h2,
+.overview-section-title h2,
+.snapshot-side-head h2,
+.snapshot-detail-header h2,
+.snapshot-detail-empty h2,
+.snapshot-empty h3,
+.snapshot-activity-heading h3,
+.modal-header h2,
+.form-intro h3,
+.form-body h3,
+.thread-title,
+.discussion-heading h3,
+.location-heading h3,
+.empty-state h3,
+.empty-list h3,
+.empty-discussion b,
+.how-it-works > div h3,
+.admin-console h2,
+.admin-console-grid h3,
+.overview-loading h2,
+.overview-loading h3 {
+  font-family: "Instrument Serif", Georgia, serif;
+  font-synthesis: none;
+  font-weight: 400;
+  color: var(--cw-heading);
+  letter-spacing: -0.022em;
+}
+
+/* Page identity first, followed by a genuinely subordinate description. */
+.intro {
+  padding: 36px 2px 30px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: clamp(22px, 4vw, 64px);
+}
+.intro > div { flex: 1 1 auto; min-width: 0; }
+.intro .eyebrow {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  font-family: "Inter", system-ui, sans-serif;
+  font-size: var(--type-label);
+  font-weight: 750;
+  letter-spacing: .105em;
+  line-height: 1.5;
+  text-transform: uppercase;
+}
+.intro h1 {
+  font-size: var(--type-display);
+  line-height: var(--leading-display);
+  max-width: 23ch;
+  margin: 12px 0 13px;
+  letter-spacing: -.035em;
+  text-wrap: balance;
+}
+.intro h1 em {
+  font-weight: 400;
+  font-synthesis: none;
+  font-style: italic;
+  text-decoration-skip-ink: auto;
+  background: linear-gradient(transparent 78%, color-mix(in srgb, var(--cw-accent) 43%, transparent) 78%);
+}
+.intro h1:has(.headline-second-line) { max-width: none; }
+.intro h1 .headline-second-line { display: block; }
+.intro p {
+  max-width: 43ch;
+  font-size: clamp(19px, 1.62vw, 23px);
+  line-height: 1.28;
+  font-weight: 400;
+  letter-spacing: -.009em;
+  color: var(--cw-muted);
+  text-wrap: pretty;
+}
+
+/* One CTA hierarchy: a strong report action; all other actions quieter. */
+.button {
+  min-height: 44px;
+  border-radius: 11px;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -.008em;
+}
+.report-button {
+  flex: 0 0 auto;
+  min-height: 50px;
+  height: 50px;
+  font-size: 14px;
+  font-weight: 750;
+  padding: 0 21px;
+  box-shadow: 0 6px 15px color-mix(in srgb, var(--cw-accent) 15%, transparent);
+}
+.primary { font-size: 13px; font-weight: 750; }
+.secondary { font-size: 13px; font-weight: 650; }
+
+/* Navigation: section selection is prominent; inactive items remain readable. */
+.navigation-caption {
+  font-size: var(--type-label);
+  font-weight: 750;
+  line-height: 1.4;
+  letter-spacing: .11em;
+}
+.main-nav { gap: 5px; }
+.main-nav button {
+  min-height: 45px;
+  font-size: 13px;
+  font-weight: 600;
+  gap: 12px;
+  padding: 11px 13px;
+}
+.main-nav button.active { font-weight: 750; }
+.header-actions .help-button,
+.header-actions .sign-in,
+.theme-control button { font-size: 12px; }
+.brand-light { font-weight: inherit; }
+
+/* Section / panel titles: the map is the feature, not an army of H1-sized cards. */
+.section-kicker {
+  font-family: "Inter", system-ui, sans-serif;
+  font-size: var(--type-label);
+  font-weight: 750;
+  letter-spacing: .12em;
+  line-height: 1.45;
+  text-transform: uppercase;
+}
+.workspace-heading { padding: 27px 27px 17px; }
+.workspace-heading h2 {
+  font-size: var(--type-section);
+  line-height: var(--leading-heading);
+  margin-top: 7px;
+}
+.overview-map-first .overview-map-full .overview-panel-heading {
+  align-items: flex-end;
+  gap: 22px;
+  padding: 25px 27px 21px;
+}
+.overview-map-first .overview-map-full .overview-panel-heading h2 {
+  font-size: var(--type-section);
+  line-height: var(--leading-heading);
+  max-width: 29ch;
+  margin: 7px 0 9px;
+  text-wrap: balance;
+}
+.overview-panel-heading p {
+  font-size: var(--type-body);
+  line-height: 1.55;
+  max-width: 68ch;
+  color: var(--cw-muted);
+}
+.overview-panel-heading .button { min-height: 44px; font-size: 13px; padding: 10px 17px; }
+.overview-map-first .overview-preview-map {
+  height: clamp(500px, 66vh, 790px);
+  margin: 0 15px;
+}
+.overview-map-footnote {
+  padding: 15px 26px;
+  font-size: var(--type-meta);
+  line-height: 1.5;
+}
+.overview-map-first .overview-stats-title { margin: 38px 2px 19px; }
+.overview-section-title h2 {
+  font-size: var(--type-section);
+  line-height: var(--leading-heading);
+  margin-top: 6px;
+}
+.overview-section-title > span { font-size: var(--type-meta); max-width: 37ch; line-height: 1.6; }
+
+/* Equal visual priority for equally important metrics; NO lone loud coral tile. */
+.overview-metrics { gap: 14px; }
+.overview-metric,
+.overview-metric.metric-featured {
+  position: relative;
+  min-width: 0;
+  min-height: 162px;
+  padding: 21px 22px;
+  background: var(--cw-panel);
+  border: 1px solid var(--cw-border);
+  border-radius: 15px;
+  box-shadow: none;
+}
+.overview-metric:before {
+  content: "";
+  position: absolute;
+  left: 22px;
+  right: 22px;
+  top: 0;
+  height: 2px;
+  background: var(--cw-lavender);
+  opacity: .68;
+}
+.overview-metric:nth-child(2):before { background: var(--cw-accent); }
+.overview-metric:nth-child(3):before { background: var(--cw-teal); }
+.overview-metric:nth-child(4):before { background: var(--cw-lavender); }
+.overview-metric-top,
+.metric-featured .overview-metric-top {
+  font-size: var(--type-meta);
+  font-weight: 650;
+  line-height: 1.35;
+  color: var(--cw-muted);
+}
+.overview-metric-top svg,
+.metric-featured .overview-metric-top svg {
+  width: 19px;
+  height: 19px;
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--cw-teal);
+}
+.overview-metric strong,
+.metric-featured strong {
+  margin: 15px 0 5px;
+  font-family: "Inter", system-ui, sans-serif;
+  font-size: clamp(34px, 2.7vw, 40px);
+  font-weight: 800;
+  line-height: 1.08;
+  letter-spacing: -.05em;
+  color: var(--cw-heading);
+  font-variant-numeric: tabular-nums;
+}
+.overview-metric small,
+.metric-featured small {
+  color: var(--cw-muted);
+  font-size: var(--type-meta);
+  line-height: 1.5;
+}
+.overview-map-first .overview-disclaimer { margin-top: 27px; font-size: var(--type-meta); }
+
+/* Local Snapshot: watchlist is navigation, selected town is the focal panel. */
+.local-snapshots { gap: 16px; }
+.snapshot-side-head { padding: 22px 19px 19px; gap: 10px; }
+.snapshot-side-head h2 {
+  font-size: var(--type-panel);
+  line-height: var(--leading-heading);
+  margin: 7px 0 7px;
+}
+.snapshot-side-head p { font-size: 13px; line-height: 1.55; }
+.snapshot-add-button { width: 42px; height: 42px; }
+.snapshot-field-label { font-size: var(--type-meta); line-height: 1.4; }
+.snapshot-add-panel .place-search-form input { font-size: 13px; }
+.snapshot-add-panel .place-search-submit { font-size: 12px; }
+.snapshot-suggestions button { font-size: 12px; }
+.snapshot-suggestions small { font-size: 11px; }
+.snapshot-note { font-size: 12px; }
+.snapshot-watch-select { min-height: 61px; padding: 12px 10px; }
+.snapshot-watch-select strong { font-size: 14px; font-weight: 700; line-height: 1.3; }
+.snapshot-watch-select small { font-size: 12px; line-height: 1.4; }
+.snapshot-watch-select b { font-size: 14px; }
+.snapshot-watch-actions button { width: 28px; height: 32px; }
+.snapshot-watch-foot { font-size: 12px; line-height: 1.6; }
+.snapshot-detail-header { padding: 27px 27px 21px; align-items: flex-end; }
+.snapshot-detail-header h2 {
+  font-size: clamp(32px, 3vw, 43px);
+  line-height: var(--leading-heading);
+  margin: 7px 0 9px;
+}
+.snapshot-detail-header p { font-size: var(--type-body); line-height: 1.55; max-width: 64ch; }
+.snapshot-figures { gap: 11px; padding: 0 16px 18px; }
+.snapshot-figures > div { padding: 19px 16px; gap: 10px; }
+.snapshot-figures span { font-size: var(--type-meta); }
+.snapshot-figures strong {
+  font-size: clamp(27px, 2.4vw, 35px);
+  letter-spacing: -.05em;
+  font-variant-numeric: tabular-nums;
+}
+.snapshot-resolution { padding: 17px; }
+.snapshot-resolution > div:first-child { font-size: 14px; }
+.snapshot-resolution > div:first-child span { font-size: 17px; font-variant-numeric: tabular-nums; }
+.snapshot-resolution small { display: block; font-size: var(--type-meta); line-height: 1.5; }
+.snapshot-activity { padding: 25px 25px 30px; }
+.snapshot-activity-heading h3 { font-size: 26px; line-height: 1.15; }
+.snapshot-activity-heading span { font-size: var(--type-meta); }
+.snapshot-activity-row { gap: 13px; padding: 15px 0; }
+.snapshot-activity-row strong { font-size: 14px; font-weight: 650; line-height: 1.4; }
+.snapshot-activity-row p,
+.snapshot-no-reports { font-size: 12px; line-height: 1.55; }
+.snapshot-empty h3 { font-size: 25px; line-height: 1.14; }
+.snapshot-empty p,
+.snapshot-detail-empty p { font-size: var(--type-body); line-height: 1.6; }
+.snapshot-detail-empty h2 { font-size: var(--type-section); }
+
+/* Explore / discussion / history: dense lists should scan, not shout. */
+.filter-bar { padding: 0 27px 22px; gap: 12px; }
+.search-field { min-height: 45px; }
+.search-field input { font-size: 14px; }
+.category-chips button,
+.filter-button { font-size: 12px; font-weight: 650; }
+.reports-panel-heading { padding: 21px 19px; }
+.reports-panel h3,
+.reports-panel-heading h3 {
+  font-family: "Inter", system-ui, sans-serif;
+  font-size: 16px;
+  font-weight: 750;
+  line-height: 1.3;
+  letter-spacing: -.02em;
+}
+.reports-panel-heading p { font-size: 12px; line-height: 1.55; margin-top: 5px; }
+.reports-panel-heading h3 > span { font-size: 12px; font-variant-numeric: tabular-nums; }
+.reports-panel-heading select { font-size: 12px; }
+.issue-card { padding: 18px; }
+.issue-card h3 {
+  font-family: "Inter", system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.45;
+  font-weight: 700;
+  letter-spacing: -.015em;
+}
+.issue-card time,
+.issue-card-address,
+.issue-card-bottom > span:first-child { font-size: 12px; line-height: 1.5; }
+.card-description { font-size: 13px; line-height: 1.6; }
+.issue-card .status-badge, .issue-card .category-badge { font-size: 11px; }
+.panel-footer,
+.workspace-footnote { font-size: 12px; line-height: 1.5; }
+.board-toolbar label, .board-toolbar select { font-size: 12px; }
+.community-grid .issue-card { padding: 20px; }
+
+/* Forms / discussion / administration share the same predictable heading scale. */
+.modal-header { padding: 22px 25px; }
+.modal-header h2 { font-size: var(--type-panel); line-height: 1.12; }
+.form-intro h3 { font-size: 26px; line-height: 1.15; }
+.form-body h3 { font-size: 24px; line-height: 1.16; }
+.form-body label, .comment-form label { font-size: 13px; font-weight: 650; }
+.form-body p,
+.form-body p.muted,
+.form-intro p,
+.field-help { font-size: 13px; line-height: 1.55; }
+.form-body input,
+.form-body textarea,
+.form-body select { font-size: 14px; line-height: 1.5; }
+.report-steps span { font-size: 12px; }
+.thread-title { font-size: clamp(30px, 2.8vw, 41px); line-height: 1.12; }
+.thread-address { font-size: 13px; }
+.location-heading h3 { font-size: 27px; line-height: 1.15; }
+.location-issues h4 { font-family: "Inter", system-ui, sans-serif; font-size: 14px; line-height: 1.45; }
+.discussion-heading h3 { font-size: 27px; line-height: 1.15; }
+.discussion-heading h3 span { font-family: "Inter", system-ui, sans-serif; font-size: 12px; letter-spacing: 0; }
+.comment-meta { font-size: 12px; }
+.how-it-works > div h3 { font-size: 25px; line-height: 1.15; }
+.how-it-works > div p { font-size: 13px; line-height: 1.6; }
+.empty-state h3,
+.empty-list h3 { font-size: 28px; line-height: 1.16; }
+.empty-state p,
+.empty-list p { font-size: 14px; line-height: 1.6; max-width: 50ch; }
+.empty-discussion b { font-size: 24px; line-height: 1.18; }
+.empty-discussion p { font-size: 13px; line-height: 1.6; }
+.admin-console h2 { font-size: var(--type-section); line-height: 1.13; }
+.admin-console-grid h3 { font-size: 26px; line-height: 1.16; }
+.admin-console > p,
+.admin-console-grid p { font-size: 14px; line-height: 1.6; }
+.overview-loading h2,
+.overview-loading h3 { font-size: var(--type-panel); }
+
+/* Strong contrast and generous action hit targets without using accent colour
+ * on every sentence or turning metadata into false calls to action. */
+.snapshot-watch-actions button:focus-visible,
+.snapshot-add-button:focus-visible,
+.main-nav button:focus-visible { outline: 3px solid var(--cw-accent); outline-offset: 2px; }
+button:disabled { opacity: .55; }
+
+/* Non-hero utility text: no 9px fine print in the application chrome. */
+.snapshot-suggestions p { font-size: 12px; line-height: 1.55; }
+.snapshot-add-panel .place-results button { font-size: 13px; }
+.map-location { font-size: 12px; }
+.map-key-heading, .map-key-heading strong { font-size: 12px; }
+.leaflet-container .leaflet-control-attribution { font-size: 10px; }
+.panel-footer, .workspace-footnote, .workspace-footnote button { font-size: 12px; }
+footer, footer p, .preview-label { font-size: 12px; line-height: 1.55; }
+footer .footer-brand { font-size: 13px; font-weight: 700; }
+footer .footer-brand > span { font-size: 12px; font-weight: 450; }
+.filter-catalogue h3 { font-family: "Inter", system-ui, sans-serif; font-size: 14px; font-weight: 750; }
+.filter-catalogue label { font-size: 13px; line-height: 1.5; }
+
+/* Tablet navigation wraps horizontally; typography still follows same ladder. */
+@media (max-width: 1050px) {
+  :root { --type-display: clamp(42px, 5.1vw, 58px); --type-section: clamp(29px, 3.3vw, 34px); }
+  .intro { gap: 26px; }
+  .intro h1 { font-size: var(--type-display); }
+  .overview-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .overview-metric, .overview-metric.metric-featured { min-height: 151px; }
+}
+@media (max-width: 790px) {
+  :root { --type-display: clamp(40px, 6.8vw, 50px); --type-section: clamp(28px, 4.8vw, 33px); }
+  .intro { padding: 29px 2px 25px; gap: 22px; }
+  .intro h1 { font-size: var(--type-display); max-width: 23ch; }
+  .intro p { font-size: 20px; }
+  .main-nav button { font-size: 12px; min-height: 40px; padding: 9px 12px; }
+  .overview-map-first .overview-preview-map { height: clamp(420px, 60vh, 630px); }
+  .overview-map-first .overview-map-full .overview-panel-heading { padding: 23px 22px 19px; }
+  .overview-map-first .overview-map-full .overview-panel-heading h2 { font-size: var(--type-section); }
+}
+@media (max-width: 600px) {
+  :root { --type-display: clamp(37px, 9vw, 45px); --type-section: 29px; --type-panel: 25px; }
+  .intro { flex-direction: column; align-items: stretch; padding: 25px 2px 22px; gap: 17px; }
+  .intro h1,
+  .intro h1:has(.headline-second-line) { font-size: var(--type-display); max-width: 22ch; letter-spacing: -.025em; }
+  .intro p { font-size: 19px; max-width: 36ch; }
+  .intro .eyebrow { font-size: 10px; letter-spacing: .075em; }
+  .intro .report-button { width: 100%; justify-content: center; }
+  .workspace-heading { padding: 21px 18px 14px; }
+  .filter-bar { padding: 0 18px 18px; }
+  .overview-map-first .overview-map-full .overview-panel-heading {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 17px;
+    padding: 19px 17px 17px;
+  }
+  .overview-map-first .overview-map-full .overview-panel-heading h2 { font-size: 29px; max-width: 32ch; }
+  .overview-panel-heading p { font-size: 13px; }
+  .overview-panel-heading .button { align-self: flex-start; min-height: 43px; font-size: 13px; }
+  .overview-map-first .overview-preview-map { height: 56vh; min-height: 365px; margin: 0 8px; }
+  .overview-map-footnote { font-size: 11px; padding: 12px 14px; }
+  .overview-map-first .overview-stats-title { margin: 30px 2px 16px; }
+  .overview-section-title { align-items: flex-start; flex-direction: column; gap: 6px; }
+  .overview-section-title h2 { font-size: 30px; }
+  .overview-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .overview-metric, .overview-metric.metric-featured { padding: 15px; min-height: 155px; }
+  .overview-metric:before { left: 15px; right: 15px; }
+  .overview-metric strong, .metric-featured strong { font-size: clamp(30px, 7vw, 37px); margin: 14px 0 5px; }
+  .overview-metric-top, .metric-featured .overview-metric-top { font-size: 12px; }
+  .overview-metric small, .metric-featured small { font-size: 11px; }
+  .snapshot-detail-header { padding: 22px 18px 18px; align-items: flex-start; }
+  .snapshot-detail-header h2 { font-size: 34px; }
+  .snapshot-figures { gap: 9px; padding: 0 12px 15px; }
+  .snapshot-figures > div { padding: 15px 13px; }
+  .snapshot-figures strong { font-size: 30px; }
+  .snapshot-activity { padding: 21px 16px 24px; }
+  .snapshot-activity-heading h3 { font-size: 25px; }
+  .snapshot-watch-select strong { font-size: 14px; }
+  .modal-header { padding: 20px 18px; }
+  .modal-header h2 { font-size: 25px; }
+  .thread-title { font-size: 32px; }
+}
+@media (max-width: 390px) {
+  .intro h1, .intro h1:has(.headline-second-line) { font-size: 36px; }
+  .overview-metric, .overview-metric.metric-featured { padding: 13px; }
+  .overview-metric-top, .metric-featured .overview-metric-top { font-size: 11px; }
+  .overview-metric strong, .metric-featured strong { font-size: 30px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .intro h1, .overview-metric, .overview-panel-heading { transition: none; }
+}
+
+/* v1.9 — Regular Instrument Serif / quiet atmospheric accent gradients
+ * Treat gradients as materials, not decorative stripes. Keep maps, report
+ * statuses, severity pins, form inputs and content cards neutral and clear.
+ */
+:root,
+:root[data-theme="light"] {
+  --cw-atmosphere-page:
+    radial-gradient(ellipse 65% 55% at 96% 2%, rgba(155, 129, 221, .095), transparent 76%),
+    radial-gradient(ellipse 63% 60% at -12% 93%, rgba(255, 116, 110, .052), transparent 78%),
+    var(--cw-page);
+  --cw-atmosphere-nav: linear-gradient(157deg, #fdfaff 0%, var(--cw-nav) 54%, #faf5fc 100%);
+  --cw-atmosphere-panel:
+    radial-gradient(ellipse 85% 70% at 100% 0%, rgba(155, 129, 221, .047), transparent 78%),
+    var(--cw-panel);
+  --cw-atmosphere-section:
+    linear-gradient(122deg, rgba(155, 129, 221, .064), rgba(255, 116, 110, .025) 55%, transparent 86%);
+  --cw-atmosphere-selected: linear-gradient(108deg, rgba(155, 129, 221, .095), rgba(255, 116, 110, .075));
+  --cw-atmosphere-cta: linear-gradient(118deg, #ff827f 0%, var(--cw-accent) 63%, #fb777b 100%);
+  --cw-atmosphere-cta-hover: linear-gradient(118deg, #ff7875 0%, var(--cw-accent-hover) 100%);
+}
+:root[data-theme="dark"] {
+  --cw-atmosphere-page:
+    radial-gradient(ellipse 65% 55% at 96% 2%, rgba(73, 195, 188, .075), transparent 77%),
+    radial-gradient(ellipse 63% 60% at -12% 93%, rgba(182, 165, 217, .055), transparent 80%),
+    var(--cw-page);
+  --cw-atmosphere-nav: linear-gradient(155deg, #0a2529 0%, var(--cw-nav) 56%, #0c2227 100%);
+  --cw-atmosphere-panel:
+    radial-gradient(ellipse 82% 73% at 100% 0%, rgba(73, 195, 188, .048), transparent 79%),
+    var(--cw-panel);
+  --cw-atmosphere-section:
+    linear-gradient(122deg, rgba(73, 195, 188, .055), rgba(182, 165, 217, .035) 57%, transparent 90%);
+  --cw-atmosphere-selected: linear-gradient(108deg, rgba(73, 195, 188, .09), rgba(182, 165, 217, .06));
+  --cw-atmosphere-cta: linear-gradient(118deg, #ff8581 0%, var(--cw-accent) 65%, #fc757b 100%);
+  --cw-atmosphere-cta-hover: linear-gradient(118deg, #ff9490 0%, var(--cw-accent-hover) 100%);
+}
+
+/* Never synthesize a heavy Instrument Serif face, including old component
+ * headings and nested italic/strong elements from earlier CSS layers. */
+.intro h1, .intro h1 em, .intro p,
+.workspace-heading h2, .overview-panel-heading h2, .overview-section-title h2,
+.snapshot-side-head h2, .snapshot-detail-header h2, .snapshot-detail-empty h2,
+.snapshot-empty h3, .snapshot-activity-heading h3, .modal-header h2,
+.form-intro h3, .form-body h3, .thread-title, .discussion-heading h3,
+.location-heading h3, .empty-state h3, .empty-list h3,
+.empty-discussion b, .how-it-works > div h3, .admin-console h2,
+.admin-console-grid h3, .overview-loading h2, .overview-loading h3,
+.city-card h3, .ranked-line strong {
+  font-weight: 400;
+  font-synthesis: none;
+}
+/* Child spans/emphasis inherit native regular rather than user-agent bold. */
+.intro h1 :is(strong, b, em),
+.intro p :is(strong, b, em),
+.thread-title :is(strong, b, em) { font-weight: 400; font-synthesis: none; }
+
+/* Ambient page and rail: colour is subtle enough to feel like natural light. */
+body { background: var(--cw-atmosphere-page); }
+.site-header { background: var(--cw-atmosphere-nav); }
+.workspace, .admin-console, .snapshot-watchlist, .snapshot-detail,
+.overview-map-first .overview-map-full { background: var(--cw-atmosphere-panel); }
+
+/* Soft colour transitions only at major section entrances. */
+.overview-map-first .overview-map-full .overview-panel-heading,
+.snapshot-side-head,
+.snapshot-detail-header,
+.workspace-heading,
+.modal-header,
+.drawer .modal-header { background: var(--cw-atmosphere-section); }
+
+/* Selected states are unmistakable, but not visually louder than content. */
+.main-nav button.active, .main-nav button.active:hover,
+.snapshot-watch-row.selected { background: var(--cw-atmosphere-selected); }
+.main-nav button.active { box-shadow: inset 3px 0 0 var(--cw-accent); }
+
+/* Retain 4 equal metrics; each gets the same-strength tonal haze. */
+.overview-metric, .overview-metric.metric-featured { 
+  --metric-tone: var(--cw-lavender);
+  background:
+    radial-gradient(ellipse 88% 80% at 102% -6%, color-mix(in srgb, var(--metric-tone) 7%, transparent), transparent 85%),
+    var(--cw-panel);
+}
+.overview-metric:nth-child(2) { --metric-tone: var(--cw-accent); }
+.overview-metric:nth-child(3) { --metric-tone: var(--cw-teal); }
+.overview-metric:nth-child(4) { --metric-tone: var(--cw-lavender); }
+
+/* A whisper of tonal direction on the primary action, rather than a shiny CTA. */
+.report-button { background: var(--cw-atmosphere-cta); }
+.report-button:hover { background: var(--cw-atmosphere-cta-hover); }
+
+/* Compact motion, no sweeping gradients or animation. */
+@media (max-width: 790px) {
+  .main-nav button.active { box-shadow: inset 0 -2px 0 var(--cw-accent); }
+}
+
+/* v2.0 — Local Snapshot information architecture.
+ * The full watchlist total is the single primary statistic block; selected
+ * town facts are subordinate context beneath the local map. */
+.local-snapshots-page { display: flex; flex-direction: column; gap: 22px; padding-bottom: 28px; }
+.snapshot-watch-summary {
+  min-width: 0;
+  padding: clamp(20px, 2.5vw, 30px);
+  border-radius: 17px;
+  border: 1px solid var(--cw-border);
+  background: var(--cw-atmosphere-panel);
+  box-shadow: var(--cw-shadow);
+}
+.snapshot-summary-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 22px; }
+.snapshot-summary-heading h2 {
+  font-family: "Instrument Serif", Georgia, serif;
+  font-size: var(--type-section);
+  font-weight: 400;
+  font-synthesis: none;
+  line-height: var(--leading-heading);
+  letter-spacing: -.025em;
+  color: var(--cw-heading);
+  margin: 8px 0 9px;
+}
+.snapshot-summary-heading p { color: var(--cw-muted); font-size: var(--type-body); line-height: 1.55; max-width: 69ch; }
+.snapshot-summary-count {
+  flex-shrink: 0;
+  white-space: nowrap;
+  font-family: "Inter", system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 650;
+  color: var(--cw-ink);
+  background: var(--cw-soft);
+  border: 1px solid var(--cw-border);
+  padding: 9px 13px;
+  border-radius: 999px;
+}
+.snapshot-summary-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+.snapshot-summary-metric {
+  --snapshot-metric-accent: var(--cw-lavender);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 164px;
+  padding: 20px 21px;
+  border: 1px solid var(--cw-border);
+  border-radius: 14px;
+  background:
+    radial-gradient(ellipse 85% 75% at 100% 0%, color-mix(in srgb, var(--snapshot-metric-accent) 7%, transparent), transparent 84%),
+    var(--cw-panel);
+}
+.snapshot-summary-metric::before { content: ""; position: absolute; top: 0; left: 21px; right: 21px; height: 2px; background: var(--snapshot-metric-accent); opacity: .65; }
+.snapshot-summary-metric:nth-child(2) { --snapshot-metric-accent: var(--cw-accent); }
+.snapshot-summary-metric:nth-child(3) { --snapshot-metric-accent: var(--cw-teal); }
+.snapshot-summary-metric:nth-child(4) { --snapshot-metric-accent: var(--cw-lavender); }
+.snapshot-summary-metric-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; color: var(--cw-muted); font: 650 var(--type-meta)/1.4 "Inter", system-ui, sans-serif; }
+.snapshot-summary-metric-top svg { flex-shrink: 0; color: var(--cw-teal); }
+.snapshot-summary-metric > strong { margin: 13px 0 5px; color: var(--cw-heading); font: 800 clamp(33px, 2.7vw, 40px)/1.1 "Inter", system-ui, sans-serif; letter-spacing: -.05em; font-variant-numeric: tabular-nums; }
+.snapshot-summary-metric > small { display: block; color: var(--cw-muted); font: 400 var(--type-meta)/1.5 "Inter", system-ui, sans-serif; }
+.snapshot-summary-note { margin: 13px 2px 0; color: var(--cw-muted); font-size: var(--type-meta); line-height: 1.55; }
+
+.local-snapshots { padding-bottom: 0; }
+.snapshot-side-head h3 {
+  font-family: "Instrument Serif", Georgia, serif;
+  font-size: clamp(25px, 2vw, 29px);
+  font-weight: 400;
+  font-synthesis: none;
+  line-height: 1.15;
+  color: var(--cw-heading);
+  margin: 7px 0 8px;
+}
+.snapshot-side-head p { font-size: var(--type-meta); }
+.snapshot-watch-row { transition: background-color 140ms ease, border-color 140ms ease, opacity 140ms ease; }
+.snapshot-watch-row.dragging { opacity: .55; border-style: dashed; border-color: var(--cw-border-strong); }
+.snapshot-watch-row.drag-target { border-color: var(--cw-lavender); background: var(--cw-atmosphere-selected); box-shadow: inset 0 -2px 0 var(--cw-lavender); }
+.snapshot-drag-handle {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 32px;
+  height: 45px;
+  margin-left: 5px;
+  padding: 0;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  color: var(--cw-muted);
+  border-radius: 7px;
+}
+.snapshot-drag-handle:hover, .snapshot-drag-handle:focus-visible { color: var(--cw-heading); background: var(--cw-soft-2); }
+.snapshot-drag-handle:active { cursor: grabbing; }
+.snapshot-drag-handle:disabled { cursor: default; opacity: .35; }
+.snapshot-watch-select { padding-left: 3px; }
+.snapshot-watch-select > svg { display: none; } /* Drag grip identifies the row; avoid a second icon. */
+.snapshot-watch-actions button { width: 26px; }
+.snapshot-watchlist { min-height: 0; }
+.snapshot-detail-header { padding-bottom: 23px; align-items: center; }
+.snapshot-detail-map { height: clamp(340px, 37vw, 470px); }
+.snapshot-town-section { padding: 25px 20px 0; }
+.snapshot-town-section-head { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin: 0 0 14px; }
+.snapshot-town-section-head h3 { font: 600 16px/1.35 "Inter", system-ui, sans-serif; color: var(--cw-heading); }
+.snapshot-town-section-head span { font-size: var(--type-meta); color: var(--cw-muted); }
+.snapshot-town-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; margin: 0; padding: 16px 0; border-top: 1px solid var(--cw-border); border-bottom: 1px solid var(--cw-border); }
+.snapshot-town-metrics > div { min-width: 0; padding: 4px 16px; border-right: 1px solid var(--cw-border); }
+.snapshot-town-metrics > div:first-child { padding-left: 2px; }
+.snapshot-town-metrics > div:last-child { border-right: 0; }
+.snapshot-town-metrics dt { color: var(--cw-muted); font: 500 var(--type-meta)/1.4 "Inter", system-ui, sans-serif; }
+.snapshot-town-metrics dd { margin: 7px 0 0; color: var(--cw-heading); font: 750 clamp(22px, 2vw, 28px)/1.15 "Inter", system-ui, sans-serif; font-variant-numeric: tabular-nums; letter-spacing: -.04em; }
+.snapshot-town-section .snapshot-resolution { border: none; padding: 18px 0 15px; margin: 0; }
+.snapshot-town-section .snapshot-resolution > div:first-child { font-size: 13px; }
+.snapshot-activity { padding-top: 22px; }
+
+@media (max-width: 1100px) {
+  .snapshot-summary-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .snapshot-town-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 18px; }
+  .snapshot-town-metrics > div:nth-child(2) { border-right: 0; }
+  .snapshot-town-metrics > div:nth-child(3) { padding-left: 2px; }
+}
+@media (max-width: 700px) {
+  .snapshot-summary-heading { align-items: flex-start; flex-direction: column; gap: 12px; }
+  .snapshot-watch-summary { padding: 18px; }
+  .snapshot-summary-metrics { gap: 10px; }
+  .snapshot-summary-metric { min-height: 145px; padding: 16px 14px; }
+  .snapshot-summary-metric::before { left: 14px; right: 14px; }
+  .snapshot-summary-metric > strong { font-size: clamp(28px, 7vw, 36px); }
+  .snapshot-town-section { padding: 20px 16px 0; }
+  .snapshot-detail-map { height: clamp(290px, 55vh, 420px); }
+  .snapshot-town-metrics > div { padding-right: 10px; }
+}
+@media (max-width: 390px) {
+  .snapshot-summary-metric { padding: 13px 11px; }
+  .snapshot-summary-metric-top { font-size: 11px; }
+  .snapshot-watch-actions button { width: 23px; }
+  .snapshot-drag-handle { width: 28px; margin-left: 1px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .snapshot-watch-row { transition: none; }
+}
+
+/* v2.1 — One Reports destination for watched towns: total -> status -> list.
+ * The single oversized total is the page anchor; Active/Inactive are equivalent
+ * selectable subsections. Filters and individual reports remain subordinate. */
+.watch-reports-summary {
+  margin: 0 25px 20px;
+  overflow: hidden;
+  background: var(--cw-atmosphere-panel);
+  border: 1px solid var(--cw-border);
+  border-radius: 16px;
+}
+.watch-reports-overview {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 20px 30px;
+  padding: 25px 27px 23px;
+  background: var(--cw-atmosphere-section);
+}
+.watch-reports-total {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+.watch-reports-total .section-kicker { color: var(--cw-muted); }
+.watch-reports-total > strong {
+  display: block;
+  color: var(--cw-heading);
+  font: 750 clamp(44px, 5vw, 66px)/1.03 "Inter", system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -.055em;
+}
+.watch-reports-overview-detail { max-width: 340px; }
+.watch-reports-overview-detail p { color: var(--cw-muted); font-size: 13px; line-height: 1.6; }
+.watch-reports-manage {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 9px;
+  padding: 7px 0;
+  border: 0;
+  background: transparent;
+  color: var(--cw-heading);
+  font: 650 13px/1.4 "Inter", system-ui, sans-serif;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: var(--cw-border-strong);
+  text-underline-offset: 4px;
+}
+.watch-reports-manage:hover { color: var(--cw-accent); }
+.watch-reports-sections {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  padding: 14px;
+  border-top: 1px solid var(--cw-border);
+}
+.watch-reports-sections > button {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  min-width: 0;
+  min-height: 82px;
+  padding: 16px 18px;
+  border: 1px solid var(--cw-border);
+  border-radius: 12px;
+  background: var(--cw-panel);
+  color: var(--cw-heading);
+  cursor: pointer;
+  text-align: left;
+  transition: background-color 150ms, border-color 150ms;
+}
+.watch-reports-sections > button:hover { background: var(--cw-soft); }
+.watch-reports-sections > button.selected {
+  background: var(--cw-atmosphere-selected);
+  border-color: var(--cw-lavender);
+  box-shadow: inset 0 2px 0 var(--cw-lavender);
+}
+.watch-reports-sections > button > span {
+  display: grid;
+  grid-template-columns: 9px auto;
+  column-gap: 10px;
+  align-items: center;
+  font: 700 14px/1.3 "Inter", system-ui, sans-serif;
+}
+.watch-reports-status-dot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--cw-accent);
+}
+.watch-reports-status-dot.inactive { background: var(--cw-teal); }
+.watch-reports-sections small {
+  grid-column: 2;
+  color: var(--cw-muted);
+  font: 450 12px/1.5 "Inter", system-ui, sans-serif;
+}
+.watch-reports-sections strong {
+  color: var(--cw-heading);
+  font: 740 clamp(24px, 2.5vw, 32px)/1 "Inter", system-ui, sans-serif;
+  letter-spacing: -.045em;
+  font-variant-numeric: tabular-nums;
+}
+.watch-reports-note {
+  padding: 0 27px 18px;
+  color: var(--cw-muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+.watch-reports-empty { padding: 65px 25px; }
+/* Distinguish a subsection result count from the large unfiltered total. */
+.board-toolbar { font-size: 13px; color: var(--cw-muted); }
+.board-toolbar label, .board-toolbar select { font-size: 12px; }
+@media (max-width: 790px) {
+  .watch-reports-summary { margin: 0 16px 17px; }
+  .watch-reports-overview { padding: 22px 20px; }
+  .watch-reports-note { padding: 0 20px 16px; }
+}
+@media (max-width: 520px) {
+  .watch-reports-summary { margin: 0 12px 15px; }
+  .watch-reports-overview { align-items: flex-start; gap: 8px; padding: 19px 17px; }
+  .watch-reports-total > strong { font-size: 44px; }
+  .watch-reports-sections { gap: 7px; padding: 9px; }
+  .watch-reports-sections > button { min-height: 80px; padding: 12px 11px; gap: 7px; }
+  .watch-reports-sections > button > span { font-size: 13px; column-gap: 7px; }
+  .watch-reports-sections > button strong { font-size: 24px; }
+  .watch-reports-note { padding: 3px 15px 14px; }
+  .board-toolbar { gap: 9px; flex-wrap: wrap; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .watch-reports-sections > button { transition: none; }
+}
+
+
+/* v2.2 fine-tuning: lighter copy density and utility-only internal headers */
+.utility-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.utility-heading .section-kicker { margin: 0; }
+.utility-heading .place-search { width: min(380px, 100%); }
+.watch-reports-summary.compact .watch-reports-overview { align-items: center; }
+.watch-reports-summary.compact .watch-reports-overview-detail { max-width: none; display: flex; align-items: center; }
+.watch-reports-summary.compact .watch-reports-manage { margin-top: 0; }
+.watch-reports-summary.compact .watch-reports-total .section-kicker { margin-bottom: 6px; }
+.watch-reports-summary.compact .watch-reports-sections small { font-size: 11px; line-height: 1.35; }
+.watch-reports-summary.compact .watch-reports-sections > button { min-height: 92px; }
+.snapshot-summary-note { margin-top: 12px; }
+.snapshot-side-head p,
+.snapshot-detail-header p,
+.overview-panel-heading p { display: none; }
+.overview-map-first .overview-map-footnote,
+.watch-reports-note { font-size: 12px; }
+/* The basemap, map controls and tooltips remain light in both app themes. */
+/* CivicWatch soft pastel basemap. Keep the raster map light in both app
+   themes, with roads clearly defined, pale green parks, powder-blue water,
+   and subtly lavender-tinted built surfaces. Civic markers and controls stay
+   in their own higher layers and keep full saturation. */
+.map-shell .leaflet-container,
+.map-shell .leaflet-host,
+.map-shell { background: #f5f7f2; }
+.map-shell .leaflet-tile-pane { filter: none; }
+.map-shell .leaflet-tile-pane .leaflet-tile {
+  filter: saturate(.94) contrast(.945) brightness(1.075);
+}
+.map-shell .leaflet-tile-pane::before,
+.map-shell .leaflet-tile-pane::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1000;
+}
+.map-shell .leaflet-tile-pane::before {
+  background: rgba(250, 248, 245, .12);
+}
+/* A gentle colour wash approximates the desired palette while preserving
+   readable charcoal labels in the original raster tiles. */
+.map-shell .leaflet-tile-pane::after {
+  background:
+    radial-gradient(circle at 86% 14%, rgba(125, 207, 226, .14), transparent 30%),
+    radial-gradient(circle at 24% 24%, rgba(221, 237, 220, .18), transparent 36%),
+    linear-gradient(125deg,
+      rgba(197, 180, 232, .11) 0%,
+      rgba(250, 248, 245, .025) 42%,
+      rgba(242, 167, 160, .055) 100%);
+}
+.map-shell .map-controls,
+.map-shell .map-key,
+.map-shell .map-location { background: #fffdfb; color: #2f3138; border-color: #e5e1eb; }
+.map-shell .map-controls button,
+.map-shell .map-key,
+.map-shell .map-key-heading strong { color: #2f3138; }
+.map-shell .map-controls button:hover { background: #f3eff8; color: #231b30; }
+.map-shell .leaflet-tooltip.civic-tooltip { background: #fffdfb; color: #2f3138; border-color: #e5e1eb; }
+.map-shell .leaflet-control-attribution { background: rgba(255,255,255,.86) !important; color: #5b5d66; }
+.map-shell .leaflet-control-attribution a { color: #387e86; }
+@media (max-width: 800px) {
+  .utility-heading { flex-wrap: wrap; align-items: flex-start; }
+  .utility-heading .place-search { width: 100%; max-width: none; }
+  .watch-reports-summary.compact .watch-reports-overview { align-items: flex-start; }
+}
+
+/* v2.3: one hero per page; compact local empty state and action. */
+.snapshot-no-reports { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; }
+.snapshot-no-reports p { margin: 0; font-size: 13px; line-height: 1.55; }
+.snapshot-no-reports strong { font-size: 15px; color: var(--cw-heading); }
+.snapshot-no-reports .button { margin-top: 5px; }
+.watch-reports-sections > button > span { gap: 8px; }
+@media (max-width: 740px) {
+  .intro h1 { overflow-wrap: normal; text-wrap: balance; }
+  .watch-reports-summary.compact .watch-reports-sections > button { min-height: 76px; }
+}
+
+
+/* v2.5.2: CivicWatch issue pins. Colour is determined by the display-only
+   markerPalette, so it also matches categories fetched from a live API. */
+.map-shell .pin-body {
+  background: linear-gradient(148deg,
+    color-mix(in srgb, var(--pin-color) 96%, white),
+    var(--pin-color) 70%);
+  box-shadow: 0 3px 10px rgba(33, 26, 48, .23),
+    0 0 0 4px rgb(var(--pin-rgb, 145 112 186) / var(--pin-ring, .12));
+  border-color: #fffafd;
+}
+.map-shell .civic-marker:hover .pin-body {
+  filter: none;
+  box-shadow: 0 5px 16px rgba(33, 26, 48, .27),
+    0 0 0 5px rgb(var(--pin-rgb, 145 112 186) / .25);
+}
+.map-shell .pin-body sup {
+  color: #211a30;
+  background: #fffafd;
+  border-color: #e7e0f0;
+  box-shadow: 0 2px 7px rgba(40, 29, 63, .16);
+}
+/* The location being chosen by a reporter is an accent, not a category. */
+.map-shell .chosen-marker {
+  background: #e76d7c;
+  border-color: #fffafd;
+  box-shadow: 0 0 0 7px rgba(155, 129, 221, .24);
+}

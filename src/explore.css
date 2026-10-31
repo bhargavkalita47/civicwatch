@@ -1,0 +1,90 @@
+/* CivicWatch v2.5.7: one Explore search, category-group quick filters. */
+.explore-toolbar {
+  position: relative;
+  z-index: 600;
+  padding-top: 18px;
+  gap: 10px;
+}
+.explore-toolbar .explore-search {
+  position: relative;
+  flex: 0 1 360px;
+  width: min(360px, 100%);
+  min-width: min(280px, 100%);
+  z-index: 1;
+}
+.explore-search-form {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 43px;
+  padding: 4px 5px 4px 12px;
+  border: 1px solid var(--cw-border);
+  border-radius: 12px;
+  background: var(--cw-elevated);
+  color: var(--cw-ink);
+}
+.explore-search-form:focus-within {
+  border-color: var(--cw-lavender);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--cw-lavender) 18%, transparent);
+}
+.explore-search-form > svg { flex: none; color: var(--cw-muted); }
+.explore-search-form input {
+  flex: 1; min-width: 0; width: 100%;
+  border: 0; outline: 0; background: transparent;
+  color: var(--cw-ink); font-size: 13px;
+}
+.explore-search-form input:focus-visible { outline: 0; }
+.explore-search-form input::placeholder { color: var(--cw-faint); }
+.explore-search-form input::-webkit-search-cancel-button { display: none; }
+.explore-search-clear {
+  display: flex; flex: none; padding: 5px;
+  align-items: center; color: var(--cw-muted);
+}
+.explore-search-place {
+  display: inline-flex; flex: none; align-items: center; justify-content: center;
+  gap: 4px; min-height: 32px; padding: 0 10px;
+  border-radius: 8px; background: var(--cw-accent); color: var(--cw-accent-ink);
+  font-size: 11px; font-weight: 700; white-space: nowrap;
+}
+.explore-search-place:disabled { opacity: .6; }
+.explore-search-results,
+.explore-search-error {
+  position: absolute; left: 0; right: 0; top: calc(100% + 7px);
+  z-index: 50; margin: 0; padding: 6px;
+  border: 1px solid var(--cw-border); border-radius: 12px;
+  background: var(--cw-elevated); color: var(--cw-ink);
+  box-shadow: var(--cw-shadow-float);
+}
+.explore-search-results { max-height: min(300px, 50vh); overflow-y: auto; }
+.explore-search-results button {
+  display: flex; align-items: center; width: 100%; gap: 10px;
+  border-radius: 8px; padding: 10px 9px; text-align: left;
+  font-size: 12px;
+}
+.explore-search-results button:hover,
+.explore-search-results button:focus-visible { background: var(--cw-soft); }
+.explore-search-results button span { flex: 1; }
+.explore-search-results button svg { flex: none; color: var(--cw-teal); }
+.explore-search-error { padding: 11px 12px; font-size: 12px; }
+/* Group names need horizontal breathing room; overflow scrolls instead of
+   hiding categories at narrow sizes. */
+.explore-toolbar .category-chips {
+  min-width: 0; flex: 1 1 220px; overflow-x: auto; overscroll-behavior-x: contain;
+}
+.explore-toolbar .category-chips button { display: flex; min-height: 36px; font-size: 11px; flex: none; }
+.explore-toolbar .category-chips i { width: 7px; height: 7px; }
+.explore-toolbar .filter-button { flex: none; }
+@media (max-width: 1050px) {
+  .explore-toolbar { flex-wrap: wrap; }
+  .explore-toolbar .explore-search { flex: 1 1 100%; width: 100%; max-width: none; }
+  .explore-toolbar .category-chips { flex: 1 1 0; }
+}
+@media (max-width: 600px) {
+  .explore-toolbar { gap: 10px; padding: 15px 13px 14px; }
+  .explore-toolbar .explore-search { min-width: 0; }
+  .explore-toolbar .explore-search-form input { font-size: 16px; }
+  .explore-toolbar .category-chips { order: 1; flex: 1 1 auto; width: calc(100% - 85px); }
+  .explore-toolbar .filter-button { order: 2; }
+  .explore-toolbar .category-chips button { font-size: 11px; }
+}

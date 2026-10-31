@@ -1,0 +1,131 @@
+/* CivicWatch v2.5.4 — Town watchlist hierarchy and single-action onboarding.
+   Scoped to Town watchlist; other pages and design tokens are unchanged. */
+
+/* A single, modest first-use panel replaces the zero-value dashboard and the
+   two competing empty-state cards. Search is the primary interaction. */
+.snapshot-is-empty { gap: 0; align-items: center; }
+.snapshot-onboarding {
+  width: min(860px, 100%);
+  min-height: 310px;
+  padding: clamp(28px, 5vw, 58px) clamp(22px, 6vw, 68px);
+  background: var(--cw-atmosphere-panel);
+  border: 1px solid var(--cw-border);
+  box-shadow: var(--cw-shadow);
+  border-radius: 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 0;
+}
+.snapshot-onboarding-icon {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  margin-bottom: 18px;
+  border-radius: 12px;
+  color: var(--cw-lavender);
+  background: var(--cw-soft);
+}
+.snapshot-onboarding-copy h2 {
+  margin: 7px 0 5px;
+  font: 400 clamp(29px, 3.25vw, 38px)/1.1 "Instrument Serif", Georgia, serif;
+  letter-spacing: -.025em;
+  color: var(--cw-heading);
+}
+.snapshot-onboarding-copy p {
+  margin: 0;
+  font: 400 14px/1.65 "Inter", system-ui, sans-serif;
+  color: var(--cw-muted);
+}
+.snapshot-onboarding-search {
+  margin-top: 25px;
+  width: min(590px, 100%);
+}
+.snapshot-search-flow, .snapshot-search-flow .place-search { width: 100%; max-width: none; }
+.snapshot-search-flow .place-search-form { min-height: 48px; }
+.snapshot-search-flow .place-search-form input { font-size: 14px; }
+.snapshot-search-flow .place-search-submit { font-size: 13px; }
+.snapshot-suggestions-block { margin-top: 20px; }
+.snapshot-suggestions-block .snapshot-field-label { font-size: 11px; font-weight: 600; margin: 0 0 8px; }
+.snapshot-suggestions-block .snapshot-suggestions { display: flex; flex-wrap: wrap; gap: 8px; }
+.snapshot-suggestions-block .snapshot-suggestions button {
+  display: inline-flex; align-items: baseline; gap: 7px;
+  min-height: 34px; padding: 7px 11px; border: 1px solid var(--cw-border);
+  border-radius: 9px; color: var(--cw-ink); background: var(--cw-elevated);
+  font-size: 12px;
+}
+.snapshot-suggestions-block .snapshot-suggestions button:hover { border-color: var(--cw-lavender); background: var(--cw-soft); }
+.snapshot-suggestions-block .snapshot-suggestions button small { color: var(--cw-muted); font-size: 11px; }
+.snapshot-onboarding .snapshot-note { width: min(590px, 100%); margin: 10px 0 0; }
+
+/* With places selected, combine totals into a low-height data strip. Don't
+   make four identical numbers compete with the main town/map workflow. */
+.snapshot-watch-summary-compact { padding: 18px 22px 20px; }
+.snapshot-watch-summary-compact .snapshot-summary-heading {
+  margin-bottom: 14px; align-items: center; gap: 12px;
+}
+.snapshot-watch-summary-compact .snapshot-summary-count { padding: 6px 11px; font-size: 11px; }
+.snapshot-watch-summary-compact .snapshot-summary-metrics { gap: 0; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.snapshot-watch-summary-compact .snapshot-summary-metric {
+  display: block; border: 0; border-right: 1px solid var(--cw-border);
+  border-radius: 0; background: none; box-shadow: none;
+  min-height: 0; padding: 5px clamp(12px, 2vw, 26px); 
+}
+.snapshot-watch-summary-compact .snapshot-summary-metric:first-child { padding-left: 0; }
+.snapshot-watch-summary-compact .snapshot-summary-metric:last-child { border-right: 0; padding-right: 0; }
+.snapshot-watch-summary-compact .snapshot-summary-metric::before { display: none; }
+.snapshot-watch-summary-compact .snapshot-summary-metric-top { font-weight: 500; font-size: 12px; }
+.snapshot-watch-summary-compact .snapshot-summary-metric-top svg { opacity: .7; }
+.snapshot-watch-summary-compact .snapshot-summary-metric > strong {
+  display: block; margin: 7px 0 0; font-size: clamp(25px, 2.2vw, 33px);
+  line-height: 1.12; letter-spacing: -.045em;
+}
+.snapshot-watch-summary-compact .snapshot-summary-zero { margin: 4px 0 0; color: var(--cw-muted); font-size: 13px; }
+
+/* One clearly labelled add control. The plus changes to Close only while the
+   search form is open. Town selection and drag actions remain separate. */
+.local-snapshots-page .snapshot-watchlist { position: sticky; top: 18px; min-height: 0; }
+.local-snapshots-page .snapshot-side-head { align-items: center; padding: 18px 17px; }
+.local-snapshots-page .snapshot-side-head h3 { margin: 4px 0 0; font-size: 25px; }
+.local-snapshots-page .snapshot-add-button {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  width: auto; min-width: 92px; height: 36px; padding: 0 10px;
+  font-size: 12px; font-weight: 650; white-space: nowrap;
+}
+.local-snapshots-page .snapshot-add-button svg { flex-shrink: 0; }
+.local-snapshots-page .snapshot-add-panel { padding: 16px; }
+.local-snapshots-page .snapshot-watch-foot { margin-top: 6px; padding: 10px 0 12px; font-size: 11px; }
+.local-snapshots-page .snapshot-detail { min-height: 0; }
+.local-snapshots-page .snapshot-detail-header { padding: 21px 23px 15px; }
+.local-snapshots-page .snapshot-detail-header h2 { font-size: clamp(29px, 3vw, 39px); }
+.local-snapshots-page .snapshot-activity { padding: 18px 23px 25px; }
+.local-snapshots-page .snapshot-no-reports { margin: 0; padding: 12px 0; }
+.local-snapshots-page .snapshot-no-reports strong { display: block; color: var(--cw-heading); font-size: 14px; }
+.local-snapshots-page .snapshot-no-reports p { margin-top: 6px; font-size: 13px; }
+.local-snapshots-page .snapshot-no-reports .button { margin-top: 12px; }
+.local-snapshots-page .snapshot-town-section { padding-top: 18px; }
+
+@media (max-width: 950px) {
+  .local-snapshots-page .snapshot-watchlist { position: static; }
+}
+@media (max-width: 700px) {
+  .snapshot-onboarding { min-height: 0; padding: 28px 20px; }
+  .snapshot-onboarding-search { margin-top: 20px; }
+  .snapshot-watch-summary-compact { padding: 16px; }
+  .snapshot-watch-summary-compact .snapshot-summary-heading { flex-direction: row; align-items: center; gap: 10px; }
+  .snapshot-watch-summary-compact .snapshot-summary-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0; }
+  .snapshot-watch-summary-compact .snapshot-summary-metric { padding: 14px 12px; border-bottom: 1px solid var(--cw-border); }
+  .snapshot-watch-summary-compact .snapshot-summary-metric:nth-child(2) { border-right: 0; }
+  .snapshot-watch-summary-compact .snapshot-summary-metric:nth-child(3) { padding-left: 0; border-bottom: 0; }
+  .snapshot-watch-summary-compact .snapshot-summary-metric:nth-child(4) { border-bottom: 0; }
+  .snapshot-watch-summary-compact .snapshot-summary-metric:first-child { padding-left: 0; }
+  .snapshot-watch-summary-compact .snapshot-summary-metric > strong { font-size: 29px; }
+  .local-snapshots-page .snapshot-detail-header { padding: 19px 17px 14px; }
+}
+@media (max-width: 380px) {
+  .snapshot-suggestions-block .snapshot-suggestions { gap: 6px; }
+  .snapshot-watch-summary-compact .snapshot-summary-heading { flex-wrap: wrap; }
+  .local-snapshots-page .snapshot-add-button { min-width: 82px; padding: 0 8px; }
+}

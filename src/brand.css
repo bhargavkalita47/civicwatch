@@ -1,0 +1,22 @@
+/* CivicWatch v2.5.5 — authentic supplied C-and-eye symbol.
+   The existing coral tile ties the mark into both app themes; the dark ink
+   silhouette provides stronger contrast than a white-on-coral treatment. */
+.site-header .brand-mark,
+.mobile-topbar .mobile-brand .brand-mark {
+  background: var(--cw-accent);
+  color: var(--cw-accent-ink);
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  overflow: hidden;
+}
+.site-header .brand-mark > svg.civicwatch-logo-symbol,
+.mobile-topbar .mobile-brand .brand-mark > svg.civicwatch-logo-symbol {
+  display: block;
+  width: 70%;
+  height: 70%;
+  flex: none;
+  fill: none;
+  color: var(--cw-accent-ink);
+}

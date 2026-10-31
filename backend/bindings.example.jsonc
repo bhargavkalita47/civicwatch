@@ -1,0 +1,14 @@
+// Add the following arrays alongside "assets" in the root wrangler.jsonc
+// ONLY AFTER provisioning your own D1/R2 resources.
+// Do not commit a placeholder database_id into the active config.
+"d1_databases": [
+  {
+    "binding": "DB",
+    "database_name": "civicwatch",
+    "database_id": "REPLACE_WITH_REAL_D1_DATABASE_ID",
+    "migrations_dir": "backend/migrations"
+  }
+],
+"r2_buckets": [
+  { "binding": "PHOTOS", "bucket_name": "civicwatch-photos" }
+]
