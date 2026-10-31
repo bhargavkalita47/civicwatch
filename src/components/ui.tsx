@@ -101,6 +101,9 @@ export function Modal({
       ref={ref}
       className={`modal ${wide ? "wide" : ""} ${drawer ? "drawer" : ""}`}
       onCancel={(event) => {
+        // A file input can emit a bubbling cancel event when its picker is dismissed.
+        // Close only when the dialog itself was cancelled (such as with Escape).
+        if (event.target !== event.currentTarget) return;
         event.preventDefault();
         onClose();
       }}

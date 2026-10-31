@@ -1,7 +1,9 @@
 # Deploy CivicWatch to Cloudflare Workers (GitHub integration)
 
-This release targets **Cloudflare Workers with Static Assets** only. It is not a
-Cloudflare Pages project. Source configuration (`wrangler.jsonc`) specifies the
+Cloudflare Workers with Static Assets remains the **current staging target**.
+A separate `vercel.json` config is included for a future **static frontend-only** migration;
+we are not switching hosts or implementing the backend in this patch.
+It is not a Cloudflare Pages project. Source configuration (`wrangler.jsonc`) specifies the
 Worker entry point, static build output, SPA routing and API routes together.
 No Pages Functions or Pages-only configuration is included.
 
@@ -157,3 +159,17 @@ The UI initially uses local browser preview data. Admin roles, shared issue hist
 ## Version note
 
 This deployment package includes the v1.5 visual refresh and overview simplification.
+
+
+## 6. Vercel preparation — defer until Cloudflare staging tests pass
+
+`vercel.json` contains the Vite output directory and CSP/other response headers.
+When ready, import the **same GitHub repository** into Vercel, use Node.js 22,
+`npm ci` and `npm run build`, output `dist`, and leave `VITE_SERVICE_MODE=mock`
+until real authentication and persistence are built. Do **not** use
+`npm run deploy` on Vercel: that command is for Cloudflare Wrangler.
+
+The Worker and its Cloudflare services will **not** migrate with these static
+assets. Local preview data is origin-scoped, so the Vercel URL will not see
+reports/watchlists stored under the Cloudflare URL. See
+`RELEASE_NOTES_v2_5_8.md` for the required staging QA and remaining checks.

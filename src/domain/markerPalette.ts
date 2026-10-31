@@ -60,3 +60,12 @@ export function categoryMarkerColor(category: Pick<Category, "id" | "color">): s
 export function markerRgb(hex: string): string {
   return [1, 3, 5].map((offset) => Number.parseInt(hex.slice(offset, offset + 2), 16)).join(" ");
 }
+
+/** Choose accessible icon ink independently of the category hue and density. */
+export function markerIconColor(hex: string): "#211A30" | "#FFFFFF" {
+  const rgb = [1, 3, 5].map((offset) => Number.parseInt(hex.slice(offset, offset + 2), 16) / 255);
+  const linear = rgb.map((c) => c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
+  const luminance = linear[0] * 0.2126 + linear[1] * 0.7152 + linear[2] * 0.0722;
+  // Dark ink has relative luminance approx .011, white has 1.
+  return (luminance + 0.05) / 0.061 >= 1.05 / (luminance + 0.05) ? "#211A30" : "#FFFFFF";
+}

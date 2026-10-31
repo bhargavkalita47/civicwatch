@@ -1,3 +1,13 @@
+## v2.5.8 — frontend stability and future Vercel staging readiness
+
+- Corrected mobile topbar/search stacking while scrolling.
+- Prevented map controls and nested place search from submitting report forms.
+- Separated successful writes from failed refreshes to avoid duplicate reports/comments.
+- Scoped Explore statuses, synchronized cross-tab authentication, and improved marker and placeholder contrast.
+- Aligned current design/cluster validation, added release regression checks, and moved early theme initialization out of inline HTML for strict CSP.
+- Added static Vercel configuration without switching from Cloudflare or connecting a backend.
+- Full npm build/tests **not run in the patch environment** due unavailable npm registry; Cloudflare staging QA remains required. See `RELEASE_NOTES_v2_5_8.md`.
+
 ## CivicWatch v2.5.7 — Explore map controls
 
 - Combined place lookup and report-text filtering into a single Explore search field.

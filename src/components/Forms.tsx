@@ -124,8 +124,10 @@ export function ReportModal({
     [uploading, setUploading] = useState(false),
     [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
-    [separate, setSeparate] = useState(false);
+    [separate, setSeparate] = useState(false),
+    [saved, setSaved] = useState(false);
   const latestLookup = useRef(0);
+  const createdIssue = useRef<Issue | null>(null);
   function populateArea(place: PlaceResult | null) {
     if (place?.area) {
       setLocality(place.area.name);
@@ -169,6 +171,7 @@ export function ReportModal({
       setStep(2);
       return;
     }
+    if (busy || createdIssue.current) return;
     setBusy(true);
     setError("");
     try {
@@ -181,9 +184,13 @@ export function ReportModal({
         address,
         attachments: photos,
       });
+      createdIssue.current = issue; // A refresh failure must never repeat this POST.
+      setSaved(true);
       await onCreated(issue);
     } catch (e) {
-      setError((e as Error).message || copy.errors.save);
+      setError(createdIssue.current
+        ? "Report saved, but the screen could not be updated. Close this dialog and refresh to see it."
+        : (e as Error).message || copy.errors.save);
     } finally {
       setBusy(false);
     }
@@ -390,12 +397,15 @@ export function ReportModal({
             className="button primary"
             disabled={
               busy ||
+              saved ||
               uploading ||
               (step === 2 && nearby.length > 0 && !separate)
             }
           >
             {busy ? (
               <Spinner />
+            ) : saved ? (
+              "Saved"
             ) : (
               <>
                 {step === 1 ? "Continue" : copy.reporting.submit}

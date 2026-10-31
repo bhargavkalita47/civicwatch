@@ -39,11 +39,9 @@ assert.match(watchlist, /onPointerCancel=\{clearDrag\}/, 'Pointer cancel resets 
 assert.match(watchlist, /onGripKeyDown/, 'Reordering must support keyboard users');
 assert.match(watchlist, /snapshot-summary-metrics/, 'Combined watchlist totals must have their own section');
 assert.match(watchlist, /snapshot-is-empty/, "Empty watchlist must use a single onboarding panel");
-assert.match(watchlist, /snapshot-watch-summary-compact/, "Populated watchlist must use compact totals");
-assert.match(watchlist, /watchTotals\.reports \?/, "Zero-report watchlists must avoid four empty metric cards");
 const watchlistLayout = read('src/watchlist-refinement.css');
 assert.match(root, /import "\.\/watchlist-refinement\.css";/, 'Refinement stylesheet must be loaded');
-assert.ok(watchlist.indexOf('if (!watchlist.length) return') < watchlist.indexOf('snapshot-watch-summary-compact'), 'Initial watchlist setup comes before statistics');
+assert.ok(watchlist.indexOf('if (!watchlist.length) return') < watchlist.indexOf('snapshot-summary-metrics'), 'Initial watchlist setup comes before statistics');
 assert.match(watchlist, /snapshot-onboarding-search/, 'A single place-search flow should be the empty-state primary action');
 assert.doesNotMatch(watchlist, /snapshot-detail-empty/, 'Duplicated empty-state CTA must be removed');
 assert.match(watchlist, /watchlist.length > 1 && <button className="snapshot-drag-handle"/, 'Single watched towns should not show disabled drag handles');

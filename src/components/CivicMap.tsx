@@ -5,7 +5,7 @@ import { LocateFixed, Minus, Plus, Layers, RotateCcw } from "lucide-react";
 import type { Category, Coordinate, LocationCluster } from "../domain/types";
 import { normalizedPoint, type MapBounds } from "../domain/geography";
 import { markerColor, peopleCount } from "../domain/logic";
-import { categoryMarkerColor, markerRgb } from "../domain/markerPalette";
+import { categoryMarkerColor, markerIconColor, markerRgb } from "../domain/markerPalette";
 import { config } from "../config";
 import { copy } from "../copy";
 const paths: Record<string, string> = {
@@ -118,7 +118,7 @@ export function CivicMap({
         n = cluster.issues.length;
       const icon = L.divIcon({
         className: "civic-marker",
-        html: `<div class="pin-body" style="--pin-color:${bg};--pin-rgb:${markerRgb(bg)};--pin-ring:${Math.min(0.24, cluster.totalPeople / 100)}"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="${paths[category.symbol] || paths.pin}"/></svg>${n > 1 ? `<sup aria-hidden="true">${n}</sup>` : ""}</div>`,
+        html: `<div class="pin-body" style="--pin-color:${bg};--pin-ink:${markerIconColor(bg)};--pin-rgb:${markerRgb(bg)};--pin-ring:${Math.min(0.24, cluster.totalPeople / 100)}"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="${paths[category.symbol] || paths.pin}"/></svg>${n > 1 ? `<sup aria-hidden="true">${n}</sup>` : ""}</div>`,
         iconSize: [38, 45],
         iconAnchor: [19, 42],
       });
@@ -204,14 +204,14 @@ export function CivicMap({
         </div>
       )}
       <div className="map-controls">
-        <button onClick={() => map.current?.zoomIn()} aria-label="Zoom in">
+        <button type="button" onClick={() => map.current?.zoomIn()} aria-label="Zoom in">
           <Plus size={19} />
         </button>
-        <button onClick={() => map.current?.zoomOut()} aria-label="Zoom out">
+        <button type="button" onClick={() => map.current?.zoomOut()} aria-label="Zoom out">
           <Minus size={19} />
         </button>
         <span />
-        <button onClick={() => void locate()} aria-label={copy.map.locate}>
+        <button type="button" onClick={() => void locate()} aria-label={copy.map.locate}>
           {locating ? (
             <span className="locating-dot" />
           ) : (
@@ -221,6 +221,7 @@ export function CivicMap({
         {!compact && (
           <>
             <button
+              type="button"
               onClick={() =>
                 map.current?.flyTo([center.lat, center.lng], 13)
               }
@@ -229,6 +230,7 @@ export function CivicMap({
               <RotateCcw size={17} />
             </button>
             <button
+              type="button"
               onClick={() => setLegend((v) => !v)}
               aria-label="Show issue types"
               aria-expanded={legend}
@@ -256,6 +258,7 @@ export function CivicMap({
       )}
       {tileError && (
         <button
+          type="button"
           className="tile-warning"
           onClick={() => {
             setTileError(false);

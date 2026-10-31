@@ -56,7 +56,7 @@ describe("Geography and counts", () => {
       clusters.find((c) => c.issues.some((i) => i.id === "seed-issue-0"))
         ?.issues,
     ).toHaveLength(2);
-    expect(clusters.length).toBe(20);
+    expect(clusters.length).toBe(16); // Four resolved reports are excluded from map clusters.
   });
   it("deduplicates people across author and confirmations", () => {
     const i = createSeed().issues[0];

@@ -28,6 +28,7 @@ import { config } from "./config";
 import { copy, reportCount } from "./copy";
 import type {
   Category,
+  Comment,
   CategoryGroup,
   City,
   Coordinate,
@@ -306,7 +307,7 @@ export default function App() {
   const filters: IssueFilters = {
     query,
     categoryIds,
-    status: tab === "reports" && reportSection === "inactive" ? "resolved" : status,
+    status: tab === "explore" ? "all" : tab === "reports" && reportSection === "inactive" ? "resolved" : status,
     sort,
     authorId: tab === "mine" ? auth.session?.user.id : undefined,
   };
@@ -320,7 +321,7 @@ export default function App() {
   );
   const clusters = useMemo(() => clusterIssues(visible), [visible]);
   const issueCount = citySummary.open;
-  const hasFilters = categoryIds.length > 0 || (status !== "all" && (tab !== "reports" || reportSection === "active"));
+  const hasFilters = categoryIds.length > 0 || (status !== "all" && tab !== "explore" && (tab !== "reports" || reportSection === "active"));
   function changeReportSection(next: ReportSection) {
     setReportSection(next);
     setStatus("all");
@@ -355,18 +356,31 @@ export default function App() {
     );
   }
   async function created(issue: Issue) {
+    // Persist succeeded before this callback is called. Show the saved item
+    // immediately; a failed follow-up GET is never a failed POST.
     setCityId(issue.cityId);
-    const [dataset, locations] = await Promise.all([civicService.getDataset(), civicService.getCities()]);
-    setData(dataset);
-    setCities(locations);
-    setOverviewStats(await civicService.getOverviewStats());
+    setData((current) => current ? {
+      ...current,
+      issues: [issue, ...current.issues.filter((entry) => entry.id !== issue.id)],
+    } : { version: 1, users: [], issues: [issue], comments: [] });
     setReportPoint(null);
-    const cluster = clusterIssues(dataset.issues).find((c) =>
-      c.issues.some((i) => i.id === issue.id),
-    )!;
-    setSelection({ cluster, issueId: issue.id });
+    setSelection({ cluster: { id: issue.id, location: issue.location, issues: [issue], totalPeople: peopleCount(issue) }, issueId: issue.id });
     setFocus(issue.location);
     notify(`${config.serviceMode === "mock" ? copy.reporting.saved : copy.reporting.published} ${copy.reporting.completion}`);
+    try {
+      const [dataset, locations, snapshot] = await Promise.all([
+        civicService.getDataset(), civicService.getCities(), civicService.getOverviewStats(),
+      ]);
+      setData(dataset);
+      setCities(locations);
+      setOverviewStats(snapshot);
+      const cluster = clusterIssues(dataset.issues).find((entry) =>
+        entry.issues.some((item) => item.id === issue.id));
+      if (cluster) setSelection({ cluster, issueId: issue.id });
+    } catch {
+      // Do not allow a transient read failure to cause a duplicate create.
+      notify("Report saved. Latest totals could not be loaded; refresh to update them.");
+    }
   }
   function issueCard(issue: Issue, large = false) {
     const c = categories.find((c) => c.id === issue.categoryId);
@@ -408,7 +422,7 @@ export default function App() {
       <a className="skip-link" href="#main">
         Skip to main content
       </a>
-      <div className="mobile-topbar" inert={isMobile && menuOpen}>
+      <header className="mobile-topbar" inert={isMobile && menuOpen}>
         <a href="#" className="brand mobile-brand" aria-label="CivicWatch home" onClick={(event) => { event.preventDefault(); setTab("overview"); closeMenu(); }}>
           <span className="brand-mark"><CivicWatchLogo className="civicwatch-logo-symbol" /></span>
           <span>Civic<span className="brand-light">Watch</span></span>
@@ -421,7 +435,7 @@ export default function App() {
             <Menu size={22} />
           </button>
         </div>
-      </div>
+      </header>
       {isMobile && menuOpen && <div className="mobile-nav-backdrop" aria-hidden="true" onClick={closeMenu} />}
       <header ref={drawerRef} id="civicwatch-navigation" className={`site-header${menuOpen ? " mobile-drawer-open" : ""}`}
         role={isMobile ? "dialog" : undefined} aria-modal={isMobile && menuOpen ? true : undefined}
@@ -463,7 +477,7 @@ export default function App() {
           </button>
           <button
             className={tab === "explore" ? "active" : ""} aria-current={tab === "explore" ? "page" : undefined}
-            onClick={() => { setTab("explore"); closeMenu(); }}
+            onClick={() => { setStatus("all"); setTab("explore"); closeMenu(); }}
           >
             <Compass size={16} />
             {copy.nav.explore}
@@ -560,13 +574,14 @@ export default function App() {
             categories={categories}
             issues={data?.issues ?? []}
             onSelectCluster={(cluster) => setSelection({ cluster })}
-            onOpenMap={() => { setSelection(null); setTab("explore"); }}
+            onOpenMap={() => { setSelection(null); setStatus("all"); setTab("explore"); }}
           />
         ) : tab === "snapshots" ? (
           <LocalSnapshots cities={cities} watchlist={watchlist} setWatchlist={setWatchlist} stats={overviewStats} issues={data?.issues ?? []} categories={categories}
             loading={loading} error={error} onReload={() => void load()}
             onExplore={exploreWatchCity} onReport={(city) => startReport(city.center)} onSelectCluster={(cluster) => setSelection({ cluster })} />
-        ) : <section className="workspace">
+        ) : <section className="workspace" aria-label="Report workspace">
+          <h2 className="sr-only">{tab === "explore" ? "Explore reports" : tab === "reports" ? "Watched town reports" : "My reports"}</h2>
           {tab === "reports" && (
             <section className="watch-reports-summary compact" aria-labelledby="watch-reports-heading">
               <div className="watch-reports-overview">
@@ -658,7 +673,7 @@ export default function App() {
                   <X size={12} />
                 </button>
               ))}
-              {status !== "all" && (tab !== "reports" || reportSection === "active") && (
+              {status !== "all" && tab !== "explore" && (tab !== "reports" || reportSection === "active") && (
                 <button onClick={() => setStatus("all")}>
                   {statusLabels[status]}
                   <X size={12} />
@@ -856,7 +871,7 @@ export default function App() {
           wide
         >
           <div className="form-body">
-            {!(tab === "reports" && reportSection === "inactive") && <label>
+            {tab !== "explore" && !(tab === "reports" && reportSection === "inactive") && <label>
               Report status
               <select
                 value={status}
@@ -967,6 +982,7 @@ export default function App() {
             history.replaceState(null, "", location.pathname);
           }}
           onRefresh={refresh}
+          onCommentCreated={(comment: Comment) => setData((current) => current ? { ...current, comments: [...current.comments.filter((entry) => entry.id !== comment.id), comment] } : current)}
           onResolved={async () => {setSelection(null); history.replaceState(null, "", location.pathname); await refresh(); if (tab === "reports") changeReportSection("inactive"); notify("Report marked resolved. It is no longer pinned on the map.");}}
           onDeleted={async () => {
             setSelection(null);

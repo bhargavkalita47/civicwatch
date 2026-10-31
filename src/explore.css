@@ -1,7 +1,7 @@
 /* CivicWatch v2.5.7: one Explore search, category-group quick filters. */
 .explore-toolbar {
   position: relative;
-  z-index: 600;
+  z-index: 2; /* Never obscure the sticky mobile navigation. */
   padding-top: 18px;
   gap: 10px;
 }
@@ -10,7 +10,7 @@
   flex: 0 1 360px;
   width: min(360px, 100%);
   min-width: min(280px, 100%);
-  z-index: 1;
+  z-index: auto;
 }
 .explore-search-form {
   display: flex;
@@ -87,4 +87,10 @@
   .explore-toolbar .category-chips { order: 1; flex: 1 1 auto; width: calc(100% - 85px); }
   .explore-toolbar .filter-button { order: 2; }
   .explore-toolbar .category-chips button { font-size: 11px; }
+}
+
+@media (max-width: 790px) {
+  /* Scrolling content, including dropdown suggestions, belongs beneath the
+     64px sticky navigation; do not promote the toolbar above it. */
+  .explore-toolbar { z-index: 2; }
 }
