@@ -45,6 +45,7 @@ export function ThreadPanel({
   categories,
   onClose,
   onRefresh,
+  onCommentCreated,
   onDeleted,
   onResolved,
   onAdd,
@@ -57,6 +58,7 @@ export function ThreadPanel({
   categories: Category[];
   onClose: () => void;
   onRefresh: () => Promise<void>;
+  onCommentCreated: (comment: Comment) => void;
   onDeleted: () => Promise<void>;
   onResolved: () => Promise<void>;
   onAdd: (point: Issue["location"]) => void;
@@ -110,17 +112,23 @@ export function ThreadPanel({
     setBusy(true);
     setError("");
     try {
-      await civicService.createComment({
+      const comment = await civicService.createComment({
         issueId: issue.id,
         parentId: reply?.id,
         body,
         attachments: photos,
       });
-      await onRefresh();
+      onCommentCreated(comment);
       setBody("");
       setPhotos([]);
       setReply(null);
       notify(config.serviceMode === "mock" ? "Update saved locally. Not visible to other residents." : "Update posted.");
+      try {
+        await onRefresh();
+      } catch {
+        // Comment already saved and displayed. Do not prompt a duplicate POST.
+        notify("Comment saved. Other updates could not be loaded; try refreshing later.");
+      }
     } catch (e) {
       setError((e as Error).message);
     } finally {

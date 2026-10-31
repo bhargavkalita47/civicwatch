@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { categories } from "../data/categories";
 import { markerColor } from "./logic";
-import { categoryMarkerColor, markerPalette, markerRgb } from "./markerPalette";
+import { categoryMarkerColor, markerIconColor, markerPalette, markerRgb } from "./markerPalette";
 
 const luminance = (hex: string) => {
   const components = [1, 3, 5].map((start) => parseInt(hex.slice(start, start + 2), 16) / 255);
@@ -20,7 +20,17 @@ describe("CivicWatch marker palette", () => {
     for (const category of categories) {
       const fill = categoryMarkerColor(category);
       expect(fill).toMatch(/^#[a-f0-9]{6}$/i);
-      expect(1.05 / (luminance(fill) + 0.05)).toBeGreaterThan(3);
+      const ink = markerIconColor(fill);
+      const iconLum = luminance(ink);
+      const contrast = (Math.max(iconLum, luminance(fill)) + 0.05) /
+        (Math.min(iconLum, luminance(fill)) + 0.05);
+      expect(contrast).toBeGreaterThanOrEqual(3);
+      for (const confirmations of [1, 5, 20, 100]) {
+        const color = markerColor(fill, confirmations);
+        const inner = luminance(markerIconColor(color));
+        const outer = luminance(color);
+        expect((Math.max(inner, outer) + .05) / (Math.min(inner, outer) + .05)).toBeGreaterThanOrEqual(3);
+      }
     }
   });
 

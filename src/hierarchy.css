@@ -970,3 +970,6 @@ body { background: var(--cw-atmosphere-page); }
   border-color: #fffafd;
   box-shadow: 0 0 0 7px rgba(155, 129, 221, .24);
 }
+
+/* Accessibility: use dynamic ink matched to the actual (density-darkened) pin fill. */
+.map-shell .pin-body { color: var(--pin-ink, #211a30); }

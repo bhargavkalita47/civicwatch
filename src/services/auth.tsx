@@ -7,6 +7,7 @@ import {
 } from "react";
 import type { Session, SignInInput } from "../domain/types";
 import { civicService } from "./index";
+import { config } from "../config";
 interface AuthContextValue {
   session: Session | null;
   loading: boolean;
@@ -36,6 +37,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       active = false;
     };
   }, []);
+  // Reconcile session changes across tabs. Storage covers local preview mode;
+  // BroadcastChannel also covers cookie-based API sessions later on.
+  useEffect(() => {
+    let alive = true;
+    let latest = 0;
+    const reconcile = async () => {
+      const request = ++latest;
+      try {
+        const next = await civicService.getSession();
+        if (alive && request === latest) {
+          setSession(next);
+          setError("");
+        }
+      } catch (cause) {
+        if (alive && request === latest) {
+          setSession(null);
+          setError((cause as Error).message);
+        }
+      }
+    };
+    const onStorage = (event: StorageEvent) => {
+      if (event.key === config.sessionKey || event.key === null) void reconcile();
+    };
+    const channel = typeof BroadcastChannel === "undefined"
+      ? null : new BroadcastChannel("civicwatch-auth-v1");
+    if (channel) channel.onmessage = () => void reconcile();
+    window.addEventListener("storage", onStorage);
+    return () => {
+      alive = false;
+      window.removeEventListener("storage", onStorage);
+      channel?.close();
+    };
+  }, []);
+  const broadcastAuthChange = () => {
+    if (typeof BroadcastChannel === "undefined") return;
+    const channel = new BroadcastChannel("civicwatch-auth-v1");
+    channel.postMessage("session-changed");
+    channel.close();
+  };
   useEffect(() => {
     if (!session) return;
     const left = Date.parse(session.expiresAt) - Date.now();
@@ -58,10 +98,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         signIn: async (input) => {
           setSession(await civicService.signIn(input));
           setError("");
+          broadcastAuthChange();
         },
         signOut: async () => {
           await civicService.signOut();
           setSession(null);
+          broadcastAuthChange();
         },
       }}
     >
