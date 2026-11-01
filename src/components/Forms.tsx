@@ -113,11 +113,12 @@ export function ReportModal({
   const [step, setStep] = useState(1),
     [point, setPoint] = useState<Coordinate>(initial),
     [picked, setPicked] = useState(false),
-    [address, setAddress] = useState(""),
+    [city, setCity] = useState(""),
     [locality, setLocality] = useState(""),
     [region, setRegion] = useState(""),
     [country, setCountry] = useState(""),
     [locating, setLocating] = useState(false),
+    [lookupNotice, setLookupNotice] = useState(""),
     [category, setCategory] = useState(""),
     [title, setTitle] = useState(""),
     [description, setDescription] = useState(""),
@@ -128,27 +129,36 @@ export function ReportModal({
     [separate, setSeparate] = useState(false),
     [saved, setSaved] = useState(false);
   const latestLookup = useRef(0);
+  const editedLocation = useRef({ city: false, locality: false });
   const createdIssue = useRef<Issue | null>(null);
+  const address = [locality.trim(), city.trim()].filter(Boolean).join(", ");
   function populateArea(place: PlaceResult | null) {
-    if (place?.area) {
-      setLocality(place.area.name);
-      setRegion(place.area.region);
-      setCountry(place.area.country);
-    }
+    if (!editedLocation.current.city) setCity(place?.city || place?.area?.name || "");
+    if (!editedLocation.current.locality) setLocality(place?.locality || "");
+    setRegion(place?.region || place?.area?.region || "");
+    setCountry(place?.country || place?.area?.country || "");
+    setLookupNotice(place?.city || place?.area?.name
+      ? "Check the city and locality, and edit them if needed."
+      : "City could not be filled automatically. Enter it below; locality is optional.");
   }
   async function choosePoint(next: Coordinate, place?: PlaceResult) {
     setPoint(next);
     setPicked(true);
     setError("");
     setLocating(false);
+    setLookupNotice("");
+    editedLocation.current = { city: false, locality: false };
+    setCity(""); setLocality(""); setRegion(""); setCountry("");
     const ticket = ++latestLookup.current;
     if (place) { populateArea(place); return; }
-    setLocality(""); setRegion(""); setCountry("");
     setLocating(true);
     try {
       const match = await geoService.reverse(next);
       if (ticket === latestLookup.current) populateArea(match);
-    } catch { /* Manual locality entry remains available when lookup fails. */ }
+    } catch {
+      if (ticket === latestLookup.current)
+        setLookupNotice("Place lookup is unavailable. Enter the city below; locality is optional.");
+    }
     finally { if (ticket === latestLookup.current) setLocating(false); }
   }
   const nearby = issues.filter(
@@ -164,8 +174,8 @@ export function ReportModal({
         setError("Click the map to confirm the exact location.");
         return;
       }
-      if (!locality.trim() || !region.trim() || !country.trim()) {
-        setError("Enter the town or locality, region and country. You can report anywhere.");
+      if (!city.trim()) {
+        setError("Enter the city. Locality is optional.");
         return;
       }
       setError("");
@@ -177,12 +187,12 @@ export function ReportModal({
     setError("");
     try {
       const issue = await civicService.createIssue({
-        area: reportingArea(locality, region, country, point),
+        area: reportingArea(city, region || "Unspecified region", country || "Unspecified country", point),
         categoryId: category,
         title,
         description,
         location: point,
-        address,
+        address: address.length >= 3 ? address : `${address} · pinned location`,
         attachments: photos,
       });
       createdIssue.current = issue; // A refresh failure must never repeat this POST.
@@ -233,29 +243,15 @@ export function ReportModal({
                 ? `${point.lat.toFixed(5)}, ${point.lng.toFixed(5)}`
                 : copy.reporting.noLocation}
             </div>
-            <p className="field-help">{locating ? "Finding the locality…" : !picked ? copy.reporting.mapHint : "Check the place details, and edit them if needed."}</p>
+            <p className="field-help" role="status">{locating ? "Filling city and locality from the selected location…" : !picked ? copy.reporting.mapHint : lookupNotice}</p>
             <div className="geo-field-grid">
-              <label>Town, village or locality
-                <input required maxLength={100} value={locality} onChange={(e) => setLocality(e.target.value)} placeholder="e.g. Guwahati or your village" />
+              <label>City
+                <input required maxLength={100} value={city} onChange={(e) => { editedLocation.current.city = true; setCity(e.target.value); }} placeholder="e.g. Guwahati" autoComplete="address-level2" />
               </label>
-              <label>State / region
-                <input required maxLength={100} value={region} onChange={(e) => setRegion(e.target.value)} placeholder="e.g. Assam" />
-              </label>
-              <label>Country
-                <input required maxLength={100} value={country} onChange={(e) => setCountry(e.target.value)} placeholder="e.g. India" />
+              <label>Locality — optional
+                <input maxLength={100} value={locality} onChange={(e) => { editedLocation.current.locality = true; setLocality(e.target.value); }} placeholder="e.g. Ulubari or GS Road" />
               </label>
             </div>
-            <label>
-              Street or nearby landmark
-              <input
-                required
-                minLength={3}
-                maxLength={240}
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-                placeholder="e.g. GS Road, beside the bus stop"
-              />
-            </label>
           </>
         ) : (
           <>
@@ -347,7 +343,7 @@ export function ReportModal({
               <span>
                 {address}
                 <small>
-                  {locality}, {region}, {country} · {point.lat.toFixed(5)}, {point.lng.toFixed(5)}
+                  {point.lat.toFixed(5)}, {point.lng.toFixed(5)}
                 </small>
               </span>
               <button

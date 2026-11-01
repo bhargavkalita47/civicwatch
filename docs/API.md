@@ -22,7 +22,7 @@ Base URL: `/api/v1` (same-origin Cloudflare Worker, not a Pages Function). JSON 
 ## Input rules
 
 - Title: 8–120 characters after trimming. Description: 20–3,000 characters. Address/landmark: 3–240 characters. Trim on the server before validating and saving.
-- Category: a known catalogue ID. `CreateIssueInput.area` carries locality/region/country metadata; server derives/upserts a stable reporting-area ID transactionally, then saves exact coordinates. Never treat locality labels or client-supplied coordinates as an authorization boundary. Verify location metadata before making official jurisdiction claims.
+- Category: a known catalogue ID. The report form asks for City (required) and Locality (optional). GPS/map selection and place search fill these fields from available place metadata; users can correct them manually. `CreateIssueInput.area` carries city/region/country metadata; region and country are not user-facing fields. If lookup is unavailable, the client marks missing metadata as `Unspecified region` / `Unspecified country` rather than blocking a city-only report. `address` combines optional locality with city, retaining the existing storage contract. The server derives/upserts a stable reporting-area ID transactionally, then saves exact coordinates. Never treat locality labels or client-supplied coordinates as an authorization boundary. Verify location metadata before making official jurisdiction claims.
 - Latitude: finite, -90 to 90. Longitude: finite, -180 to 180.
 - Comment: 2–2,000 characters, or an image attachment with an optional shorter body.
 - Reply parent: an existing comment on the same issue. A production moderation/deletion strategy must retain parent relationships or replace removed posts with a tombstone.
