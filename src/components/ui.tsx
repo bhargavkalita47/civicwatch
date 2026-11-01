@@ -10,6 +10,7 @@ import {
   Accessibility,
   X,
   ImagePlus,
+  Camera,
   LoaderCircle,
   Check,
 } from "lucide-react";
@@ -19,6 +20,7 @@ import { categoryMarkerColor } from "../domain/markerPalette";
 import { civicService } from "../services";
 import { copy } from "../copy";
 import { config } from "../config";
+import { CameraCapture } from "./CameraCapture";
 export function CategoryIcon({
   category,
   size = 18,
@@ -145,21 +147,22 @@ export function PhotoPicker({
   onBusy?: (busy: boolean) => void;
 }) {
   const [busy, setBusy] = useState(false),
-    [error, setError] = useState("");
-  async function upload(files: FileList | null) {
-    if (!files?.length || busy) return;
+    [error, setError] = useState(""),
+    [camera, setCamera] = useState(false);
+  async function upload(files: FileList | File[] | null): Promise<boolean> {
+    if (!files?.length || busy) return false;
     if (files.length + value.length > config.maxAttachments) {
       setError(`You can attach up to ${config.maxAttachments} photos. Remove a photo or select fewer files.`);
-      return;
+      return false;
     }
     const selected = Array.from(files);
     if (selected.some((file) => file.size > config.maxPhotoBytes)) {
       setError(copy.errors.uploadLarge);
-      return;
+      return false;
     }
     if (selected.some((file) => !["image/jpeg", "image/png", "image/webp"].includes(file.type))) {
       setError(copy.errors.uploadType);
-      return;
+      return false;
     }
     setBusy(true);
     onBusy?.(true);
@@ -169,8 +172,10 @@ export function PhotoPicker({
       for (const file of Array.from(files))
         next.push(await civicService.uploadPhoto(file));
       onChange([...value, ...next]);
+      return true;
     } catch (e) {
       setError((e as Error).message);
+      return false;
     } finally {
       setBusy(false);
       onBusy?.(false);
@@ -194,24 +199,30 @@ export function PhotoPicker({
         ))}
       </div>
       {value.length < config.maxAttachments && (
-        <label className={`upload-button ${busy ? "disabled" : ""}`}>
+        <div className="photo-source-actions">
+        <label className={`upload-button ${busy || camera ? "disabled" : ""}`}>
           {busy ? <Spinner /> : <ImagePlus size={18} />}
           <span>
-            {busy ? "Preparing photo…" : "Add photos"}
+            {busy ? "Preparing photo…" : "Upload photos"}
             <small>{copy.reporting.photosRestrictions}</small>
           </span>
           <input
             type="file"
             accept="image/jpeg,image/png,image/webp"
             multiple
-            disabled={busy}
+            disabled={busy || camera}
             onChange={(e) => {
               void upload(e.target.files);
               e.target.value = "";
             }}
           />
         </label>
+        <button type="button" className="button secondary take-photo-button" disabled={busy || camera}
+          onClick={() => { setError(""); setCamera(true); }}><Camera size={18} />Take photo</button>
+        </div>
       )}
+      <p className="photo-processing-note">Photos are automatically optimized while keeping fine detail.</p>
+      {camera && <CameraCapture onCapture={(photo) => upload([photo])} onClose={() => setCamera(false)} onBusy={onBusy} />}
       <ErrorNotice message={error} />
     </div>
   );

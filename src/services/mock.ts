@@ -1,5 +1,5 @@
 import { config } from "../config";
-import { copy } from "../copy";
+import { preparePhoto, photoDataUrl, photoTypes } from "./photos";
 import { categories } from "../data/categories";
 import { cities } from "../data/cities";
 import { createSeed } from "../data/seed";
@@ -87,53 +87,16 @@ function checkAttachments(attachments: Attachment[]) {
     attachments.length > config.maxAttachments ||
     attachments.some(
       (a) =>
-        !a.url.startsWith("data:image/jpeg;") || a.size > config.maxPhotoBytes,
+        !photoTypes.includes(a.mimeType) || !a.url.startsWith(`data:${a.mimeType};`) || a.size > config.maxPhotoBytes,
     )
   )
     throw new ServiceError("Choose up to 3 supported photos.", "VALIDATION");
 }
 async function compressPhoto(file: File): Promise<Attachment> {
-  if (
-    !["image/jpeg", "image/png", "image/webp"].includes(file.type) ||
-    file.size > config.maxPhotoBytes
-  )
-    throw new ServiceError(
-      file.size > config.maxPhotoBytes ? copy.errors.uploadLarge : copy.errors.uploadType,
-      "VALIDATION",
-    );
-  let bitmap: ImageBitmap;
-  try {
-    bitmap = await createImageBitmap(file);
-  } catch {
-    throw new ServiceError(
-      "This photo could not be opened. Try a different image.",
-      "VALIDATION",
-    );
-  }
-  const scale = Math.min(1, 1400 / Math.max(bitmap.width, bitmap.height));
-  const canvas = document.createElement("canvas");
-  canvas.width = Math.max(1, Math.round(bitmap.width * scale));
-  canvas.height = Math.max(1, Math.round(bitmap.height * scale));
-  const ctx = canvas.getContext("2d");
-  if (!ctx) {
-    bitmap.close();
-    throw new ServiceError(
-      "Image processing is unavailable in this browser.",
-      "VALIDATION",
-    );
-  }
-  ctx.fillStyle = "#fff";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-  bitmap.close();
-  const url = canvas.toDataURL("image/jpeg", 0.76);
+  const prepared = await preparePhoto(file);
   return {
-    id: id(),
-    url,
-    name: file.name,
-    mimeType: "image/jpeg",
-    size: Math.round(((url.length - url.indexOf(",") - 1) * 3) / 4),
-    createdAt: now(),
+    id: id(), url: await photoDataUrl(prepared), name: prepared.name,
+    mimeType: prepared.type, size: prepared.size, createdAt: now(),
   };
 }
 export const mockService: CivicService = {

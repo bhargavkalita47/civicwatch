@@ -1,4 +1,5 @@
 import { config } from "../config";
+import { preparePhoto } from "./photos";
 import {
   ServiceError,
   type Attachment,
@@ -93,9 +94,10 @@ export const apiService: CivicService = {
       method: "POST",
       body: JSON.stringify(input),
     }),
-  uploadPhoto: (file) => {
+  uploadPhoto: async (file) => {
+    const prepared = await preparePhoto(file);
     const body = new FormData();
-    body.append("file", file);
+    body.append("file", prepared);
     return request<Attachment>("/attachments", { method: "POST", body });
   },
   deleteIssue: (id) => request<void>(`/issues/${encodeURIComponent(id)}`, { method: "DELETE" }),
