@@ -106,10 +106,10 @@ describe("Geography and counts", () => {
       })[0].id,
     ).toBe("seed-issue-0");
   });
-  it("defines thirty unique category colours and IDs", () => {
-    expect(categories).toHaveLength(30);
-    expect(new Set(categories.map((c) => c.color)).size).toBe(30);
-    expect(new Set(categories.map((c) => c.id)).size).toBe(30);
+  it("defines seventy unique category colours and IDs", () => {
+    expect(categories).toHaveLength(70);
+    expect(new Set(categories.map((c) => c.color)).size).toBe(70);
+    expect(new Set(categories.map((c) => c.id)).size).toBe(70);
   });
 });
 describe("Validation and mock service integration", () => {

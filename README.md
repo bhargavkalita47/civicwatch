@@ -193,7 +193,7 @@ mock identities or roles.
 ## Currently usable features
 
 - Pan/zoom/recenter Leaflet map using keyless OpenStreetMap standard tiles and visible attribution.
-- 30 categories for roads, drainage, lighting, waste, infrastructure, safety,
+- 70 categories for roads, drainage, lighting, waste, infrastructure, safety,
   parks, accessibility, utilities and more, with individual marker colours.
 - Darker pins for more unique confirmations, count badge for multiple issues at
   a place; click to explore issue threads and participant counts.
@@ -311,4 +311,4 @@ The **Overview** map remains the primary view, and its statistics are platform-w
 
 ### CivicWatch map marker colours (v2.5.2)
 
-Map markers use `src/domain/markerPalette.ts` as a display-only palette of thirty distinct, accessible-hued category colours. The same function is applied to the map legend, filter chips, issue badges and detail-panel category accents. Adding an API-defined category automatically falls back to its own valid hexadecimal colour. Confirmation counts still darken the marker without changing its underlying issue type. To adjust category colours, edit only the central palette; no database migration or map-tile provider change is needed.
+Map markers use `src/domain/markerPalette.ts` as a display-only palette of seventy distinct, accessible-hued category colours. The same function is applied to the map legend, filter chips, issue badges and detail-panel category accents. Adding an API-defined category automatically falls back to its own valid hexadecimal colour. Confirmation counts still darken the marker without changing its underlying issue type. To adjust category colours, edit only the central palette; no database migration or map-tile provider change is needed.

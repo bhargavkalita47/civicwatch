@@ -5,6 +5,7 @@ import { distance } from "../domain/logic";
 import { reportingArea } from "../domain/geography";
 import { geoService, type PlaceResult } from "../services/geo";
 import { PlaceSearch } from "./PlaceSearch";
+import { CategorySelect } from "./CategorySelect";
 import { civicService } from "../services";
 import { useAuth } from "../services/auth";
 import { config } from "../config";
@@ -264,30 +265,15 @@ export function ReportModal({
                 {copy.reporting.detailHint}
               </p>
             </div>
-            <label>
-              {copy.reporting.categoryLabel}
-              <select
-                required
-                value={category}
-                onChange={(e) => {
-                  setCategory(e.target.value);
-                  setSeparate(false);
-                }}
-              >
-                <option value="">Choose an issue type</option>
-                {[...new Set(categories.map((c) => c.group))].map((group) => (
-                  <optgroup key={group} label={group}>
-                    {categories
-                      .filter((c) => c.group === group)
-                      .map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {c.label}
-                        </option>
-                      ))}
-                  </optgroup>
-                ))}
-              </select>
-            </label>
+            <CategorySelect
+              categories={categories}
+              value={category}
+              label={copy.reporting.categoryLabel}
+              onChange={(id) => {
+                setCategory(id);
+                setSeparate(false);
+              }}
+            />
             {category && (
               <p className="field-help">
                 {categories.find((c) => c.id === category)?.description}

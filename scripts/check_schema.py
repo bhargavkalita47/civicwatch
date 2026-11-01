@@ -3,7 +3,7 @@ root=pathlib.Path(__file__).resolve().parents[1]
 db=sqlite3.connect(':memory:')
 for path in sorted((root/'backend/migrations').glob('*.sql')):
  db.executescript(path.read_text(encoding='utf-8-sig'))
-assert db.execute('SELECT count(*) FROM categories').fetchone()[0]==30
+assert db.execute('SELECT count(*) FROM categories').fetchone()[0]==70
 db.execute("INSERT INTO users(id,auth_subject,display_name,email) VALUES ('u1','auth1','Resident One','one@example.com'),('u2','auth2','Resident Two','two@example.com')")
 # Dynamic city/town creation: new areas work without changing the migrations.
 db.execute("INSERT INTO cities(id,name,region,country,center_lat,center_lng,radius_km) VALUES ('area:peru:lima-province:lima','Lima','Lima Province','Peru',-12.0464,-77.0428,20)")
