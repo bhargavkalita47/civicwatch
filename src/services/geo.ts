@@ -7,6 +7,10 @@ export interface PlaceResult {
   label: string;
   point: Coordinate;
   area: City | null;
+  city?: string;
+  locality?: string;
+  region?: string;
+  country?: string;
 }
 interface PhotonFeature {
   geometry?: { coordinates?: number[] };
@@ -22,13 +26,16 @@ function parseFeature(feature: PhotonFeature): PlaceResult | null {
   const [lng, lat] = feature.geometry?.coordinates ?? [];
   if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) return null;
   const point = { lat, lng };
-  const name = text(p.name), city = text(p.city), district = text(p.district), county = text(p.county);
-  const locality = city || text(p.locality) || text(p.town) || text(p.village) || text(p.hamlet) || district || county || name;
+  const name = text(p.name), city = text(p.city);
+  const settlementName = text(p.osm_key) === "place" && ["city", "town", "village", "hamlet"].includes(text(p.osm_value)) ? name : "";
+  const cityName = city || text(p.town) || text(p.village) || text(p.hamlet) || settlementName;
   const region = text(p.state) || text(p.county);
   const country = text(p.country);
-  const area = locality && region && country ? reportingArea(locality, region, country, point) : null;
+  const area = cityName && region && country ? reportingArea(cityName, region, country, point) : null;
+  const locality = [p.suburb, p.neighbourhood, p.quarter, p.locality, p.district, p.street, p.name]
+    .map(text).find((value) => value && ![cityName, region, country].includes(value)) || "";
   const label = [...new Set([name, city && city !== name ? city : "", region, country].filter(Boolean))].join(", ") || `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
-  return { id: `${String(p.osm_type ?? "")}:${String(p.osm_id ?? "")}:${lat}:${lng}`, label, point, area };
+  return { id: `${String(p.osm_type ?? "")}:${String(p.osm_id ?? "")}:${lat}:${lng}`, label, point, area, city: cityName, locality, region, country };
 }
 
 /** Photon is a keyless, replaceable preview provider. One explicit user action = one query.
