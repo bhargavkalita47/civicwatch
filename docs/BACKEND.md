@@ -84,7 +84,7 @@ This distinction prevents a UI demo from pretending to be a live public system.
    D1 unique constraints and relationships remain a second defense.
 
 7. **Handle images safely.** Use R2 with random non-guessable object keys;
-   verify actual bytes and MIME type, re-encode/strip metadata, max 4 MB and
+   verify actual bytes and MIME type, re-encode/strip metadata, max 15 MB per image and
    three photos per post, enforce upload ownership and association, and clean
    up abandoned objects. Do not accept arbitrary browser-provided photo URLs
    as attached or trusted assets.

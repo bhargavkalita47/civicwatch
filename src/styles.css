@@ -1311,6 +1311,12 @@ textarea {
 .optional {
   font-weight: 400;
 }
+.report-photos > label {
+  line-height: 1.5;
+}
+.report-photos > .field-help {
+  margin: 6px 0 0;
+}
 .upload-button {
   border: 1px dashed #ccd9c1;
   background: #fafcf7;
