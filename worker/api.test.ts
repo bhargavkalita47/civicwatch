@@ -21,7 +21,7 @@ describe("Cloudflare Workers entry and backend boundary", () => {
   it("exposes the authoritative catalogue", async () => {
     const response = await call("/api/v1/categories");
     expect(response.status).toBe(200);
-    expect(await response.json()).toHaveLength(30);
+    expect(await response.json()).toHaveLength(70);
     const locations = await call("/api/v1/cities");
     expect(locations.status).toBe(200);
     expect(await locations.json()).toEqual([]);

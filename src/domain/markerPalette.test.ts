@@ -11,7 +11,7 @@ const luminance = (hex: string) => {
 
 describe("CivicWatch marker palette", () => {
   it("covers the entire issue catalogue with unique colours", () => {
-    expect(categories).toHaveLength(30);
+    expect(categories).toHaveLength(70);
     expect(Object.keys(markerPalette)).toHaveLength(categories.length);
     expect(new Set(categories.map(categoryMarkerColor)).size).toBe(categories.length);
   });
