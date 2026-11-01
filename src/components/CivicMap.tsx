@@ -55,7 +55,8 @@ export function CivicMap({
   callbacks.current = { onSelect, onPick, onCenter, onBounds, onError };
   const [legend, setLegend] = useState(false),
     [tileError, setTileError] = useState(false),
-    [locating, setLocating] = useState(false);
+    [locating, setLocating] = useState(false),
+    [locatedPoint, setLocatedPoint] = useState<Coordinate | null>(null);
   useEffect(() => {
     if (!container.current) return;
     const instance = L.map(container.current, {
@@ -140,8 +141,23 @@ export function CivicMap({
       }, { className: "civic-tooltip", direction: "top", offset: [0, -19], opacity: 1 });
       marker.on("click", () => callbacks.current.onSelect?.(cluster));
     }
-    if (pick)
-      L.marker([pick.lat, pick.lng], {
+    // Browsing maps need a position marker too, even without a report selection.
+    if (locatedPoint && !(compact && onPick))
+      L.marker([locatedPoint.lat, locatedPoint.lng], {
+        icon: L.divIcon({
+          className: "current-location-marker",
+          html: "<span></span>",
+          iconSize: [24, 24],
+          iconAnchor: [12, 12],
+        }),
+        title: "Your current location",
+        alt: "Your current location",
+        zIndexOffset: 1000,
+      }).addTo(group).bindTooltip("Your current location");
+    // Show the GPS selection immediately, before the parent finishes its lookup.
+    const selectedPoint = pick || (compact && onPick ? locatedPoint : null);
+    if (selectedPoint)
+      L.marker([selectedPoint.lat, selectedPoint.lng], {
         icon: L.divIcon({
           className: "chosen-marker",
           html: "<span></span>",
@@ -149,8 +165,11 @@ export function CivicMap({
           iconAnchor: [13, 13],
         }),
         keyboard: false,
+        title: "Selected report location",
+        alt: "Selected report location",
+        zIndexOffset: 1000,
       }).addTo(group);
-  }, [categories, clusters, pick]);
+  }, [categories, clusters, pick, locatedPoint, compact, onPick]);
   useEffect(() => {
     if (focus && map.current) {
       if (compact)
@@ -159,6 +178,7 @@ export function CivicMap({
     }
   }, [focus, compact]);
   async function locate() {
+    if (locating) return;
     if (!navigator.geolocation) {
       callbacks.current.onError?.(
         "Location is not supported by this browser. You can pan the map instead.",
@@ -166,23 +186,28 @@ export function CivicMap({
       return;
     }
     setLocating(true);
+    const instance = map.current;
     navigator.geolocation.getCurrentPosition(
       (position) => {
+        if (!instance || map.current !== instance) return;
         setLocating(false);
-        const point = {
+        const point = normalizedPoint({
           lat: position.coords.latitude,
           lng: position.coords.longitude,
-        };
-        map.current?.flyTo([point.lat, point.lng], 15);
+        });
+        setLocatedPoint(point);
+        if (compact) instance.setView([point.lat, point.lng], 15, { animate: false });
+        else instance.flyTo([point.lat, point.lng], 15);
         if (compact) callbacks.current.onPick?.(point);
       },
       () => {
+        if (!instance || map.current !== instance) return;
         setLocating(false);
         callbacks.current.onError?.(
           copy.errors.location,
         );
       },
-      { timeout: 10000, maximumAge: 60000 },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
     );
   }
   return (
@@ -211,7 +236,7 @@ export function CivicMap({
           <Minus size={19} />
         </button>
         <span />
-        <button type="button" onClick={() => void locate()} aria-label={copy.map.locate}>
+        <button type="button" onClick={() => void locate()} aria-label={copy.map.locate} disabled={locating} aria-busy={locating}>
           {locating ? (
             <span className="locating-dot" />
           ) : (
@@ -270,7 +295,7 @@ export function CivicMap({
           Map tiles unavailable. Check connection and retry.
         </button>
       )}
-      {compact && onPick && <span className="picker-hint">Click to place your pin</span>}
+      {compact && onPick && <span className="picker-hint">{pick || locatedPoint ? "Location selected · tap the map to adjust" : "Click to place your pin"}</span>}
     </div>
   );
 }
