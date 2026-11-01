@@ -345,7 +345,7 @@ export function ReportModal({
                 {description.length}/3,000
               </span>
             </label>
-            <div>
+            <div className="report-photos">
               <label>
                 {copy.reporting.photosLabel}
               </label>

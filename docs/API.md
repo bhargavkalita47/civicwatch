@@ -27,7 +27,7 @@ Base URL: `/api/v1` (same-origin Cloudflare Worker, not a Pages Function). JSON 
 - Comment: 2–2,000 characters, or an image attachment with an optional shorter body.
 - Reply parent: an existing comment on the same issue. A production moderation/deletion strategy must retain parent relationships or replace removed posts with a tombstone.
 - Confirmation: unique `(issue_id, user_id)` and idempotent. The author is already counted and cannot add a second voice. Return the existing report for a duplicate request.
-- Photos: no more than three per report or comment; at most 4 MB each; JPG, PNG or WebP only. Client-side checks are convenience checks. The server must independently inspect bytes, authorize ownership and enforce limits transactionally.
+- Photos: no more than three per report or comment; at most 15 MB (15 × 1024 × 1024 bytes) each; JPG, PNG or WebP only. Client-side checks are convenience checks. The server must independently inspect bytes, authorize ownership and enforce limits transactionally.
 - Initial status: always `reported`. Author identity, creation timestamp and organization assignment are server-controlled.
 - Resolve: the original reporter may mark their own report resolved. Other changes need server-verified jurisdiction-scoped moderator or administrator authority. A production system should also collect resolution evidence and support review/reopening.
 

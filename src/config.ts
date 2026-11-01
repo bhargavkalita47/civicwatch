@@ -22,6 +22,6 @@ export const config = {
   tileMaxZoom: Math.max(1, Math.min(19, number(env.VITE_TILE_MAX_ZOOM, 19))),
   storageKey: "civicwatch.dataset.v1",
   sessionKey: "civicwatch.session.v1",
-  maxPhotoBytes: 4 * 1024 * 1024,
+  maxPhotoBytes: 15 * 1024 * 1024,
   maxAttachments: 3,
 } as const;

@@ -68,7 +68,7 @@ export const copy = {
     descriptionLabel: "What did you notice?",
     descriptionPlaceholder: "Describe the problem, how long it’s been there, and who it affects.",
     photosLabel: "Photos — optional", photosHint: "A little evidence for the growing collection.",
-    photosRestrictions: "Up to 3 photos · JPG, PNG or WebP · 4 MB each",
+    photosRestrictions: "Up to 3 photos · JPG, PNG or WebP · 15 MB each",
     submit: "Publish report", saved: "Report saved locally. Not publicly visible.", published: "Report published.",
     completion: "Another problem with a paper trail.",
   },
@@ -96,7 +96,7 @@ export const copy = {
   },
   errors: {
     location: "We couldn’t find your location. Search for a place or select it on the map.",
-    uploadLarge: "That photo exceeds 4 MB. Choose a smaller image.",
+    uploadLarge: "Each photo must be 15 MB or smaller. Choose smaller images and try again.",
     uploadType: "This file type isn’t supported. Use JPG, PNG, or WebP.",
     save: "Your report couldn’t be saved. Try again.",
     map: "Unable to load reports. Try again.",

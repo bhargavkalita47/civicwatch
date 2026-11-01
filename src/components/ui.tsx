@@ -147,9 +147,9 @@ export function PhotoPicker({
   const [busy, setBusy] = useState(false),
     [error, setError] = useState("");
   async function upload(files: FileList | null) {
-    if (!files?.length) return;
+    if (!files?.length || busy) return;
     if (files.length + value.length > config.maxAttachments) {
-      setError("You can attach up to 3 photos.");
+      setError(`You can attach up to ${config.maxAttachments} photos. Remove a photo or select fewer files.`);
       return;
     }
     const selected = Array.from(files);
@@ -185,6 +185,7 @@ export function PhotoPicker({
             <button
               type="button"
               aria-label={`Remove ${photo.name}`}
+              disabled={busy}
               onClick={() => onChange(value.filter((p) => p.id !== photo.id))}
             >
               <X size={13} />
@@ -192,7 +193,7 @@ export function PhotoPicker({
           </div>
         ))}
       </div>
-      {value.length < 3 && (
+      {value.length < config.maxAttachments && (
         <label className={`upload-button ${busy ? "disabled" : ""}`}>
           {busy ? <Spinner /> : <ImagePlus size={18} />}
           <span>
