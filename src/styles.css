@@ -1367,6 +1367,16 @@ textarea {
   display: flex;
   gap: 8px;
 }
+.photo-source-actions { display: flex; flex-wrap: wrap; align-items: stretch; gap: 8px; }
+.photo-source-actions > .upload-button { flex: 1 1 220px; }
+.take-photo-button { flex: 0 0 auto; }
+.photo-processing-note { margin: 0; font-size: 12px; color: var(--cw-muted); }
+.camera-capture { padding: 14px; border: 1px solid var(--cw-border); border-radius: 8px; background: var(--cw-surface); color: var(--cw-ink); }
+.camera-heading, .camera-actions { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.camera-capture video { width: 100%; max-height: 350px; background: #111; border-radius: 6px; object-fit: contain; }
+.camera-capture video[hidden] { display: none; }
+.camera-help { font-size: 13px; line-height: 1.5; }
+.camera-actions { margin-top: 10px; justify-content: flex-start; }
 .photo-previews > div {
   position: relative;
   width: 75px;
