@@ -94,11 +94,61 @@ body { min-width: 0; }
   font-weight: 400; letter-spacing: 0; line-height: 1.65;
   max-width: 65ch;
 }
-#root .intro h1,
-#root .overview-stats-title h2 {
+
+#root .intro h1 {
   font-family: "Instrument Serif", Georgia, serif;
-  font-weight: 400; font-synthesis: none; letter-spacing: -.025em; line-height: 1.12;
+  font-weight: 400;
+  font-synthesis: none;
+  letter-spacing: -.025em;
+  line-height: 1.12;
 }
+
+#root .overview-stats-title h2 {
+  font-family: "Inter", system-ui, sans-serif;
+  font-weight: 700;
+  font-synthesis: none;
+  letter-spacing: -.035em;
+  line-height: 1.18;
+}
+
+/* Date and time in the navigation header */
+#root .brand .header-clock {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  min-width: 0;
+  font-family: "Inter", system-ui, sans-serif;
+  line-height: 1.2;
+}
+
+#root .brand .header-clock-date {
+  font-size: 10px;
+  font-weight: 650;
+  letter-spacing: .06em;
+  color: var(--cw-muted);
+  white-space: nowrap;
+}
+
+#root .brand .header-clock-time {
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: -.03em;
+  color: var(--cw-heading);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+@media (max-width: 790px) {
+  #root .brand .header-clock-date {
+    font-size: 9px;
+  }
+
+  #root .brand .header-clock-time {
+    font-size: 16px;
+  }
+}
+
 #root .intro h1 { font-size: var(--type-display); line-height: var(--leading-display); }
 #root .overview-stats-title h2,
 #root .snapshot-summary-heading h2 { font-size: var(--type-section); }
