@@ -11,6 +11,7 @@ import "./mobile-nav.css";
 import "./explore.css";
 import "./watchlist-refinement.css";
 import "./brand.css";
+import "./profile.css";
 class ErrorBoundary extends Component<
   { children: ReactNode },
   { failed: boolean }

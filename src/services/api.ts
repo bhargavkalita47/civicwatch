@@ -11,6 +11,7 @@ import {
   type Issue,
   type OverviewSnapshot,
   type Session,
+  type Profile,
 } from "../domain/types";
 // The browser receives only an HttpOnly, Secure server session cookie in live mode.
 // No mock identity, client-supplied user ID or role is trusted by this adapter.
@@ -77,6 +78,10 @@ export const apiService: CivicService = {
       throw e;
     }
   },
+  getProfile: () => request<Profile>("/profile"),
+  updateProfile: (changes) => request<Profile>("/profile", { method: "PATCH", body: JSON.stringify(changes) }),
+  prepareProfilePhoto: async () => { throw new ServiceError("Profile photos are available in local preview only for now.", "CONFIGURATION"); },
+  updateIssue: (id, input) => request<Issue>(`/issues/${encodeURIComponent(id)}`, { method: "PATCH", body: JSON.stringify(input) }),
   signIn: (input) =>
     request<Session>("/auth/sign-in", {
       method: "POST",

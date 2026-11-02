@@ -14,6 +14,7 @@ interface AuthContextValue {
   error: string;
   signIn: (input: SignInInput) => Promise<void>;
   signOut: () => Promise<void>;
+  refreshSession: () => Promise<void>;
 }
 const AuthContext = createContext<AuthContextValue | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -58,7 +59,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     };
     const onStorage = (event: StorageEvent) => {
-      if (event.key === config.sessionKey || event.key === null) void reconcile();
+      if (event.key === config.sessionKey || event.key === config.storageKey || event.key === null) void reconcile();
     };
     const channel = typeof BroadcastChannel === "undefined"
       ? null : new BroadcastChannel("civicwatch-auth-v1");
@@ -95,6 +96,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         session,
         loading,
         error,
+        refreshSession: async () => {
+          setSession(await civicService.getSession());
+          broadcastAuthChange();
+        },
         signIn: async (input) => {
           setSession(await civicService.signIn(input));
           setError("");

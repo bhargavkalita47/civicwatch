@@ -19,11 +19,11 @@ export const copy = {
     snapshots: { title: "Home is where the problems are.", subtitle: "Keep your towns and their unfinished business on a watchlist." },
     explore: { title: "Disappointment has coordinates.", subtitle: "Find reported issues nearby, compare notes, or pin another problem." },
     reports: { title: "New day. Same complaints.", subtitle: "Browse what your watched towns are still putting up with." },
-    mine: { title: "Your patience has a paper trail.", subtitle: "Everything you reported instead of accepting it as local character." },
+    mine: { title: "A face behind the complaints.", subtitle: "Make yourself known. Your neighbourhood already knows the problems." },
     admin: { title: "Someone has to run this thing.", subtitle: "Keep the complaint desk running." },
   },
   actions: { report: "Report an issue", clearFilters: "Clear filters", signIn: "Sign in", search: "Search", about: "About CivicWatch" },
-  nav: { overview: "Overview", snapshots: "Town watchlist", explore: "Explore map", reports: "Reports", mine: "My reports", help: "How it works" },
+  nav: { overview: "Overview", snapshots: "Town watchlist", explore: "Explore map", reports: "Reports", mine: "Profile", help: "How it works" },
   overview: {
     mapHeading: "A scenic view of neglect.", mapAction: "Explore map",
     mapInstruction: "Open a pin to view the report and discussion.",

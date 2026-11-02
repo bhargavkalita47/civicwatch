@@ -29,8 +29,23 @@ export interface User {
   id: ID;
   displayName: string;
   email: string;
+  avatarUrl?: string;
   role: Role;
   createdAt: ISODate;
+}
+export interface Profile {
+  userId: ID;
+  displayName: string;
+  avatarUrl: string;
+  city: string;
+  bio: string;
+  website: string;
+}
+export type ProfileChanges = Partial<Omit<Profile, "userId">>;
+export interface EditIssueInput {
+  title: string;
+  description: string;
+  address: string;
 }
 export interface PublicUser {
   id: ID;
@@ -106,6 +121,7 @@ export interface Dataset {
   comments: Comment[];
   /** Reporting areas are created by reports, not limited to a static city list. */
   areas?: City[];
+  profiles?: Profile[];
 }
 export interface CreateIssueInput {
   area: City;
@@ -145,6 +161,10 @@ export interface CivicService {
   getOverviewStats(): Promise<OverviewSnapshot>;
   getDataset(): Promise<Dataset>;
   getSession(): Promise<Session | null>;
+  getProfile(): Promise<Profile>;
+  updateProfile(changes: ProfileChanges): Promise<Profile>;
+  prepareProfilePhoto(file: File): Promise<string>;
+  updateIssue(id: ID, input: EditIssueInput): Promise<Issue>;
   signIn(input: SignInInput): Promise<Session>;
   signOut(): Promise<void>;
   createIssue(input: CreateIssueInput): Promise<Issue>;
