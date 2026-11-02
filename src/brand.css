@@ -247,3 +247,12 @@ body { min-width: 0; }
   .map-report-focus > div { flex-basis: calc(100% - 36px); }
   .map-report-focus > .button { flex: 1; justify-content: center; }
 }
+
+
+/* Fix top padding in My Reports only */
+@media (min-width: 791px) {
+  #root .workspace > h2.sr-only + .filter-bar:not(.explore-toolbar) {
+    padding-top: 20px;
+  }
+}
+
