@@ -121,17 +121,19 @@ input:focus-visible,textarea:focus-visible,select:focus-visible{outline-color:va
 .main-nav{height:auto; flex:1; display:flex; flex-direction:column;align-items:stretch; gap:5px;padding:0;margin:0;border:0;background:transparent;border-radius:0;overflow-y:auto;scrollbar-width:thin;}
 .main-nav button{flex:0 0 auto;width:100%;min-height:45px;height:auto;padding:11px 13px;border-radius:12px;font-size:12px;font-weight:650;color:var(--cw-muted);justify-content:flex-start;gap:13px;white-space:nowrap;}
 
+
 .main-nav button.active,
 .main-nav button.active:hover {
   background: linear-gradient(
     110deg,
-    color-mix(in srgb, var(--cw-accent) 25%, var(--cw-panel)),
-    color-mix(in srgb, var(--cw-lavender) 25%, var(--cw-panel)) 65%,
-    color-mix(in srgb, var(--cw-teal) 12%, var(--cw-panel))
+    color-mix(in srgb, var(--cw-accent) 55%, var(--cw-panel)) 0%,
+    color-mix(in srgb, var(--cw-lavender) 50%, var(--cw-panel)) 55%,
+    color-mix(in srgb, var(--cw-teal) 38%, var(--cw-panel)) 100%
   );
   color: var(--cw-nav-selected-ink);
   box-shadow: none;
 }
+
 
 .main-nav button.active svg{color:var(--cw-accent);}
 .main-nav button:hover{background:var(--cw-nav-hover);color:var(--cw-heading);}
