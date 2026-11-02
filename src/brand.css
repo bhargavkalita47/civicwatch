@@ -162,6 +162,30 @@ body { min-width: 0; }
     backdrop-filter: blur(26px) saturate(150%);
     box-shadow: inset 0 1px 0 var(--cw-glass-edge);
   }
+   /* Report form: stronger frosted header only */
+dialog.modal[data-step-scroll] > .modal-header {
+  background:
+    linear-gradient(
+      120deg,
+      color-mix(in srgb, var(--cw-lavender) 12%, transparent),
+      transparent 75%
+    ),
+    var(--cw-glass);
+  box-shadow:
+    inset 0 1px 0 var(--cw-glass-edge),
+    0 8px 22px rgba(20, 15, 35, .08);
+}
+
+/* Mobile hamburger: improve glass readability */
+@media (max-width: 790px) {
+  .site-header {
+    background: color-mix(
+      in srgb,
+      var(--cw-panel) 88%,
+      transparent
+    );
+  }
+}
 }
 /* Readability fallback when transparency is reduced by the device. */
 @media (prefers-reduced-transparency: reduce) {
