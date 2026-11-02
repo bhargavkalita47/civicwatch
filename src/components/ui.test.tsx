@@ -132,4 +132,81 @@ describe("shared report and discussion photo picker", () => {
     expect(container.querySelectorAll(".photo-previews img")).toHaveLength(2);
     expect(container.querySelector('[role="alert"]')).toBeNull();
   });
+
+  it("offers a native rear-camera fallback and cancelling it keeps the report", async () => {
+    await act(async () => { container.querySelector<HTMLButtonElement>(".take-photo-button")!.click(); });
+    const capture = container.querySelector<HTMLInputElement>('input[capture="environment"]')!;
+    expect(capture).not.toBeNull();
+    await act(async () => { capture.dispatchEvent(new Event("cancel", { bubbles: true })); });
+    expect(closed).not.toHaveBeenCalled();
+    expect(container.querySelector<HTMLInputElement>('[name="title"]')?.value).toBe("Keep my report");
+    Object.defineProperty(capture, "files", { configurable: true, value: [file("live.jpg")] });
+    await act(async () => { capture.dispatchEvent(new Event("change", { bubbles: true })); });
+    expect(uploaded).toHaveBeenCalledWith(expect.objectContaining({ name: "live.jpg" }));
+    expect(container.querySelector('[alt="live.jpg"]')).not.toBeNull();
+    expect(container.querySelector(".camera-capture")).toBeNull();
+  });
+
+  it("captures from the live preview, attaches a photo and turns the camera off", async () => {
+    const stop = vi.fn();
+    const getUserMedia = vi.fn().mockResolvedValue({ getTracks: () => [{ stop }] });
+    vi.stubGlobal("navigator", Object.assign(Object.create(navigator), { mediaDevices: { getUserMedia } }));
+    vi.spyOn(HTMLMediaElement.prototype, "play").mockResolvedValue();
+    vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue({ drawImage: vi.fn() } as unknown as CanvasRenderingContext2D);
+    vi.spyOn(HTMLCanvasElement.prototype, "toBlob").mockImplementation((callback) => callback(new Blob(["camera"], { type: "image/jpeg" })));
+    await act(async () => { container.querySelector<HTMLButtonElement>(".take-photo-button")!.click(); });
+    expect(getUserMedia).toHaveBeenCalledWith(expect.objectContaining({ audio: false, video: expect.objectContaining({ facingMode: { ideal: "environment" } }) }));
+    const video = container.querySelector("video")!;
+    Object.defineProperties(video, { videoWidth: { value: 2560 }, videoHeight: { value: 1440 } });
+    await act(async () => { video.dispatchEvent(new Event("canplay")); });
+    await act(async () => { [...container.querySelectorAll("button")].find((button) => button.textContent?.includes("Capture photo"))!.click(); });
+    expect(uploaded).toHaveBeenCalledWith(expect.objectContaining({ type: "image/jpeg" }));
+    expect(container.querySelectorAll(".photo-previews img")).toHaveLength(1);
+    expect(stop).toHaveBeenCalledTimes(1);
+    expect(container.querySelector(".camera-capture")).toBeNull();
+  });
+
+  it("keeps the report busy while encoding a camera frame before uploading it", async () => {
+    const stop = vi.fn();
+    vi.stubGlobal("navigator", Object.assign(Object.create(navigator), { mediaDevices: { getUserMedia: vi.fn().mockResolvedValue({ getTracks: () => [{ stop }] }) } }));
+    vi.spyOn(HTMLMediaElement.prototype, "play").mockResolvedValue();
+    vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue({ drawImage: vi.fn() } as unknown as CanvasRenderingContext2D);
+    let encoded!: BlobCallback;
+    vi.spyOn(HTMLCanvasElement.prototype, "toBlob").mockImplementation((callback) => { encoded = callback; });
+    await act(async () => { container.querySelector<HTMLButtonElement>(".take-photo-button")!.click(); });
+    const video = container.querySelector("video")!;
+    Object.defineProperties(video, { videoWidth: { value: 1920 }, videoHeight: { value: 1080 } });
+    await act(async () => { video.dispatchEvent(new Event("canplay")); });
+    await act(async () => { [...container.querySelectorAll("button")].find((button) => button.textContent?.includes("Capture photo"))!.click(); });
+    expect(onBusy).toHaveBeenLastCalledWith(true);
+    expect(uploaded).not.toHaveBeenCalled();
+    await act(async () => { encoded(new Blob(["camera"], { type: "image/jpeg" })); });
+    expect(uploaded).toHaveBeenCalledTimes(1);
+    expect(onBusy).toHaveBeenLastCalledWith(false);
+  });
+
+  it("shows a clear permission error and keeps uploads available", async () => {
+    const getUserMedia = vi.fn().mockRejectedValue({ name: "NotAllowedError" });
+    vi.stubGlobal("navigator", Object.assign(Object.create(navigator), { mediaDevices: { getUserMedia } }));
+    await act(async () => { container.querySelector<HTMLButtonElement>(".take-photo-button")!.click(); });
+    expect(container.querySelector(".camera-capture [role=alert]")?.textContent).toContain("Camera access was denied");
+    expect(picker().disabled).toBe(true);
+    await act(async () => { document.activeElement!.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true })); });
+    expect(container.querySelector(".camera-capture")).toBeNull();
+    expect(picker().disabled).toBe(false);
+    expect(closed).not.toHaveBeenCalled();
+  });
+
+  it("stops a late camera stream if the user cancels before permission resolves", async () => {
+    let allow!: (value: unknown) => void;
+    const stop = vi.fn();
+    const getUserMedia = vi.fn(() => new Promise((resolve) => { allow = resolve; }));
+    vi.stubGlobal("navigator", Object.assign(Object.create(navigator), { mediaDevices: { getUserMedia } }));
+    await act(async () => { container.querySelector<HTMLButtonElement>(".take-photo-button")!.click(); });
+    await act(async () => { container.querySelector<HTMLButtonElement>('[aria-label="Close camera"]')!.click(); });
+    await act(async () => { allow({ getTracks: () => [{ stop }] }); });
+    expect(stop).toHaveBeenCalledTimes(1);
+    expect(uploaded).not.toHaveBeenCalled();
+    expect(closed).not.toHaveBeenCalled();
+  });
 });
