@@ -39,10 +39,12 @@
   --cw-rail: 242px;
   --cw-glass: rgba(255, 250, 253, .48);
   --cw-glass-edge: rgba(255, 255, 255, .8);
+  --cw-drawer-glass: rgba(255, 250, 253, .62);
 }
 :root[data-theme="dark"] {
   --cw-glass: rgba(10, 35, 40, .58);
   --cw-glass-edge: rgba(169, 193, 196, .24);
+  --cw-drawer-glass: rgba(10, 35, 40, .88);
 }
 
 
@@ -176,16 +178,49 @@ dialog.modal[data-step-scroll] > .modal-header {
     0 8px 22px rgba(20, 15, 35, .08);
 }
 
-/* Mobile hamburger: improve glass readability */
+/* Mobile hamburger: translucent and readable */
 @media (max-width: 790px) {
   .site-header {
-    background: color-mix(
-      in srgb,
-      var(--cw-panel) 88%,
-      transparent
-    );
+    background: var(--cw-drawer-glass);
+  }
+
+  /* Light mode navigation */
+  :root:not([data-theme="dark"])
+  .site-header .main-nav button {
+    color: #211a30;
+    font-weight: 700;
+  }
+
+  :root:not([data-theme="dark"])
+  .site-header .main-nav button svg {
+    color: currentColor;
+  }
+
+  /* Selected navigation item */
+  :root:not([data-theme="dark"])
+  .site-header .main-nav button.active {
+    background: rgba(255, 229, 230, .86);
+    color: #211a30;
+    font-weight: 800;
+  }
+
+  :root:not([data-theme="dark"])
+  .site-header .main-nav button.active svg {
+    color: var(--cw-accent);
+  }
+
+  /* Section labels and help */
+  :root:not([data-theme="dark"])
+  .site-header .navigation-caption {
+    color: #483b59;
+  }
+
+  :root:not([data-theme="dark"])
+  .site-header .header-actions .help-button {
+    color: #30233d;
   }
 }
+
 }
 /* Readability fallback when transparency is reduced by the device. */
 @media (prefers-reduced-transparency: reduce) {
