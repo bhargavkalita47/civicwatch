@@ -233,7 +233,6 @@ export function PhotoPicker({
           onClick={() => { setError(""); setCamera(true); }}><Camera size={18} />Take photo</button>
         </div>
       )}
-      <p className="photo-processing-note">Photos are automatically optimized while keeping fine detail.</p>
       {camera && <CameraCapture onCapture={(photo) => upload([photo])} onClose={() => setCamera(false)} onBusy={onBusy} />}
       <ErrorNotice message={error} />
     </div>
