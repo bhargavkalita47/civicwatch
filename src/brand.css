@@ -221,3 +221,29 @@ body { min-width: 0; }
   #root .watch-reports-sections > button { flex-direction: column; gap: 10px; padding: 14px 8px; }
   #root .watch-reports-sections > button strong { margin-left: 0; }
 }
+
+
+/* Explicit report-to-map navigation: one persistent, accessible selection. */
+.view-report-map { margin: 0 0 20px; justify-content: center; min-height: 46px; }
+.map-workspace[aria-label="Explore report map"] { scroll-margin-top: 88px; }
+.map-report-focus {
+  grid-column: 1 / -1; display: flex; align-items: center; gap: 12px;
+  padding: 16px 20px; color: var(--cw-ink); background: var(--cw-soft);
+  border-bottom: 1px solid var(--cw-border);
+}
+.map-report-focus > svg { flex-shrink: 0; color: var(--cw-accent); }
+.map-report-focus > div { flex: 1; min-width: 0; }
+.map-report-focus strong, .map-report-focus span { display: block; overflow-wrap: anywhere; }
+.map-report-focus strong { font: 650 14px/1.5 "Inter", system-ui, sans-serif; }
+.map-report-focus span { color: var(--cw-muted); font-size: 12px; }
+.map-report-focus > button { flex-shrink: 0; min-height: 44px; }
+.map-shell .civic-marker-highlighted .pin-body,
+.map-shell .civic-marker-highlighted:hover .pin-body {
+  outline: 3px solid #252035; outline-offset: 4px;
+  box-shadow: 0 0 0 10px rgba(255,255,255,.9), 0 0 0 15px rgba(155,129,221,.4);
+}
+@media (max-width: 790px) {
+  .map-report-focus { flex-wrap: wrap; padding: 16px; }
+  .map-report-focus > div { flex-basis: calc(100% - 36px); }
+  .map-report-focus > .button { flex: 1; justify-content: center; }
+}

@@ -119,8 +119,15 @@ export default function App() {
       cluster: LocationCluster;
       issueId?: string;
     } | null>(null),
+    [mapIssueId, setMapIssueId] = useState<string | null>(null),
     [focus, setFocus] = useState<Coordinate>(),
     [toast, setToast] = useState("");
+  const mapWorkspaceRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (tab !== "explore" || !mapIssueId) return;
+    mapWorkspaceRef.current?.focus({ preventScroll: true });
+    mapWorkspaceRef.current?.scrollIntoView({ block: "start" });
+  }, [tab, mapIssueId]);
   const pending = useRef<(() => void) | null>(null),
     center = useRef<Coordinate>(config.center),
     toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -293,7 +300,21 @@ export default function App() {
   const citySummary = useMemo(() => summarizeIssues(scopedIssues), [scopedIssues]);
   const reportGroups = useMemo(() => watchlistReportGroups(watchlist, cityIssues), [watchlist, cityIssues]);
   const reportCounts = {total: reportGroups.all.length, active: reportGroups.active.length, inactive: reportGroups.inactive.length};
+  function viewIssueOnMap(issue: Issue) {
+    setSelection(null);
+    setMapIssueId(issue.id);
+    setQuery("");
+    setCategoryIds([]);
+    setStatus("all");
+    setCityId("");
+    setMapBounds(null);
+    center.current = issue.location;
+    setFocus({ ...issue.location });
+    setTab("explore");
+    history.replaceState(null, "", location.pathname + location.search);
+  }
   function exploreWatchCity(next: City) {
+    setMapIssueId(null);
     const id = next.id;
     setCityId(cities.some((city) => city.id === id) ? id : "");
     setTab("explore");
@@ -320,6 +341,11 @@ export default function App() {
     [data, scopedIssues, query, categoryIds, status, sort, tab, reportGroups, reportSection, auth.session],
   );
   const clusters = useMemo(() => clusterIssues(visible), [visible]);
+  const mapIssue = tab === "explore" ? data?.issues.find((issue) => issue.id === mapIssueId) : undefined;
+  // A resolved report gets one temporary location marker, never a place in active totals.
+  const exploreClusters = useMemo(() => mapIssue?.status === "resolved"
+    ? [...clusters, { id: "historical:" + mapIssue.id, location: mapIssue.location, issues: [mapIssue], totalPeople: peopleCount(mapIssue) }]
+    : clusters, [clusters, mapIssue]);
   const issueCount = citySummary.open;
   const hasFilters = categoryIds.length > 0 || (status !== "all" && tab !== "explore" && (tab !== "reports" || reportSection === "active"));
   function changeReportSection(next: ReportSection) {
@@ -615,6 +641,7 @@ export default function App() {
               onChange={setQuery}
               onSelectPlace={(place) => {
                 setCityId("");
+                setMapIssueId(null);
                 setSelection(null);
                 center.current = place.point;
                 setFocus({ ...place.point });
@@ -725,13 +752,20 @@ export default function App() {
               </button>
             </div>
           ) : tab === "explore" ? (
-            <div className="map-workspace">
+            <div className="map-workspace" ref={mapWorkspaceRef} tabIndex={-1} aria-label="Explore report map">
+              {mapIssue && <div className="map-report-focus" role="status">
+                <MapPin size={18} aria-hidden="true" />
+                <div><strong>{mapIssue.title}</strong><span>{mapIssue.status === "resolved" ? "Resolved report — location only" : "Highlighted on the map"}</span></div>
+                <button type="button" className="button secondary" onClick={() => openIssue(mapIssue)}>Open report</button>
+                <button type="button" className="icon-button" aria-label="Clear report highlight" onClick={() => setMapIssueId(null)}><X size={18} /></button>
+              </div>}
               <CivicMap
                 categories={categories}
                 center={activeCity?.center || center.current}
                 cityName={activeCity?.name ?? "current area"}
                 showLocationBadge={false}
-                clusters={clusters}
+                clusters={exploreClusters}
+                highlightedIssueId={mapIssue?.id}
                 onSelect={(cluster) => {
                   setSelection({ cluster });
                   if (cluster.issues.length === 1)
@@ -990,6 +1024,7 @@ export default function App() {
             await refresh();
           }}
           onAdd={(point) => startReport(point)}
+          onViewMap={viewIssueOnMap}
           ensureSession={ensureSession}
           notify={notify}
         />
