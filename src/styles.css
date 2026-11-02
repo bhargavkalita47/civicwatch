@@ -1096,7 +1096,7 @@ footer > p {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  z-index: 10;
+  z-index: 1000;
   backdrop-filter: blur(8px);
 }
 .modal-header h2 {
