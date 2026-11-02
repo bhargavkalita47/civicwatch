@@ -176,16 +176,6 @@ dialog.modal[data-step-scroll] > .modal-header {
     0 8px 22px rgba(20, 15, 35, .08);
 }
 
-/* Mobile hamburger: improve glass readability */
-@media (max-width: 790px) {
-  .site-header {
-    background: color-mix(
-      in srgb,
-      var(--cw-panel) 88%,
-      transparent
-    );
-  }
-}
 }
 /* Readability fallback when transparency is reduced by the device. */
 @media (prefers-reduced-transparency: reduce) {
