@@ -597,12 +597,12 @@ body { background: var(--cw-atmosphere-page); }
 }
 .snapshot-summary-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 22px; }
 .snapshot-summary-heading h2 {
-  font-family: "Instrument Serif", Georgia, serif;
+  font-family: "Inter", system-ui, sans-serif;
   font-size: var(--type-section);
-  font-weight: 400;
+  font-weight: 800;
   font-synthesis: none;
   line-height: var(--leading-heading);
-  letter-spacing: -.025em;
+  letter-spacing: -.035em;
   color: var(--cw-heading);
   margin: 8px 0 9px;
 }
