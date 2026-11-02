@@ -116,9 +116,9 @@ export function validateIssue(input: CreateIssueInput, categories: Category[]) {
       "Use a title between 8 and 120 characters.",
       "VALIDATION",
     );
-  if (input.description.trim().length < 20 || input.description.length > 3000)
+  if (input.description.length > 3000)
     throw new ServiceError(
-      "Add a description between 20 and 3,000 characters.",
+      "Keep the description within 3,000 characters.",
       "VALIDATION",
     );
   if (input.address.trim().length < 3 || input.address.length > 240)
