@@ -199,7 +199,6 @@ dialog.modal[data-step-scroll] > .modal-header {
   /* Selected navigation item */
   :root:not([data-theme="dark"])
   .site-header .main-nav button.active {
-    background: rgba(255, 229, 230, .86);
     color: #211a30;
     font-weight: 800;
   }
