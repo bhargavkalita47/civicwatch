@@ -1,5 +1,13 @@
 import { useEffect, useRef, useState } from "react";
-import { MapPin, Pencil, UserRound } from "lucide-react";
+import {
+  MapPin,
+  Pencil,
+  UserRound,
+  Search,
+  SlidersHorizontal,
+  Settings,
+  X,
+} from "lucide-react";
 import type {
   Category,
   Dataset,
@@ -13,6 +21,7 @@ import { relativeTime, filterIssues, statusLabels } from "../domain/logic";
 import { civicService } from "../services";
 import { useAuth } from "../services/auth";
 import { CategoryBadge, ErrorNotice, Modal, Spinner, StatusBadge } from "./ui";
+import { categoryMarkerColor } from "../domain/markerPalette";
 import { config } from "../config";
 
 export function ProfileAvatar({
@@ -371,6 +380,8 @@ export function Profile({
     [profileError, setProfileError] = useState(""),
     [attempt, setAttempt] = useState(0),
     [editing, setEditing] = useState(false),
+    [settingsOpen, setSettingsOpen] = useState(false),
+    [filtersOpen, setFiltersOpen] = useState(false),
     [editIssue, setEditIssue] = useState<Issue | null>(null),
     [section, setSection] = useState<"active" | "resolved" | "history">(
       "active",
@@ -469,7 +480,6 @@ export function Profile({
       <section className="profile-identity">
         <ProfileAvatar name={profile.displayName} url={profile.avatarUrl} />
         <div className="profile-details">
-          <span className="eyebrow">Your profile</span>
           <h2>{profileName(profile.displayName)}</h2>
           {profile.city && (
             <p>
@@ -539,26 +549,93 @@ export function Profile({
                   }}
                 >
                   {key === "history"
-                    ? "History"
+                    ? "All reports"
                     : key === "active"
                       ? "Active"
                       : "Resolved"}
                 </button>
               ))}
             </div>
-            <div className="profile-report-filters">
-              <label>
-                Search my reports
+            <div className="filter-bar">
+              <label className="search-field">
+                <Search size={17} />
                 <input
                   type="search"
+                  aria-label="Search my reports"
+                  placeholder="Search reports or neighbourhoods"
                   value={reportQuery}
                   onChange={(event) => setReportQuery(event.target.value)}
-                  placeholder="Search reports or neighbourhoods"
                 />
+                {reportQuery && (
+                  <button
+                    aria-label="Clear search"
+                    onClick={() => setReportQuery("")}
+                  >
+                    <X size={14} />
+                  </button>
+                )}
               </label>
+              <div
+                className="category-chips"
+                role="group"
+                aria-label="Quick issue category filters"
+              >
+                <button
+                  className={!categoryIds.length ? "active" : ""}
+                  onClick={() => setCategoryIds([])}
+                >
+                  All
+                </button>
+                {[...new Set(categories.map((category) => category.group))].map(
+                  (group) => {
+                    const members = categories.filter(
+                      (category) => category.group === group,
+                    );
+                    const selected =
+                      categoryIds.length === members.length &&
+                      members.every((category) =>
+                        categoryIds.includes(category.id),
+                      );
+                    return (
+                      <button
+                        key={group}
+                        className={selected ? "active" : ""}
+                        aria-pressed={selected}
+                        onClick={() =>
+                          setCategoryIds(
+                            selected
+                              ? []
+                              : members.map((category) => category.id),
+                          )
+                        }
+                      >
+                        <i
+                          style={{
+                            background: categoryMarkerColor(members[0]),
+                          }}
+                        />
+                        {group}
+                      </button>
+                    );
+                  },
+                )}
+              </div>
+              <button
+                className={`button filter-button ${hasFilters ? "has-filters" : ""}`}
+                onClick={() => setFiltersOpen(true)}
+              >
+                <SlidersHorizontal size={16} /> Filters
+                {categoryIds.length > 0 && <span>{categoryIds.length}</span>}
+              </button>
+            </div>
+            <div className="board-toolbar">
+              <span>
+                {visible.length} {visible.length === 1 ? "report" : "reports"}
+              </span>
               <label>
-                Sort reports
+                Sort by
                 <select
+                  aria-label="Sort my reports"
                   value={reportSort}
                   onChange={(event) =>
                     setReportSort(event.target.value as IssueFilters["sort"])
@@ -568,56 +645,7 @@ export function Profile({
                   <option value="supported">Most supported</option>
                 </select>
               </label>
-              {section !== "resolved" && (
-                <label>
-                  Report status
-                  <select
-                    value={reportStatus}
-                    onChange={(event) =>
-                      setReportStatus(
-                        event.target.value as IssueFilters["status"],
-                      )
-                    }
-                  >
-                    <option value="all">All statuses</option>
-                    {Object.entries(statusLabels)
-                      .filter(
-                        ([id]) => section === "history" || id !== "resolved",
-                      )
-                      .map(([id, label]) => (
-                        <option key={id} value={id}>
-                          {label}
-                        </option>
-                      ))}
-                  </select>
-                </label>
-              )}
             </div>
-            <details className="profile-category-filters">
-              <summary>
-                Filter by issue type
-                {categoryIds.length ? ` (${categoryIds.length})` : ""}
-              </summary>
-              <fieldset>
-                <legend className="sr-only">Issue types</legend>
-                {categories.map((category) => (
-                  <label key={category.id}>
-                    <input
-                      type="checkbox"
-                      checked={categoryIds.includes(category.id)}
-                      onChange={() =>
-                        setCategoryIds((current) =>
-                          current.includes(category.id)
-                            ? current.filter((id) => id !== category.id)
-                            : [...current, category.id],
-                        )
-                      }
-                    />
-                    {category.label}
-                  </label>
-                ))}
-              </fieldset>
-            </details>
             {hasFilters && (
               <button className="text-button" onClick={clearFilters}>
                 Clear report filters
@@ -730,54 +758,149 @@ export function Profile({
           </>
         )}
       </section>
-      <section
-        className="profile-settings"
-        aria-labelledby="account-settings-heading"
-      >
-        <h2 id="account-settings-heading">Account settings</h2>
-        <p>The administrative corner. Try to contain your excitement.</p>
-        <dl>
-          <dt>Email (private)</dt>
-          <dd>{user.email}</dd>
-          <dt>Login methods</dt>
-          <dd>
-            {config.serviceMode === "mock"
-              ? "Local preview session"
-              : "Current account session"}
-          </dd>
-        </dl>
-        <p>
-          Google, Facebook, other social accounts and email + password sign-in
-          are planned. These controls will become available when account
-          integration is ready.
-        </p>
-        <div className="profile-report-actions">
-          <button className="button secondary" disabled>
-            Manage login methods
-          </button>
-          <button className="button secondary" disabled>
-            Change password
-          </button>
-          <button
-            className="button secondary"
-            disabled={!!busyId}
-            onClick={async () => {
-              setBusyId("signout");
-              setActionError("");
-              try {
-                await auth.signOut();
-                notify("Signed out. The potholes remain.");
-              } catch (cause) {
-                setActionError((cause as Error).message);
-              } finally {
-                setBusyId("");
-              }
-            }}
+      <div className="profile-settings-trigger">
+        <button
+          className="button secondary"
+          aria-haspopup="dialog"
+          onClick={() => setSettingsOpen(true)}
+        >
+          <Settings size={17} /> Account settings
+        </button>
+      </div>
+      {settingsOpen && (
+        <Modal
+          title="Account settings"
+          onClose={() => {
+            if (busyId !== "signout") setSettingsOpen(false);
+          }}
+        >
+          <section
+            className="form-body profile-settings"
+            aria-label="Account details"
           >
-            {busyId === "signout" ? "Signing out…" : "Sign out"}
-          </button>
-        </div>
-      </section>
+            <ErrorNotice message={actionError} />
+            <p>The administrative corner. Try to contain your excitement.</p>
+            <dl>
+              <dt>Email (private)</dt>
+              <dd>{user.email}</dd>
+              <dt>Login methods</dt>
+              <dd>
+                {config.serviceMode === "mock"
+                  ? "Local preview session"
+                  : "Current account session"}
+              </dd>
+            </dl>
+            <p>
+              Google, Facebook, other social accounts and email + password
+              sign-in are planned. These controls will become available when
+              account integration is ready.
+            </p>
+            <div className="profile-report-actions">
+              <button className="button secondary" disabled>
+                Manage login methods
+              </button>
+              <button className="button secondary" disabled>
+                Change password
+              </button>
+              <button
+                className="button secondary"
+                disabled={!!busyId}
+                onClick={async () => {
+                  setBusyId("signout");
+                  setActionError("");
+                  try {
+                    await auth.signOut();
+                    notify("Signed out. The potholes remain.");
+                  } catch (cause) {
+                    setActionError((cause as Error).message);
+                  } finally {
+                    setBusyId("");
+                  }
+                }}
+              >
+                {busyId === "signout" ? "Signing out…" : "Sign out"}
+              </button>
+            </div>
+          </section>
+        </Modal>
+      )}
+      {filtersOpen && (
+        <Modal
+          title="Filter reports"
+          onClose={() => setFiltersOpen(false)}
+          wide
+        >
+          <div className="form-body">
+            {section !== "resolved" && (
+              <label>
+                Report status
+                <select
+                  value={reportStatus}
+                  onChange={(event) =>
+                    setReportStatus(
+                      event.target.value as IssueFilters["status"],
+                    )
+                  }
+                >
+                  <option value="all">All statuses</option>
+                  {Object.entries(statusLabels)
+                    .filter(
+                      ([id]) => section === "history" || id !== "resolved",
+                    )
+                    .map(([id, label]) => (
+                      <option key={id} value={id}>
+                        {label}
+                      </option>
+                    ))}
+                </select>
+              </label>
+            )}
+            <div className="filter-catalogue">
+              {[...new Set(categories.map((category) => category.group))].map(
+                (group) => (
+                  <div key={group}>
+                    <h3>{group}</h3>
+                    {categories
+                      .filter((category) => category.group === group)
+                      .map((category) => (
+                        <label key={category.id}>
+                          <input
+                            type="checkbox"
+                            checked={categoryIds.includes(category.id)}
+                            onChange={() =>
+                              setCategoryIds((current) =>
+                                current.includes(category.id)
+                                  ? current.filter((id) => id !== category.id)
+                                  : [...current, category.id],
+                              )
+                            }
+                          />
+                          <i
+                            style={{
+                              background: categoryMarkerColor(category),
+                            }}
+                          />
+                          {category.label}
+                        </label>
+                      ))}
+                  </div>
+                ),
+              )}
+            </div>
+            <div className="form-actions">
+              <button className="text-button" onClick={clearFilters}>
+                Reset filters
+              </button>
+              <button
+                className="button primary"
+                onClick={() => setFiltersOpen(false)}
+              >
+                Show {visible.length} reports
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
       {editing && (
         <EditProfile
           profile={profile}

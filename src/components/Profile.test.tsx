@@ -35,7 +35,7 @@ const close = vi.fn(),
   saved = vi.fn();
 const button = (text: string) =>
   [...container.querySelectorAll("button")].find(
-    (b) => b.textContent === text,
+    (b) => b.textContent?.trim() === text,
   )!;
 async function click(text: string) {
   await act(async () => {
@@ -204,7 +204,27 @@ it("shows only own reports with correct active, resolved and history counts and 
     container.querySelector(".profile-report-card")?.textContent,
   ).toContain(data.issues[1].title);
   expect(button("Edit report")).toBeUndefined();
-  await click("History");
+  expect(container.querySelector('[aria-label="Account details"]')).toBeNull();
+  expect(container.textContent).not.toContain("private@example.com");
+  await click("Account settings");
+  expect(
+    container.querySelector('dialog[aria-label="Account settings"]')
+      ?.textContent,
+  ).toContain("private@example.com");
+  await act(async () =>
+    container
+      .querySelector<HTMLButtonElement>('dialog [aria-label="Close dialog"]')!
+      .click(),
+  );
+  await click("Filters");
+  expect(container.querySelector(".filter-catalogue")).not.toBeNull();
+  expect(container.querySelector("details")).toBeNull();
+  await act(async () =>
+    container
+      .querySelector<HTMLButtonElement>('dialog [aria-label="Close dialog"]')!
+      .click(),
+  );
+  await click("All reports");
   expect(container.querySelectorAll(".profile-report-card")).toHaveLength(2);
   expect(container.textContent).not.toContain(data.issues[2].title);
   await fill('input[type="search"]', data.issues[0].title);

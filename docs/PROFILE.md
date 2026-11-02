@@ -1,8 +1,8 @@
 # Profile feature
 
-Profile is available through the shared desktop/mobile navigation and the account avatar. Community Reports continues to show watched-town reports. My Reports belongs to Profile and includes Active, Resolved and History (all of the current user's reports, newest first by default). Search, multiple issue-type filters, status filters and most-supported sorting remain available within My Reports.
+Profile is available through the shared desktop/mobile navigation and the account avatar. Community Reports continues to show watched-town reports. My Reports belongs to Profile and includes Active, Resolved and All reports (all of the current user's reports, newest first by default). Search, multiple issue-type filters, status filters and most-supported sorting remain available within My Reports.
 
-All personal fields are optional. An empty name displays as CivicWatch member. Profile city is display text only; it never changes report coordinates or the town watchlist. The single website/social link must use HTTP or HTTPS. Email remains in private Account settings.
+All personal fields are optional. An empty name displays as CivicWatch member. Profile city is display text only; it never changes report coordinates or the town watchlist. The single website/social link must use HTTP or HTTPS. Email remains in private Account settings, opened using the button at the bottom of Profile.
 
 ## Service boundaries
 
@@ -17,7 +17,7 @@ All personal fields are optional. An empty name displays as CivicWatch member. P
 
 Edit Profile and Edit Report preserve drafts on service errors. Cancel, backdrop and Escape ask before discarding dirty drafts; browser departure uses `beforeunload`. Closing is blocked during image preparation or save. Canceling the native image picker leaves the form open and all data intact. Saving updates the profile immediately and refreshes the account avatar/name and public report author labels. Failed follow-up reads do not misreport a successful save.
 
-Mobile uses one column, wrapping report actions, 44px controls and sticky save/cancel actions with safe-area padding. The same navigation drawer serves all destinations.
+Mobile uses one column, wrapping report actions, 44px controls and sticky save/cancel actions with safe-area padding. The same navigation drawer serves all destinations. My Reports reuses the shared search field, category chips, Filters dialog and sorting toolbar. Selected report tabs use lavender.
 
 ## Validation
 

@@ -16,7 +16,7 @@ for (const phrase of [
   'Home is where the problems are.',
   'Disappointment has coordinates.',
   'New day. Same complaints.',
-  'Your patience has a paper trail.',
+  'A face behind the complaints.',
   'A scenic view of neglect.',
   'Managed expectations, in numbers.',
   'The usual problems. Your chosen places.',
