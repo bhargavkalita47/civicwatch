@@ -1,55 +1,72 @@
-# Verification and rollout evidence
+# Verification
 
-## Release 1.1.0 — Workers configuration (30 October 2026)
+This document is a repeatable checklist, not a claim that the latest revision has passed every check. Use the GitHub Actions run for the exact commit, Cloudflare build logs, and recorded manual results as evidence.
 
-Local verification completed for this source revision:
+## Automated checks
 
-- D1 migrations: SQLite schema check passed for all 30 categories, uniqueness,
-  author deduplication, geolocation limits and reply relationships.
-- Worker entry: strict TypeScript check of the Worker API, binding contracts,
-  catalogue and domain type imports passed using the global TypeScript compiler.
-- Worker runtime: compiled standalone module and executed eight checks covering
-  `/health`, categories, 401 session rejection, 501 pending reads/writes, 403
-  foreign-origin writes, JSON 404 for unknown API paths, and SPA fallback.
-- Cloudflare configuration: checked for `main`, Workers static assets, explicit
-  `/api/*` routing, and absence of Pages-only settings; automated assertions are
-  provided in `scripts/validate-config.mjs`.
+Use Node.js 22, npm, and Python:
 
-**Environment limit:** npm registry downloads were unavailable in the local
-packaging environment, so a fresh `npm ci`, complete Vitest/Vite production
-build and authenticated `wrangler deploy --dry-run` were not completed for this
-revision. The *previous* frontend revision was successfully built on Cloudflare
-(its build log was supplied by the project owner), but this new release adds a
-Worker entry point and deployment config that still require fresh full CI and
-Cloudflare build verification. The GitHub workflow and `npm run verify` are
-included expressly for those checks. Do not mistake static checks for a
-confirmed live Cloudflare deployment.
+```bash
+npm ci
+npm run verify
+python scripts/check_schema.py
+```
 
-## Before marking a production deployment successful
+The GitHub workflow runs the verification command and schema check on pushes to `main` and pull requests. `npm run verify` covers Vitest, the TypeScript/Vite production build, and configuration, design, copy, mobile-navigation, and release assertions.
 
-1. Run `npm ci && npm run verify` (or observe the successful GitHub Actions run).
-2. Run `npm run deploy:dry-run` with an authenticated Wrangler CLI.
-3. Deploy the **Worker** from the new GitHub repository with `npm run deploy`.
-4. Confirm JSON health, categories, 401/501 responses, SPA routes and map tiles
-   from the actual deployed domain.
-5. Complete real backend activation and two-device authorization tests before
-   allowing genuine public multi-user civic reporting.
+For Worker changes, also run `npm run dev:worker` and `npm run deploy:dry-run`. These checks do not prove that shared backend features are active.
 
-## Previous frontend verification (1.0.0)
+## Frontend smoke test
 
-The earlier frontend report stated that TypeScript/Vite builds, mock service
-unit tests, map and browser interactions, and 390px responsive checks passed.
-Those checks applied to the prior Pages-targeted frontend release; they are not
-presented here as proof of successful deployment of the new Workers version.
+Use a disposable test dataset. Test at a narrow mobile width and a desktop width, in both themes.
 
-## v1.2 interaction checks
+| Flow | Expected behaviour |
+| --- | --- |
+| Navigation | Desktop sidebar and mobile drawer work; drawer closes with selection, backdrop, close button, or Escape. Focus returns appropriately. |
+| Scroll | Changing page starts at the top. Reporting steps reset the dialog scroll position. |
+| Header and footer | Date/time displays; content has usable spacing; footer remains below short and long page content. |
+| Maps | Always-light tiles, readable controls/attribution, category markers, and sensible empty states. |
+| Explore search | One search field supports report-text filtering and explicit place lookup; quick chips filter category groups. |
+| Device location | Permission success shows the current-location marker; denied/unavailable location leaves manual pin selection usable. |
+| Report location | Confirm a pin anywhere; optional City/Locality labels are editable. Search-selected or manually edited city survives pin adjustment. Failed lookup does not block continuing. |
+| Report details | Search the 70-type category catalogue; category and title are required, description optional. Nearby same-type reports can be opened instead. |
+| Uploads | Multiple JPG/PNG/WebP files work, up to three per report/comment and 15 MB per input image. Invalid types, oversize images, and excess counts show clear errors. |
+| Picker cancellation | Closing the OS picker leaves the form and entered values intact. |
+| Camera | Capture/preview works where supported; permission denial offers the device-camera/upload fallback. Closing/capturing releases the camera. |
+| Submit/reload | A successful report survives reload in the same browser. Refresh failure after a successful write does not duplicate it. |
+| Discussion | Confirmations, replies, photo attachments, and image previews work. The author cannot count as a second confirmation. |
+| View on map | Report details open Explore at the report location and highlight the selected report. Resolved reports remain excluded from ordinary active markers. |
+| Watchlist | Add/remove/reorder towns; keyboard controls work; order persists. Combined totals reflect saved towns only. |
+| Reports | Open/Resolved sections contain watched-town reports; counts and filters use the intended scope. |
+| Author controls | Own report can be resolved or deleted with confirmation; another local account cannot delete it through the service. |
+| Layout | Long titles and content fit report cards, controls remain usable, selected-nav icons have contrast, and no horizontal overflow appears. |
 
-- Explore: search for any location by name (press Find) or pan beyond the four demo cities. Verify the map and list follow the viewport.
-- Overview: one platform total plus separate city figures, with 22 total
-  preview records on a new browser. City cards open the right map location.
-- Report: choose a pin in an unlisted country or village, fill locality/region/country if reverse lookup fails, publish. Verify the new reporting area appears in Overview and the platform total increments.
-- Delete: create an issue as local account A; account B must not see Delete and
-  its service request must be forbidden. Account A can confirm deletion and
-  the issue's comments must disappear from local storage.
-- Data is preview-local; repeat security checks with real server sessions once
-  the backend is activated.
+New browser datasets are empty by default. Enable `VITE_SEED_DEMO=true` before starting a fresh test dataset when fictional examples are useful. Existing local datasets are retained; do not clear user data as part of routine verification.
+
+## Worker deployment checks
+
+After deploying the intended Worker:
+
+- Frontend routes and refreshes load the application.
+- `/api/v1/health` returns JSON with `integration-pending`.
+- `/api/v1/categories` returns 70 issue types.
+- `/api/v1/cities` returns database areas or an empty array when unbound.
+- Session lookup returns 401 while auth is pending.
+- Shared dataset/overview and write/upload operations return intentional 501 while unimplemented.
+- Unknown API paths return JSON 404 rather than frontend HTML.
+- Local reports remain local; opening another origin or browser does not imply shared storage.
+
+## Backend acceptance criteria
+
+Before changing to the API adapter, follow [BACKEND.md](BACKEND.md) and verify:
+
+- Two independent devices can see the same newly created report.
+- Guest, expired, revoked, and unauthorized sessions cannot mutate protected data.
+- Identity and permissions come from verified server sessions.
+- Confirmations are idempotent and unique per actor/report.
+- Reports, replies, and uploads have validated ownership and relationships.
+- Resolution and deletion enforce author/moderator rules, with reliable media cleanup.
+- Malformed inputs, malicious media, oversized payloads, and rate limits are handled.
+- Pagination, geographic queries, aggregates, and moderation work with realistic data volume.
+
+Record the commit SHA, environment, automated results, tested browsers/devices, and remaining failures when reporting verification.

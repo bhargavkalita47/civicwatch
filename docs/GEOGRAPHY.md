@@ -9,12 +9,12 @@ reports for the Overview directory. No reporting area needs to exist beforehand.
 
 1. On Explore, search for a place **explicitly** (press Find) or pan the map to any location in the world. Reports visible in the viewport form the right-hand list.
 2. Press Report an issue; search for the location, use your device's location, or tap the exact map point.
-3. The form attempts a **single** reverse lookup for the selected pin. If it fails or the result is inaccurate, enter/edit town or locality, region, country, and nearby street/landmark manually. The pin's coordinates remain the authoritative position.
-4. Publish a report. The preview service adds the new locality and updates the platform + local totals. Other locations are never rejected for being beyond an existing city's radius.
-5. A location appears in Overview when there is at least one report for it. The overview has **one distinct platform total**; people are deduplicated globally instead of summing unique counts by locality.
-6. Resolved issues leave active map markers but remain in History and resolved statistics.
+3. The form attempts a **single** reverse lookup for the selected pin. If it fails or the result is inaccurate, edit the optional City and Locality fields manually, or continue using the pin alone. Region and country are internal metadata, with explicit unspecified values when lookup cannot supply them. The pin's coordinates remain the authoritative position.
+4. Save a report. The local service adds its reporting area and updates the dataset and relevant totals in that browser. Other locations are never rejected for being beyond an existing city's radius.
+5. Overview has **one distinct platform total** from the active service; people are deduplicated globally instead of summing unique counts by locality. Town watchlist provides selected-town activity and totals across saved towns.
+6. Resolved issues leave active map markers but remain in Reports → Resolved for watched towns, in My reports for their author, and in resolved statistics.
 
-Four cities are provided solely as **fictional demo report data** for fresh browser-local sessions. They are not an allowed-city list. Existing browser-local reports are migrated when loaded.
+Fictional reports across four cities are available only when `VITE_SEED_DEMO=true` is explicitly enabled for an empty browser-local dataset. New datasets are empty by default. They are not an allowed-city list. Existing browser-local reports are migrated when loaded.
 
 ## API and data contracts
 
@@ -33,4 +33,4 @@ Map tiles: OpenStreetMap via Leaflet (replaceable by `VITE_TILE_URL`; public OSM
 
 Place lookup: Photon, an OSM-derived open-source geocoder (explicit user searches and pin-triggered reverse lookups, **not** search-as-you-type). Default `https://photon.komoot.io` is a community-hosted demo; it has **no uptime guarantee**, throttles heavy clients and must not be relied upon for high-traffic production. The client caches repeated responses, serializes requests and spaces requests by at least 1.1 seconds **per browser only**. These client limits do not enforce a global application-wide limit. This endpoint is configurable via the build-time `VITE_GEOCODER_BASE_URL`, so switch to your own hosted Photon or managed geocoder with a suitable SLA before a major launch. Avoid private search data in external geocoding calls.
 
-If a lookup fails, users can still report by pinning the precise location and completing area fields manually. A backend geocoder integration can replace `src/services/geo.ts` without changing reporting or storage. Maps are not bound to the geocoder provider.
+If a lookup fails, users can still report by pinning the precise location and optionally correcting City and Locality. No location label is required to continue with a confirmed pin. A backend geocoder integration can replace `src/services/geo.ts` without changing reporting or storage. Maps are not bound to the geocoder provider.
