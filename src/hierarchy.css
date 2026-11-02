@@ -559,8 +559,9 @@ body { background: var(--cw-atmosphere-page); }
 .drawer .modal-header { background: var(--cw-atmosphere-section); }
 
 /* Selected states are unmistakable, but not visually louder than content. */
-.main-nav button.active, .main-nav button.active:hover,
-.snapshot-watch-row.selected { background: var(--cw-atmosphere-selected); }
+.snapshot-watch-row.selected {
+  background: var(--cw-atmosphere-selected);
+}
 .main-nav button.active { box-shadow: inset 3px 0 0 var(--cw-accent); }
 
 /* Retain 4 equal metrics; each gets the same-strength tonal haze. */

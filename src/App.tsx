@@ -122,6 +122,15 @@ export default function App() {
     [mapIssueId, setMapIssueId] = useState<string | null>(null),
     [focus, setFocus] = useState<Coordinate>(),
     [toast, setToast] = useState("");
+  
+useEffect(() => {
+  window.scrollTo({
+    top: 0,
+    left: 0,
+    behavior: "instant",
+  });
+}, [tab, reportSection]);
+
   const mapWorkspaceRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (tab !== "explore" || !mapIssueId) return;
