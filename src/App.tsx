@@ -78,7 +78,43 @@ const GROUP_COLORS: Record<CategoryGroup, string> = {
   "Public spaces": "#67BE98",
   "Safety & access": "#D97FC1",
 };
+
+function HeaderClock() {
+  const [now, setNow] = useState(() => new Date());
+
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      setNow(new Date());
+    }, 10000);
+
+    return () => window.clearInterval(interval);
+  }, []);
+
+  const date = new Intl.DateTimeFormat("en-IN", {
+    weekday: "short",
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  }).format(now);
+
+  const time = new Intl.DateTimeFormat("en-IN", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  }).format(now);
+
+  return (
+    <div className="header-clock">
+      <span className="header-clock-date">{date}</span>
+      <time className="header-clock-time" dateTime={now.toISOString()}>
+        {time}
+      </time>
+    </div>
+  );
+}
+
 export default function App() {
+
   const auth = useAuth();
   const [theme, setTheme] = useState<Theme>(() => {
     try { return window.localStorage.getItem(THEME_STORAGE_KEY) === "dark" ? "dark" : "light"; }
@@ -460,7 +496,7 @@ useEffect(() => {
       <header className="mobile-topbar" inert={isMobile && menuOpen}>
         <a href="#" className="brand mobile-brand" aria-label="CivicWatch home" onClick={(event) => { event.preventDefault(); setTab("overview"); closeMenu(); }}>
           <span className="brand-mark"><CivicWatchLogo className="civicwatch-logo-symbol" /></span>
-          <span>Civic<span className="brand-light">Watch</span></span>
+          <HeaderClock />
         </a>
         <div className="mobile-topbar-actions">
           <button type="button" className="mobile-report-action" onClick={() => startReport()} disabled={auth.loading} aria-label={copy.actions.report} title={copy.actions.report}>
@@ -489,10 +525,7 @@ useEffect(() => {
           <span className="brand-mark">
             <CivicWatchLogo className="civicwatch-logo-symbol" />
           </span>
-          <span>
-            Civic<span className="brand-light">Watch</span>
-            <small>THE PUBLIC COMPLAINT ARCHIVE</small>
-          </span>
+          <HeaderClock />
         </a>
         <span className="navigation-caption">{copy.brand.navCaption}</span>
         <nav className="main-nav" aria-label="Main navigation">
