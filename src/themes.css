@@ -134,7 +134,7 @@ input:focus-visible,textarea:focus-visible,select:focus-visible{outline-color:va
 
 
 
-.main-nav button.active svg{color:var(--cw-accent);}
+.main-nav button.active svg{color:currentColor;}
 .main-nav button:hover{background:var(--cw-nav-hover);color:var(--cw-heading);}
 .main-nav button.active:after{display:none;}
 .main-nav button svg{width:17px;height:17px;}
