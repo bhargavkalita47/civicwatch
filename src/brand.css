@@ -20,3 +20,14 @@
   fill: none;
   color: var(--cw-accent-ink);
 }
+
+
+/* Keep hints quieter than typed values in both themes and all form/search fields. */
+:root input::placeholder,
+:root textarea::placeholder {
+  opacity: .58;
+}
+.modal[data-step-scroll] {
+  overflow-anchor: none;
+  scroll-behavior: auto;
+}
