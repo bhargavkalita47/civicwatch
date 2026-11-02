@@ -1,3 +1,5 @@
+import { normalizeProfile, canEditReport } from "../domain/profile";
+import { prepareProfilePhoto } from "./profilePhotos";
 import { config } from "../config";
 import { preparePhoto, photoDataUrl, photoTypes } from "./photos";
 import { categories } from "../data/categories";
@@ -121,7 +123,45 @@ export const mockService: CivicService = {
   },
   async getSession() {
     await delay();
-    return session();
+    const current = session();
+    if (!current) return null;
+    const profile = read().profiles?.find((p) => p.userId === current.user.id);
+    return profile ? { ...current, user: { ...current.user, displayName: profile.displayName || "CivicWatch member", avatarUrl: profile.avatarUrl } } : current;
+  },
+  async getProfile() {
+    await delay();
+    const user = requireUser();
+    return structuredClone(read().profiles?.find((p) => p.userId === user.id) ?? { userId: user.id, displayName: user.displayName, avatarUrl: "", city: "", bio: "", website: "" });
+  },
+  async updateProfile(changes) {
+    await delay();
+    const user = requireUser(), data = read();
+    const previous = data.profiles?.find((p) => p.userId === user.id) ?? { userId: user.id, displayName: user.displayName, avatarUrl: "", city: "", bio: "", website: "" };
+    const profile = normalizeProfile({ ...previous, ...changes, userId: user.id });
+    data.profiles = [...(data.profiles ?? []).filter((p) => p.userId !== user.id), profile];
+    const author = data.users.find((u) => u.id === user.id);
+    if (author) author.displayName = profile.displayName || "CivicWatch member";
+    save(data);
+    return structuredClone(profile);
+  },
+  async prepareProfilePhoto(file) {
+    requireUser();
+    return prepareProfilePhoto(file);
+  },
+  async updateIssue(issueId, input) {
+    await delay();
+    const user = requireUser(), data = read();
+    const issue = data.issues.find((i) => i.id === issueId);
+    if (!issue) throw new ServiceError("Report not found.", "NOT_FOUND");
+    if (!canEditReport(issue, user.id)) throw new ServiceError("Only your own reports that are still Reported can be edited.", "FORBIDDEN");
+    const area = data.areas?.find((a) => a.id === issue.cityId) ?? cities.find((a) => a.id === issue.cityId);
+    validateIssue({ ...issue, ...input, area: area ?? reportingArea("Locality", "Region", "Country", issue.location) }, categories);
+    issue.title = input.title.trim();
+    issue.description = input.description.trim();
+    issue.address = input.address.trim();
+    issue.updatedAt = now();
+    save(data);
+    return structuredClone(issue);
   },
   async signIn(input) {
     await delay();
@@ -145,8 +185,12 @@ export const mockService: CivicService = {
       role: "resident" as const,
       createdAt: now(),
     };
+    const storedProfile = read().profiles?.find((p) => p.userId === user.id);
+    if (storedProfile) {
+      user.displayName = storedProfile.displayName || "CivicWatch member";
+    }
     const result: Session = {
-      user,
+      user: { ...user, avatarUrl: storedProfile?.avatarUrl },
       expiresAt: new Date(Date.now() + 7 * 86400000).toISOString(),
     };
     const data = read();

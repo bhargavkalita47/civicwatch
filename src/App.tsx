@@ -1,3 +1,4 @@
+import { Profile, ProfileAvatar } from "./components/Profile";
 import { categoryMarkerColor } from "./domain/markerPalette";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -19,6 +20,7 @@ import {
   ShieldCheck,
   SlidersHorizontal,
   Users,
+  UserRound,
   X,
   Sun,
   Moon,
@@ -299,7 +301,7 @@ useEffect(() => {
       if (issue.status === "resolved") {
         // Historical deep links and My Reports must still work even if the
         // issue's town is not on the user's Reports watchlist.
-        if (watchlist.some((town) => town.id === issue.cityId)) {
+        if (tab !== "mine" && watchlist.some((town) => town.id === issue.cityId)) {
           setTab("reports");
           setReportSection("inactive");
         }
@@ -320,7 +322,7 @@ useEffect(() => {
         );
       }
     },
-    [allClusters, watchlist],
+    [allClusters, watchlist, tab],
   );
   useEffect(() => {
     if (!data) return;
@@ -561,7 +563,7 @@ useEffect(() => {
             className={tab === "mine" ? "active" : ""} aria-current={tab === "mine" ? "page" : undefined}
             onClick={() => { setTab("mine"); closeMenu(); }}
           >
-            <ClipboardList size={16} />
+            <UserRound size={16} />
             {copy.nav.mine}
           </button>
           {auth.session?.user.role === "administrator" && <button className={tab === "admin" ? "active" : ""} aria-current={tab === "admin" ? "page" : undefined} onClick={() => { setTab("admin"); closeMenu(); }}><ShieldCheck size={16}/> Admin</button>}
@@ -577,10 +579,10 @@ useEffect(() => {
           </button>
           {auth.session ? (
             <div className="account">
-              <span className="avatar small">
-                {auth.session.user.displayName[0]}
-              </span>
-              <span>{auth.session.user.displayName.split(" ")[0]}</span>
+              <button className="profile-account-button" aria-label="Open your profile" onClick={() => { setTab("mine"); closeMenu(); }}>
+                <ProfileAvatar name={auth.session.user.displayName} url={auth.session.user.avatarUrl} small/>
+                <span>{auth.session.user.displayName.split(" ")[0] || "CivicWatch member"}</span>
+              </button>
               <button
                 className="icon-button"
                 aria-label="Sign out"
@@ -631,7 +633,13 @@ useEffect(() => {
           </button>
         </section>
         {auth.error && <ErrorNotice message={auth.error} />}
-        {tab === "admin" ? (
+        {tab === "mine" ? (
+          <Profile key={auth.session?.user.id ?? "guest"} data={data} categories={categories} loading={loading} error={error}
+            onRetry={() => void load()} onSignIn={() => setSignIn(true)} onOpenIssue={openIssue} onViewMap={viewIssueOnMap} onReport={() => startReport()}
+            onIssueUpdated={(issue) => setData((current) => current ? { ...current, issues: current.issues.map((entry) => entry.id === issue.id ? issue : entry) } : current)}
+            onIssueDeleted={(id) => { setData((current) => current ? { ...current, issues: current.issues.filter((entry) => entry.id !== id), comments: current.comments.filter((entry) => entry.issueId !== id) } : current); void refresh().catch(() => notify("Report deleted. Refresh to update totals.")); }}
+            onProfileSaved={() => { void auth.refreshSession().catch(() => notify("Profile saved. Refresh to update your account name.")); void refresh().catch(() => notify("Profile saved. Refresh to update report authors.")); }} notify={notify}/>
+        ) : tab === "admin" ? (
           <AdminAccess />
         ) : tab === "overview" ? (
           <Overview
@@ -778,21 +786,6 @@ useEffect(() => {
               <p>{copy.reports.noWatchlistText}</p>
               <button className="button primary" onClick={() => setTab("snapshots")}>{copy.watchlist.addTown} <ArrowRight size={16}/></button>
             </div>
-          ) : tab === "mine" && !auth.session ? (
-            <div className="empty-state">
-              <ClipboardList size={38} />
-              <h3>{copy.empty.personal}</h3>
-              <p>
-                Sign in to view reports saved under your account.
-              </p>
-              <button
-                className="button primary"
-                onClick={() => setSignIn(true)}
-              >
-                Sign in to get started
-                <ArrowRight size={16} />
-              </button>
-            </div>
           ) : tab === "explore" ? (
             <div className="map-workspace" ref={mapWorkspaceRef} tabIndex={-1} aria-label="Explore report map">
               {mapIssue && <div className="map-report-focus" role="status">
@@ -875,7 +868,7 @@ useEffect(() => {
             <>
               <div className="board-toolbar">
                 <span>
-                  {tab === "mine" ? `${reportCount(visible.length)} by you` :
+                  {
                     query.trim() || hasFilters ? `Showing ${visible.length.toLocaleString()} of ${reportCount(reportCounts[reportSection], reportSection === "active" ? "open" : "resolved")}`
                       : reportCount(reportCounts[reportSection], reportSection === "active" ? "open" : "resolved")}
                 </span>
@@ -898,22 +891,16 @@ useEffect(() => {
                 <div className="empty-state">
                   <MapPin size={36} />
                   <h3>
-                    {tab === "mine" ? copy.empty.personal
-                      : reportCounts[reportSection] === 0
+                    {reportCounts[reportSection] === 0
                         ? reportSection === "active" ? copy.reports.noOpen : copy.reports.noResolved
                         : copy.empty.filters}
                   </h3>
                   <p>
-                    {tab === "mine" ? copy.empty.personalText
-                      : reportCounts[reportSection] === 0
+                    {reportCounts[reportSection] === 0
                         ? reportSection === "active" ? copy.reports.noOpenText : copy.reports.noResolvedText
                         : copy.empty.filtersText}
                   </p>
-                  {tab === "mine" ? (
-                    <button className="button primary" onClick={() => startReport()}>
-                      {copy.actions.report} <Plus size={16} />
-                    </button>
-                  ) : reportCounts[reportSection] === 0 ? (
+                  {reportCounts[reportSection] === 0 ? (
                     <button className="button primary" onClick={() => changeReportSection(reportSection === "active" ? "inactive" : "active")}>
                       View {reportSection === "active" ? copy.reports.resolved : copy.reports.open} reports <ArrowRight size={16} />
                     </button>
@@ -953,8 +940,8 @@ useEffect(() => {
                 value={status}
                 onChange={(e) => setStatus(e.target.value as typeof status)}
               >
-                <option value="all">{tab === "mine" ? "All statuses" : "All active statuses"}</option>
-                {Object.entries(statusLabels).filter(([id]) => id !== "resolved" || tab === "mine").map(([id, label]) => (
+                <option value="all">All active statuses</option>
+                {Object.entries(statusLabels).filter(([id]) => id !== "resolved").map(([id, label]) => (
                   <option value={id} key={id}>{label}</option>
                 ))}
               </select>
