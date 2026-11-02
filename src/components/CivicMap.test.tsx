@@ -5,7 +5,7 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import L from "leaflet";
 import { CivicMap } from "./CivicMap";
 import { categories } from "../data/categories";
-import type { Coordinate } from "../domain/types";
+import type { Coordinate, Issue, LocationCluster } from "../domain/types";
 
 let container: HTMLDivElement;
 let root: Root;
@@ -100,4 +100,33 @@ it("ignores a GPS result after the report map is closed", async () => {
   await act(async () => { root.render(null); });
   await found();
   expect(onPick).not.toHaveBeenCalled();
+});
+
+it("highlights the exact requested report even when it is secondary in a shared marker", async () => {
+  const make = (id: string, categoryId: string, confirmations: string[]): Issue => ({
+    id, categoryId, cityId: "test", title: id + " report title", description: "", address: "Test street",
+    location: {lat:26.17,lng:91.76}, attachments:[], status:"reported", authorId:"resident",
+    organizationId:null, confirmationUserIds:confirmations,createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),
+  });
+  const first = make("popular","pothole",["one","two"]);
+  const selected = make("selected","streetlight",[]);
+  const cluster: LocationCluster = {id:"shared",location:first.location,issues:[first,selected],totalPeople:3};
+  const onSelect = vi.fn();
+  await act(async()=>{root.render(<CivicMap categories={categories} clusters={[cluster]} highlightedIssueId={selected.id} onSelect={onSelect}/>);});
+  const marker = container.querySelector<HTMLElement>(".civic-marker-highlighted")!;
+  expect(marker).not.toBeNull();
+  expect(marker.getAttribute("aria-label")).toContain(selected.title);
+  expect(marker.title).toContain(categories.find(category=>category.id===selected.categoryId)!.label);
+  await act(async()=>{marker.click();});
+  expect(onSelect).toHaveBeenCalledWith(cluster);
+  await act(async()=>{root.render(<CivicMap categories={categories} clusters={[cluster]} onSelect={onSelect}/>);});
+  expect(container.querySelector(".civic-marker-highlighted")).toBeNull();
+});
+
+it("keeps resolved location markers clearly labeled when explicitly supplied", async () => {
+  const issue: Issue = {id:"resolved",categoryId:"pothole",cityId:"test",title:"Repaired crossing",description:"",
+    address:"Test street",location:{lat:26.17,lng:91.76},attachments:[],status:"resolved",authorId:"resident",
+    organizationId:null,confirmationUserIds:[],createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()};
+  await act(async()=>{root.render(<CivicMap categories={categories} clusters={[{id:issue.id,location:issue.location,issues:[issue],totalPeople:1}]} highlightedIssueId={issue.id}/>);});
+  expect(container.querySelector(".civic-marker-highlighted")?.getAttribute("aria-label")).toContain("Resolved.");
 });

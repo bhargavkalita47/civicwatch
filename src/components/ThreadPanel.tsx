@@ -49,6 +49,7 @@ export function ThreadPanel({
   onDeleted,
   onResolved,
   onAdd,
+  onViewMap,
   ensureSession,
   notify,
 }: {
@@ -62,6 +63,7 @@ export function ThreadPanel({
   onDeleted: () => Promise<void>;
   onResolved: () => Promise<void>;
   onAdd: (point: Issue["location"]) => void;
+  onViewMap: (issue: Issue) => void;
   ensureSession: (action: () => void) => void;
   notify: (message: string) => void;
 }) {
@@ -308,6 +310,9 @@ export function ThreadPanel({
               <MapPin size={15} />
               {issue.address}
             </p>
+            <button type="button" className="button secondary full view-report-map" onClick={() => onViewMap(issue)}>
+              <MapPin size={17} /> View on map <ArrowUpRight size={16} />
+            </button>
             <div className="author-line">
               <div className="avatar">
                 {author?.displayName
