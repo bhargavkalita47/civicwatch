@@ -131,15 +131,17 @@ export function ReportModal({
   const latestLookup = useRef(0);
   const editedLocation = useRef({ city: false, locality: false });
   const createdIssue = useRef<Issue | null>(null);
+  const chosenCity = useRef<string | null>(null);
   const address = [locality.trim(), city.trim()].filter(Boolean).join(", ");
   function populateArea(place: PlaceResult | null) {
-    if (!editedLocation.current.city) setCity(place?.city || place?.area?.name || "");
+    if (!editedLocation.current.city && chosenCity.current === null)
+      setCity(place?.city || place?.area?.name || "");
     if (!editedLocation.current.locality) setLocality(place?.locality || "");
     setRegion(place?.region || place?.area?.region || "");
     setCountry(place?.country || place?.area?.country || "");
     setLookupNotice(place?.city || place?.area?.name
       ? "Check the city and locality, and edit them if needed."
-      : "City could not be filled automatically. Enter it below; locality is optional.");
+      : "You can add a city or locality below, or leave both blank.");
   }
   async function choosePoint(next: Coordinate, place?: PlaceResult) {
     setPoint(next);
@@ -147,8 +149,17 @@ export function ReportModal({
     setError("");
     setLocating(false);
     setLookupNotice("");
-    editedLocation.current = { city: false, locality: false };
-    setCity(""); setLocality(""); setRegion(""); setCountry("");
+    // A search selection or manual city edit survives pin adjustments.
+    // A new search result deliberately replaces the previous selection.
+    if (place) {
+      chosenCity.current = place.city || place.area?.name || "";
+      editedLocation.current = { city: false, locality: false };
+      setCity(chosenCity.current);
+    } else {
+      editedLocation.current.locality = false;
+      if (chosenCity.current === null && !editedLocation.current.city) setCity("");
+    }
+    setLocality(""); setRegion(""); setCountry("");
     const ticket = ++latestLookup.current;
     if (place) { populateArea(place); return; }
     setLocating(true);
@@ -157,7 +168,7 @@ export function ReportModal({
       if (ticket === latestLookup.current) populateArea(match);
     } catch {
       if (ticket === latestLookup.current)
-        setLookupNotice("Place lookup is unavailable. Enter the city below; locality is optional.");
+        setLookupNotice("Place lookup is unavailable. City and locality are optional; the map pin is enough.");
     }
     finally { if (ticket === latestLookup.current) setLocating(false); }
   }
@@ -174,10 +185,6 @@ export function ReportModal({
         setError("Click the map to confirm the exact location.");
         return;
       }
-      if (!city.trim()) {
-        setError("Enter the city. Locality is optional.");
-        return;
-      }
       setError("");
       setStep(2);
       return;
@@ -187,12 +194,12 @@ export function ReportModal({
     setError("");
     try {
       const issue = await civicService.createIssue({
-        area: reportingArea(city, region || "Unspecified region", country || "Unspecified country", point),
+        area: reportingArea(city.trim() || locality.trim() || `Pinned location (${point.lat.toFixed(3)}, ${point.lng.toFixed(3)})`, region || "Unspecified region", country || "Unspecified country", point),
         categoryId: category,
         title,
         description,
         location: point,
-        address: address.length >= 3 ? address : `${address} · pinned location`,
+        address: address.length >= 3 ? address : address ? `${address} · pinned location` : "Pinned location",
         attachments: photos,
       });
       createdIssue.current = issue; // A refresh failure must never repeat this POST.
@@ -207,7 +214,7 @@ export function ReportModal({
     }
   }
   return (
-    <Modal title={copy.reporting.modalTitle} onClose={onClose} wide>
+    <Modal title={copy.reporting.modalTitle} onClose={onClose} wide resetScrollKey={step}>
       <div className="report-steps">
         <span className={step === 1 ? "active" : ""}>
           <i>{step > 1 ? <Check size={12} /> : 1}</i>{copy.reporting.locationStep}
@@ -245,8 +252,8 @@ export function ReportModal({
             </div>
             <p className="field-help" role="status">{locating ? "Filling city and locality from the selected location…" : !picked ? copy.reporting.mapHint : lookupNotice}</p>
             <div className="geo-field-grid">
-              <label>City
-                <input required maxLength={100} value={city} onChange={(e) => { editedLocation.current.city = true; setCity(e.target.value); }} placeholder="e.g. Guwahati" autoComplete="address-level2" />
+              <label>City — optional
+                <input maxLength={100} value={city} onChange={(e) => { editedLocation.current.city = true; setCity(e.target.value); }} placeholder="e.g. Guwahati" autoComplete="address-level2" />
               </label>
               <label>Locality — optional
                 <input maxLength={100} value={locality} onChange={(e) => { editedLocation.current.locality = true; setLocality(e.target.value); }} placeholder="e.g. Ulubari or GS Road" />
@@ -313,10 +320,8 @@ export function ReportModal({
               />
             </label>
             <label>
-              {copy.reporting.descriptionLabel}
+              {copy.reporting.descriptionLabel} — optional
               <textarea
-                required
-                minLength={20}
                 maxLength={3000}
                 rows={4}
                 value={description}
@@ -341,7 +346,7 @@ export function ReportModal({
             <div className="location-summary">
               <MapPin size={16} />
               <span>
-                {address}
+                {address || "Pinned location"}
                 <small>
                   {point.lat.toFixed(5)}, {point.lng.toFixed(5)}
                 </small>

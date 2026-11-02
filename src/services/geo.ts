@@ -28,7 +28,8 @@ function parseFeature(feature: PhotonFeature): PlaceResult | null {
   const point = { lat, lng };
   const name = text(p.name), city = text(p.city);
   const settlementName = text(p.osm_key) === "place" && ["city", "town", "village", "hamlet"].includes(text(p.osm_value)) ? name : "";
-  const cityName = city || text(p.town) || text(p.village) || text(p.hamlet) || settlementName;
+  const selectedSettlement = text(p.osm_key) === "place" && ["city", "town"].includes(text(p.osm_value)) ? name : "";
+  const cityName = selectedSettlement || city || text(p.town) || text(p.village) || text(p.hamlet) || settlementName;
   const region = text(p.state) || text(p.county);
   const country = text(p.country);
   const area = cityName && region && country ? reportingArea(cityName, region, country, point) : null;

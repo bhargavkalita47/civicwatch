@@ -12,7 +12,8 @@ vi.mock("../services/geo", () => ({ geoService: { reverse: vi.fn() } }));
 vi.mock("./CivicMap", () => ({ CivicMap: ({ onPick }: { onPick: (p: {lat:number;lng:number}) => void }) =>
   <div><button type="button" onClick={() => onPick({ lat: 26.17, lng: 91.76 })}>Use my location</button>
     <button type="button" onClick={() => onPick({ lat: 27, lng: 92 })}>Move pin</button></div> }));
-vi.mock("./PlaceSearch", () => ({ PlaceSearch: () => <div /> }));
+vi.mock("./PlaceSearch", () => ({ PlaceSearch: ({ onSelect }: { onSelect: (place: PlaceResult) => void }) =>
+  <button type="button" onClick={() => onSelect(match)}>Select searched city</button> }));
 const match: PlaceResult = { id: "test", label: "Ulubari, Guwahati", point: { lat: 26.17, lng: 91.76 },
   city: "Guwahati", locality: "Ulubari", region: "Assam", country: "India", area: null };
 let container: HTMLDivElement;
@@ -38,7 +39,8 @@ async function submit() {
 async function publish() {
   await submit();
   const combo = container.querySelector<HTMLInputElement>('[role="combobox"]')!;
-  await act(async () => { combo.focus(); combo.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true })); });
+  await act(async () => { combo.focus(); });
+  await act(async () => { combo.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true })); });
   await fill(container.querySelector<HTMLInputElement>('input[placeholder="Three streetlights out near the crossing"]')!, "Streetlights not working");
   await fill(container.querySelector("textarea")!, "Several streetlights on this road have stopped working.");
   await submit();
@@ -57,7 +59,7 @@ afterEach(async () => {
 });
 
 it("asks only for city and optional locality and fills both after live location", async () => {
-  expect(city().required).toBe(true);expect(locality().required).toBe(false);
+  expect(city().required).toBe(false);expect(locality().required).toBe(false);
   expect(container.textContent).not.toMatch(/State \/ region|Street or nearby landmark|Country/);
   await click("Use my location");
   expect(city().value).toBe("Guwahati");expect(locality().value).toBe("Ulubari");
@@ -94,8 +96,56 @@ it("ignores stale lookup results after the pin is moved", async () => {
   expect(city().value).toBe("New city");expect(locality().value).toBe("New locality");
 });
 
-it("requires a city but allows an empty locality", async () => {
-  reverse.mockResolvedValueOnce(null);await click("Use my location");await submit();
-  expect(container.textContent).toContain("Enter the city. Locality is optional.");
-  expect(createIssue).not.toHaveBeenCalled();
+it("publishes with city, locality and description left blank", async () => {
+  reverse.mockResolvedValueOnce(null); await click("Use my location"); await submit();
+  const combo = container.querySelector<HTMLInputElement>('[role="combobox"]')!;
+  await act(async () => { combo.focus(); });
+  await act(async () => { combo.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true })); });
+  await fill(container.querySelector<HTMLInputElement>('input[placeholder="Three streetlights out near the crossing"]')!, "Streetlights not working");
+  expect(container.querySelector("textarea")!.required).toBe(false);
+  expect(container.querySelector("form")!.checkValidity()).toBe(true);
+  await submit();
+  expect(createIssue).toHaveBeenCalledWith(expect.objectContaining({
+    description: "", address: "Pinned location",
+    area: expect.objectContaining({name: "Pinned location (26.170, 91.760)"}),
+  }));
+});
+
+it("keeps the searched city when a new pin reverse-geocodes to a different city", async () => {
+  await click("Select searched city");
+  expect(city().value).toBe("Guwahati");
+  expect(reverse).not.toHaveBeenCalled();
+  reverse.mockResolvedValueOnce({...match,city:"Different city",locality:"New neighbourhood"});
+  await click("Move pin");
+  expect(city().value).toBe("Guwahati");
+  expect(locality().value).toBe("New neighbourhood");
+  await fill(city(),"Edited city");
+  await click("Move pin");
+  expect(city().value).toBe("Edited city");
+  await click("Select searched city");
+  expect(city().value).toBe("Guwahati");
+});
+
+it("allows a deliberately cleared searched city to stay blank after pin adjustments", async () => {
+  await click("Select searched city"); await fill(city(),""); await click("Move pin");
+  expect(city().value).toBe("");
+});
+
+it("resets dialog scroll and focus on Continue and Back without resetting field values", async () => {
+  await click("Use my location");
+  const dialog = container.querySelector("dialog")!;
+  dialog.scrollTop = 900;
+  await click("Continue");
+  expect(dialog.scrollTop).toBe(0);
+  expect(document.activeElement).toBe(dialog);
+  expect(container.querySelector('[role="combobox"]')).not.toBeNull();
+  dialog.scrollTop = 800;
+  await click("Back");
+  expect(dialog.scrollTop).toBe(0);
+  expect(city().value).toBe("Guwahati");
+});
+
+it("still requires an exact map pin before continuing", async () => {
+  await submit();
+  expect(container.textContent).toContain("Click the map to confirm the exact location.");
 });

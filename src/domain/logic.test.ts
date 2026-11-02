@@ -266,3 +266,14 @@ describe("Validation and mock service integration", () => {
     });
   });
 });
+
+
+it("accepts blank and short optional descriptions and still enforces the size limit", async () => {
+  expect(() => validateIssue({...input, description:""}, categories)).not.toThrow();
+  expect(() => validateIssue({...input, description:"Broken"}, categories)).not.toThrow();
+  expect(() => validateIssue({...input, description:"x".repeat(3001)}, categories)).toThrow();
+  await mockService.signIn({displayName:"Resident A",email:"resident-a@example.com"});
+  const saved = await mockService.createIssue({...input, description:""});
+  expect(saved.description).toBe("");
+  expect((await mockService.getDataset()).issues.find(issue => issue.id === saved.id)?.description).toBe("");
+});

@@ -35,3 +35,14 @@ describe("worldwide place lookup adapter", () => {
     expect(result).toMatchObject({ city: "", locality: "A public park", area: null });
   });
 });
+
+
+it("uses the selected city or town name ahead of conflicting parent city metadata", async () => {
+  vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({features:[{
+    geometry:{coordinates:[12.34,45.67]},
+    properties:{name:"Selected Town",city:"Parent city",osm_key:"place",osm_value:"town",state:"Region",country:"Country"}
+  }]}))));
+  const [result] = await geoService.search("selected town priority test");
+  expect(result.city).toBe("Selected Town");
+  expect(result.area?.name).toBe("Selected Town");
+});

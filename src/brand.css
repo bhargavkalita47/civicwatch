@@ -20,3 +20,204 @@
   fill: none;
   color: var(--cw-accent-ink);
 }
+
+
+/* Keep hints quieter than typed values in both themes and all form/search fields. */
+:root input::placeholder,
+:root textarea::placeholder {
+  opacity: .58;
+}
+.modal[data-step-scroll] {
+  overflow-anchor: none;
+  scroll-behavior: auto;
+}
+
+
+/* Mobile-first finish: quiet utility type, consistent gutters and frosted chrome. */
+:root {
+  --cw-gutter: clamp(16px, 2.2vw, 28px);
+  --cw-rail: 242px;
+  --cw-glass: rgba(255, 250, 253, .78);
+  --cw-glass-edge: rgba(255, 255, 255, .65);
+}
+:root[data-theme="dark"] {
+  --cw-glass: rgba(10, 35, 40, .82);
+  --cw-glass-edge: rgba(169, 193, 196, .12);
+}
+
+/* Allow 320px devices to accommodate their scrollbar without horizontal overflow. */
+body { min-width: 0; }
+
+/* A short page grows to the viewport; long pages keep a natural, non-overlapping footer. */
+#root { min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; }
+#root > :is(main, footer) {
+  margin-inline: var(--cw-rail) 0; min-width: 0; width: auto; max-width: none; align-self: stretch;
+}
+#root > main { flex: 1 0 auto; margin-block: 0; }
+#root > footer {
+  flex-shrink: 0;
+  margin-block: auto 0;
+  padding-block: 24px max(24px, env(safe-area-inset-bottom));
+}
+#root > footer .footer-brand {
+  display: flex; flex-direction: column; gap: 6px; align-items: flex-start; white-space: normal;
+}
+#root > footer .footer-brand > span { display: block; margin: 0; }
+#root > footer p { max-width: 65ch; margin: 0; }
+
+/* Reserve the serif for the page hero and headline statistics. */
+#root :is(h1, h2, h3, h4),
+.modal :is(h2, h3, h4),
+#root .ranked-line strong,
+#root .empty-discussion b {
+  font-family: "Inter", system-ui, sans-serif;
+  font-weight: 650;
+  font-synthesis: none;
+  letter-spacing: -.02em;
+  line-height: 1.35;
+}
+#root h2 { font-size: clamp(20px, 2vw, 25px); }
+#root h3, .modal h3 { font-size: 18px; }
+#root .thread-title { font-size: clamp(24px, 3vw, 32px); }
+#root .intro p {
+  font-family: "Inter", system-ui, sans-serif;
+  font-size: clamp(14px, 1.1vw, 16px);
+  font-weight: 400; letter-spacing: 0; line-height: 1.65;
+  max-width: 65ch;
+}
+#root .intro h1,
+#root .overview-stats-title h2,
+#root .snapshot-summary-heading h2 {
+  font-family: "Instrument Serif", Georgia, serif;
+  font-weight: 400; font-synthesis: none; letter-spacing: -.025em; line-height: 1.12;
+}
+#root .intro h1 { font-size: var(--type-display); line-height: var(--leading-display); }
+#root .overview-stats-title h2,
+#root .snapshot-summary-heading h2 { font-size: var(--type-section); }
+.modal .modal-header h2 { font-size: clamp(21px, 2vw, 25px); }
+
+/* Give the report summary air on every side, including its formerly flush top edge. */
+#root .workspace > .watch-reports-summary {
+  margin: var(--cw-gutter);
+}
+#root .watch-reports-summary .watch-reports-overview {
+  padding: 22px var(--cw-gutter);
+  gap: 18px;
+}
+#root .watch-reports-summary .watch-reports-sections {
+  padding: 12px; gap: 10px;
+}
+#root .watch-reports-manage {
+  min-height: 44px; padding: 10px 14px; border-radius: 10px;
+  justify-content: center; text-align: center;
+}
+#root .watch-reports-sections > button {
+  min-height: 72px; padding: 16px; justify-content: center;
+}
+#root .watch-reports-sections > button strong { margin-left: 6px; }
+
+/* Both report and discussion uploads use the same padded, self-contained panel. */
+.photo-picker {
+  padding: 14px; gap: 12px; border: 1px solid var(--cw-border); border-radius: 12px;
+  background: color-mix(in srgb, var(--cw-soft) 65%, var(--cw-panel));
+}
+.report-photos > .photo-picker { margin-top: 12px; }
+.photo-source-actions { gap: 10px; align-items: stretch; }
+.photo-source-actions .upload-button {
+  min-height: 66px; padding: 14px; margin: 0; min-width: 0;
+  background: var(--cw-panel); justify-content: center;
+}
+.photo-source-actions .upload-button > span { min-width: 0; }
+.photo-source-actions .take-photo-button { min-height: 48px; justify-content: center; }
+.photo-picker .photo-processing-note {
+  margin: 0; font: 400 12px/1.6 "Inter", system-ui, sans-serif;
+  color: var(--cw-muted);
+}
+.photo-picker .photo-previews:empty { display: none; }
+.photo-picker .camera-capture { margin: 0; }
+.photo-picker .error-notice { margin: 0; }
+.form-actions { justify-content: center; flex-wrap: wrap; gap: 12px; }
+.form-actions > .text-button { margin-right: 0; }
+.form-actions > .button { justify-content: center; min-height: 46px; }
+.modal .form-body { gap: 20px; }
+.modal .form-body > .field-help { margin-top: -6px; }
+.modal .location-summary { gap: 12px; padding: 16px; }
+.modal .location-summary > span { min-width: 0; overflow-wrap: anywhere; }
+.modal .location-summary .text-button { min-height: 44px; padding-inline: 10px; }
+.modal .fine-print { margin: 0; }
+
+/* Frost only the chrome, keeping dense content and all map tiles crisp. */
+.toast { color: var(--cw-ink); }
+.mobile-topbar, .site-header, .modal-header,
+.overview-panel-heading, .snapshot-side-head, .snapshot-detail-header,
+.filter-bar, .toast {
+  background: var(--cw-panel);
+}
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .mobile-topbar, .site-header, .modal-header,
+  #root .overview-panel-heading, #root .snapshot-side-head,
+  #root .snapshot-detail-header, #root .filter-bar, .toast {
+    background: var(--cw-glass);
+    -webkit-backdrop-filter: blur(20px) saturate(135%);
+    backdrop-filter: blur(20px) saturate(135%);
+    box-shadow: inset 0 1px 0 var(--cw-glass-edge);
+  }
+}
+/* Readability fallback when transparency is reduced by the device. */
+@media (prefers-reduced-transparency: reduce) {
+  .mobile-topbar, .site-header, .modal-header,
+  #root .overview-panel-heading, #root .snapshot-side-head,
+  #root .snapshot-detail-header, #root .filter-bar, .toast {
+    background: var(--cw-panel);
+    -webkit-backdrop-filter: none; backdrop-filter: none;
+  }
+}
+@media (max-width: 1350px) { :root { --cw-rail: 219px; } }
+@media (max-width: 1050px) { :root { --cw-rail: 196px; } }
+@media (max-width: 790px) {
+  :root { --cw-rail: 0px; }
+  #root > main { padding-inline: 16px; padding-bottom: 28px; }
+  #root > footer {
+    margin-inline: 0; padding-inline: 20px;
+    display: flex; flex-direction: column; align-items: center;
+    gap: 14px; text-align: center;
+  }
+  #root > footer .footer-brand { align-items: center; }
+  #root .intro { gap: 20px; padding-block: 28px 24px; }
+  #root .intro h1 { font-size: clamp(38px, 9vw, 54px); }
+  #root .intro > .button { align-self: center; justify-content: center; }
+  #root .overview-panel-heading,
+  #root .snapshot-detail-header,
+  #root .snapshot-side-head { padding: 20px 16px; gap: 16px; }
+  #root .overview-panel-heading,
+  #root .snapshot-detail-header { flex-direction: column; align-items: stretch; }
+  #root .overview-panel-heading .button,
+  #root .snapshot-detail-header .button { align-self: center; min-height: 44px; }
+  #root .snapshot-no-reports { text-align: center; align-items: center; padding-block: 20px; }
+  #root .snapshot-no-reports .button { margin-inline: auto; justify-content: center; }
+  #root .snapshot-onboarding { padding: 28px 20px; align-items: center; text-align: center; }
+  #root .snapshot-suggestions { justify-content: center; }
+  #root .workspace-footnote { padding: 16px; gap: 12px; justify-content: center; text-align: center; flex-wrap: wrap; }
+  #root .workspace-footnote > span { justify-content: center; }
+  #root .board-toolbar { padding: 16px; gap: 14px; }
+  #root .filter-bar { padding: 16px; gap: 12px; }
+  #root .filter-bar > .filter-button { margin-inline: auto; justify-content: center; }
+  #root .watch-reports-overview { flex-direction: column; align-items: center; text-align: center; }
+  #root .watch-reports-total { align-items: center; }
+  #root .watch-reports-summary.compact .watch-reports-overview-detail { justify-content: center; }
+  .modal .form-body { padding: 22px 18px; }
+  .modal .modal-header { padding: 18px; }
+  .form-actions > .button { flex: 1 1 120px; max-width: 280px; }
+  .photo-source-actions { flex-direction: column; }
+  .photo-source-actions > .upload-button { flex: 0 1 auto; }
+  .photo-source-actions .take-photo-button { width: 100%; }
+  .camera-actions { justify-content: center; }
+  .mobile-topbar { padding-block: 12px; }
+}
+@media (max-width: 380px) {
+  #root > main { padding-inline: 12px; }
+  #root .workspace > .watch-reports-summary { margin: 12px; }
+  #root .watch-reports-summary .watch-reports-sections { padding: 8px; gap: 8px; }
+  #root .watch-reports-sections > button { flex-direction: column; gap: 10px; padding: 14px 8px; }
+  #root .watch-reports-sections > button strong { margin-left: 0; }
+}
