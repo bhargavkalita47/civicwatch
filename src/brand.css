@@ -86,8 +86,7 @@ body { min-width: 0; }
   max-width: 65ch;
 }
 #root .intro h1,
-#root .overview-stats-title h2,
-#root .snapshot-summary-heading h2 {
+#root .overview-stats-title h2 {
   font-family: "Instrument Serif", Georgia, serif;
   font-weight: 400; font-synthesis: none; letter-spacing: -.025em; line-height: 1.12;
 }
