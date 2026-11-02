@@ -24,6 +24,7 @@ export interface MapProps {
   showLocationBadge?: boolean;
   center?: Coordinate;
   clusters?: LocationCluster[];
+  highlightedIssueId?: string;
   onSelect?: (cluster: LocationCluster) => void;
   onPick?: (point: Coordinate) => void;
   pick?: Coordinate;
@@ -39,6 +40,7 @@ export function CivicMap({
   showLocationBadge = true,
   center = config.center,
   clusters = [],
+  highlightedIssueId,
   onSelect,
   onPick,
   pick,
@@ -109,7 +111,8 @@ export function CivicMap({
     group?.clearLayers();
     if (!map.current || !group) return;
     for (const cluster of clusters) {
-      const primary = [...cluster.issues].sort(
+      const highlighted = cluster.issues.find((issue) => issue.id === highlightedIssueId);
+      const primary = highlighted || [...cluster.issues].sort(
         (a, b) => peopleCount(b) - peopleCount(a),
       )[0];
       const category = categories.find((c) => c.id === primary?.categoryId);
@@ -118,7 +121,7 @@ export function CivicMap({
         bg = markerColor(base, cluster.totalPeople),
         n = cluster.issues.length;
       const icon = L.divIcon({
-        className: "civic-marker",
+        className: "civic-marker" + (highlighted ? " civic-marker-highlighted" : ""),
         html: `<div class="pin-body" style="--pin-color:${bg};--pin-ink:${markerIconColor(bg)};--pin-rgb:${markerRgb(bg)};--pin-ring:${Math.min(0.24, cluster.totalPeople / 100)}"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="${paths[category.symbol] || paths.pin}"/></svg>${n > 1 ? `<sup aria-hidden="true">${n}</sup>` : ""}</div>`,
         iconSize: [38, 45],
         iconAnchor: [19, 42],
@@ -126,6 +129,7 @@ export function CivicMap({
       const marker = L.marker([cluster.location.lat, cluster.location.lng], {
         icon,
         keyboard: true,
+        zIndexOffset: highlighted ? 2000 : 0,
         title: `${category.label} · ${cluster.totalPeople} ${cluster.totalPeople === 1 ? "person" : "people"} · ${n} ${n === 1 ? "report" : "reports"}`,
         alt: `${n} issues, ${cluster.totalPeople} people`,
       }).addTo(group);
@@ -139,6 +143,9 @@ export function CivicMap({
         content.append(label, details);
         return content;
       }, { className: "civic-tooltip", direction: "top", offset: [0, -19], opacity: 1 });
+      if (highlighted) {
+        marker.getElement()?.setAttribute("aria-label", "Highlighted report: " + highlighted.title + (highlighted.status === "resolved" ? ". Resolved. " : ". ") + "Open discussion.");
+      }
       marker.on("click", () => callbacks.current.onSelect?.(cluster));
     }
     // Browsing maps need a position marker too, even without a report selection.
@@ -169,7 +176,7 @@ export function CivicMap({
         alt: "Selected report location",
         zIndexOffset: 1000,
       }).addTo(group);
-  }, [categories, clusters, pick, locatedPoint, compact, onPick]);
+  }, [categories, clusters, highlightedIssueId, pick, locatedPoint, compact, onPick]);
   useEffect(() => {
     if (focus && map.current) {
       if (compact)
