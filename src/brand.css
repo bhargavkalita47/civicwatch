@@ -66,7 +66,13 @@ body { min-width: 0; }
   display: flex; flex-direction: column; gap: 6px; align-items: flex-start; white-space: normal;
 }
 #root > footer .footer-brand > span { display: block; margin: 0; }
-#root > footer p { max-width: 65ch; margin: 0; }
+
+#root > footer p {
+  max-width: 65ch;
+  margin: 0 0 0 auto;
+  text-align: right;
+}
+
 
 /* Reserve the serif for the page hero and headline statistics. */
 #root :is(h1, h2, h3, h4),
@@ -240,6 +246,10 @@ dialog.modal[data-step-scroll] > .modal-header {
     display: flex; flex-direction: column; align-items: center;
     gap: 14px; text-align: center;
   }
+   #root > footer p {
+  margin: 0 auto;
+  text-align: center;
+}
   #root > footer .footer-brand { align-items: center; }
   #root .intro { gap: 20px; padding-block: 28px 24px; }
   #root .intro h1 { font-size: clamp(38px, 9vw, 54px); }
