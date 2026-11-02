@@ -211,7 +211,7 @@ dialog.modal[data-step-scroll] > .modal-header {
 
   :root:not([data-theme="dark"])
   .site-header .main-nav button.active svg {
-    color: var(--cw-accent);
+    color: currentColor;
   }
 
   /* Section labels and help */
