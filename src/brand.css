@@ -256,3 +256,34 @@ body { min-width: 0; }
   }
 }
 
+/* Fix card overflow in Reports and My Reports */
+#root .community-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+#root .community-grid > .issue-card {
+  min-width: 0;
+  max-width: 100%;
+}
+
+#root .community-grid .issue-card h3,
+#root .community-grid .card-description,
+#root .community-grid .issue-card-address {
+  overflow-wrap: anywhere;
+}
+
+/* Tablets: two equal columns */
+@media (max-width: 980px) {
+  #root .community-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Mobile: single column */
+@media (max-width: 740px) {
+  #root .community-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+
