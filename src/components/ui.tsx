@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useLayoutEffect, useEffect, useRef, useState, type ReactNode } from "react";
 import {
   MapPin,
   Construction,
@@ -80,12 +80,14 @@ export function Modal({
   children,
   wide = false,
   drawer = false,
+  resetScrollKey,
 }: {
   title: string;
   onClose: () => void;
   children: ReactNode;
   wide?: boolean;
   drawer?: boolean;
+  resetScrollKey?: string | number;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   useEffect(() => {
@@ -98,9 +100,19 @@ export function Modal({
       document.body.style.overflow = before;
     };
   }, []);
+  useLayoutEffect(() => {
+    if (resetScrollKey === undefined) return;
+    const dialog = ref.current;
+    if (!dialog) return;
+    // Release bottom-button focus without opening the mobile keyboard.
+    dialog.focus({ preventScroll: true });
+    dialog.scrollTop = 0;
+  }, [resetScrollKey]);
   return (
     <dialog
       ref={ref}
+      tabIndex={-1}
+      data-step-scroll={resetScrollKey !== undefined ? "" : undefined}
       className={`modal ${wide ? "wide" : ""} ${drawer ? "drawer" : ""}`}
       onCancel={(event) => {
         // A file input can emit a bubbling cancel event when its picker is dismissed.
