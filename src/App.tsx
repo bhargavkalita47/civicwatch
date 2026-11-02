@@ -85,7 +85,7 @@ function HeaderClock() {
   useEffect(() => {
     const interval = window.setInterval(() => {
       setNow(new Date());
-    }, 15000);
+    }, 10000);
 
     return () => window.clearInterval(interval);
   }, []);
