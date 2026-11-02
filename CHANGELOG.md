@@ -1,3 +1,48 @@
+# Changelog
+
+Changes are listed newest first. The entries below record merged work; the package version remains `2.5.8` until the next versioned release.
+
+## Unreleased — merged frontend updates (1–2 November 2026)
+
+### Added
+
+- Expanded the catalogue to 70 civic issue types, with grouped search and keyboard navigation in the category picker.
+- Added multiple-image selection and live camera capture to report and discussion photo pickers, including preview, device-camera fallback, and stream cleanup.
+- Added “View on map” to report details, opening Explore at the report location and highlighting its marker.
+- Added current-device-location markers and GPS selection in the reporting form.
+- Added a date/time display to desktop and mobile headers, refreshed every 10 seconds using the device's locale time zone.
+
+### Improved
+
+- Raised the input limit to 15 MB per image, retaining a maximum of three images per report or comment.
+- Unified upload/camera photo processing: orientation correction, metadata removal, maximum 2,560-pixel edge, and quality-aware compression with a soft 2 MB target.
+- Simplified reporting into location and details steps, with optional city, locality, description, and photos.
+- Preserved chosen city names and manual edits while adjusting the map pin; allowed reporting to continue when geocoding is unavailable.
+- Refined mobile spacing, report-card grids, toolbar padding, footer placement/alignment, and placeholder contrast.
+- Reduced Instrument Serif usage outside editorial highlights and strengthened glass effects on headers, navigation, and dialogs.
+- Refined selected-navigation gradients and icon contrast in light and dark themes.
+- Kept the default dataset empty unless fictional seed data is explicitly enabled.
+
+### Fixed
+
+- Cancelling the image file picker no longer closes the report form or loses entered data.
+- Navigation and report-step changes reset scroll position.
+- Report cards and long content fit narrow layouts without horizontal overflow.
+- Mobile drawer/header stacking and dialog headers retain the intended visual order.
+- Cloudflare preview configuration includes the previews setting.
+
+### Repository documentation
+
+- Replaced accumulated README release notes with a current product, setup, architecture, and backend-status guide.
+- Updated deployment, API input rules, geography, and verification guidance to reflect the merged frontend.
+- Added contributor guidance and a pull-request template.
+
+The shared backend is still pending; these changes do not activate public accounts, cross-device reports, or hosted media.
+
+## Earlier versioned history
+
+The entries below are historical release notes. Later entries supersede older design, terminology, and deployment decisions. Validation notes describe their original revision, not the latest commit.
+
 ## v2.5.8 — frontend stability and future Vercel staging readiness
 
 - Corrected mobile topbar/search stacking while scrolling.
@@ -103,7 +148,6 @@
 - reduced explanatory text in Overview, Local Snapshot, and Reports
 - slimmed Reports into a count-first summary with Active and Inactive subsections
 
-# CivicWatch Changelog
 
 ## 2.1.0 — Consolidated Reports (31 October 2026)
 
@@ -115,7 +159,7 @@
 - Added first-run empty-watchlist guidance, adjusted responsive layout and accessibility for subsection selectors, and expanded regression tests and design checks.
 - Preserved the map-first platform overview, Local Snapshot watchlist totals, regular Instrument Serif, and subtle light/dark gradients.
 
-# v2.0 — Watchlist drag-and-drop + correctly scoped totals (2026-10-31)
+## v2.0 — Watchlist drag-and-drop + correctly scoped totals (2026-10-31)
 
 - Added a drag grip to every saved town, with mouse/touch/stylus pointer reordering, visual targets and edge scrolling. Kept accessible arrow-key and up/down controls. Saved order persists in the existing browser storage key.
 - Moved “Numbers that speak for themselves.” from Overview to Local Snapshot, where it now represents combined totals across all saved towns, not the entire platform. Participants are deduplicated across watched towns.
@@ -124,14 +168,13 @@
 - Added isolated watchlist aggregation/reorder helpers, unit tests, extra design validation, and updated hierarchy documentation.
 - Retained regular Instrument Serif and subtle theme-specific gradients.
 
-# v1.9 — Regular serif and subtle gradients (2026-10-31)
+## v1.9 — Regular serif and subtle gradients (2026-10-31)
 
 - Reverted all editorial Instrument Serif headings, nested emphasis and hero descriptions to native regular (400); disabled synthetic bold. Inter remains bold for data and important controls.
 - Added low-opacity lavender/coral/teal gradients to ambient page/background, navigation, map header, section headers, selected watchlist items, equal-weight metric cards and the primary report action.
 - Included theme-specific light and dark treatments and preserved category-marker colours, map clarity, functional status colours, layout and accessibility.
 - Updated design hierarchy document, version and CSS validation.
 
-# Changelog
 
 ## v1.8.0 — Unified editorial typography and interface hierarchy
 

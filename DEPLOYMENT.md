@@ -1,175 +1,146 @@
-# Deploy CivicWatch to Cloudflare Workers (GitHub integration)
+# Deploy CivicWatch
 
-Cloudflare Workers with Static Assets remains the **current staging target**.
-A separate `vercel.json` config is included for a future **static frontend-only** migration;
-we are not switching hosts or implementing the backend in this patch.
-It is not a Cloudflare Pages project. Source configuration (`wrangler.jsonc`) specifies the
-Worker entry point, static build output, SPA routing and API routes together.
-No Pages Functions or Pages-only configuration is included.
+CivicWatch currently runs on **Cloudflare Workers with Static Assets**. The Vite build serves the frontend; the Worker owns `/api` and `/api/*` before static asset routing.
 
-> **Public launch prerequisite:** The default service is browser-local and
-> the Worker currently returns `501 BACKEND_NOT_ACTIVATED` for report reads and
-> writes. A successful Cloudflare deployment does **not** mean residents can
-> publish or share reports. Before inviting real submissions, activate verified
-> authentication, persistent reporting APIs (D1), secure uploads (R2), and
-> moderation, then test reports on two independent devices. Set
-> `VITE_SEED_DEMO=false`; only switch to `VITE_SERVICE_MODE=api` once the API
-> is implemented. See `docs/BACKEND.md`.
+Live frontend: https://civicwatch.bhargavkalita1327.workers.dev/
 
-## 1. Create the GitHub repository
+> The default adapter stores reports, photos, and preview accounts in the browser. Deployment does not activate shared reporting. Implement and verify authentication, persistent APIs, and hosted uploads before enabling `VITE_SERVICE_MODE=api`. See [backend activation](docs/BACKEND.md).
 
-1. Extract the latest CivicWatch source ZIP.
-2. Create a new empty GitHub repository (for example, `civicwatch-community`).
-3. Upload **the contents** of the extracted folder to the repository root.
-   `package.json`, `wrangler.jsonc`, `worker/`, `src/`, `backend/` and
-   `package-lock.json` must be directly at that root, not nested in an extra
-   project folder.
-4. Commit to `main`. Never upload `node_modules`, `dist`, `.env.local`,
-   service tokens, or private credentials.
+## Existing GitHub deployment
 
-If the new Worker must have a different name, update the `name` field in
-`wrangler.jsonc` **before** creating the Cloudflare deployment. Its default is
-`civicwatch-community`; use only lowercase letters, numbers and hyphens. The GitHub
-repository name can differ from the Worker name. The new default name is
-intentionally different from the existing `civicwatch` Worker, so deploying
-this ZIP will not silently overwrite that earlier project.
+Continue using [bhargavkalita47/civicwatch](https://github.com/bhargavkalita47/civicwatch). Updates are commits to this repository; a new repository or Worker is not required for each change.
 
-## 2. Connect a *new Worker* to GitHub
+| Build setting | Value |
+| --- | --- |
+| Production branch | `main` |
+| Root directory | Repository root (`/`) |
+| Node.js | `22` |
+| Build command | `npm run build` |
+| Deploy command | `npm run deploy` |
+| Static asset output | `dist/`, configured in `wrangler.jsonc` |
 
-1. In Cloudflare, open **Workers & Pages** → **Create** → **Worker** and choose
-   the GitHub repository deployment option (the wording may differ).
-2. Select your new repository and production branch `main`.
-3. Configure these values exactly:
+Keep existing account bindings and build settings unless a change requires them. Check the Cloudflare build result after merging a pull request.
 
-   | Field | Value |
-   | --- | --- |
-   | Build command | `npm run build` |
-   | Deploy command | `npm run deploy` |
-   | Root directory | `/` |
-   | Node.js version | `22` (or newer supported version) |
+### Worker name
 
-4. If the dashboard has a framework selection, choose **None/Other** for this
-   Worker deployment. No Pages output directory is needed: Wrangler reads
-   `assets.directory: "./dist"` from `wrangler.jsonc`.
-5. Optionally set the *build-time* variable `VITE_SERVICE_MODE=mock` explicitly.
-   Mock mode is already the source default. `VITE_SEED_DEMO=true` displays
-   fictional reports and starter discussions on new browsers.
-6. Save and deploy. The project publishes as a `*.workers.dev` address (or a
-   custom domain you attach). Future pushes to `main` redeploy from GitHub.
+The checked-in `wrangler.jsonc` uses `name: "civicwatch-community"`. The current live URL belongs to the `civicwatch` Worker. A Git-connected build may supply its configured Worker target; a standalone CLI deploy must explicitly target the intended Worker.
 
-**Important:** Do not set `npx wrangler pages deploy` or `pages_build_output_dir`.
-Do not create a Pages project for this package. The supported command is
-`npm run deploy`, which pins Wrangler CLI to 4.156.0 in the npm script and
-executes `wrangler deploy` with the checked-in Worker configuration.
+Before publishing from a local machine or creating another Git integration, check the destination name and align the source or deployment configuration. A plain CLI deployment using the checked-in name can create or update `civicwatch-community` rather than the existing live Worker.
 
-## 3. Verify production
+### Preview builds
 
-After deployment, check:
+`wrangler.jsonc` includes `"previews": {}` for the preview configuration. Keep production on `main`; use a feature branch and the connected Worker's preview build to review changes before merging. Preview availability and its URL are shown by the Cloudflare build integration.
 
-- Map background uses OpenStreetMap tiles, with no CARTO watermark or map API
-  key. You do **not** need `VITE_CARTO_API_KEY` or any CARTO account.
+The checked-in scripts pin Wrangler to `4.156.0`. Use `npm run deploy` for Worker deployment. Pages deployment commands do not match this repository's Worker entry and API routing.
 
-- `/` shows the CivicWatch application and loads the map tiles.
-- `/api/v1/health` returns JSON with `status: "integration-pending"`.
-- `/api/v1/categories` returns the 30 issue types as JSON.
-- `/api/v1/cities` returns available D1 reporting areas, or `[]` until D1 is connected (the frontend mock obtains areas from preview reports).
-- `/api/v1/overview` returns intentional 501 until the database/aggregates are connected.
-- `/api/v1/dataset` returns an intentional JSON `501` (not the HTML app).
-- Searching and panning to any place updates the visible map and nearby reports; Overview shows dynamically discovered localities and one platform-wide total.
-- A report creator can delete their own report with explicit confirmation; another local preview account cannot.
-- Map reporting, confirmations, comments and reload persistence work in the
-  **same browser**, using browser-local preview data.
-- Deep links and refreshes load the frontend correctly without 404 errors.
+## Set up another environment
 
-**Preview data is not shared between browsers or users.** Global totals in mock mode represent the combined sample data stored in the current browser, not live platform-wide participation. Only a shared backend can produce public cross-device totals. The backend is
-prepared but not activated. This is deployable frontend infrastructure, not yet
-an authenticated municipal reporting service. See `docs/BACKEND.md` for the
-remaining security, persistence, photo and moderation integration.
+1. Use the existing GitHub repository and decide which Worker/environment the deployment should target.
+2. In Cloudflare Workers & Pages, create a Worker using the GitHub integration.
+3. Choose the repository and desired production branch, then apply the build settings above.
+4. Confirm the Worker name and source configuration before the first deploy.
+5. Set any required frontend build variables and deploy.
 
-## 4. Local development and preflight
+The Worker configuration contains:
 
-Requires Node.js 22 or later and a working npm registry connection.
+- `main: "./worker/index.ts"`
+- `assets.directory: "./dist"`
+- `assets.binding: "ASSETS"`
+- `assets.not_found_handling: "single-page-application"`
+- `assets.run_worker_first: ["/api", "/api/*"]`
+
+Keep `package.json`, `wrangler.jsonc`, `src/`, `worker/`, and `backend/` at the repository root.
+
+## Build-time configuration
+
+The defaults are defined in [src/config.ts](src/config.ts) and illustrated in [.env.example](.env.example).
+
+- `VITE_SERVICE_MODE=mock`: browser-local adapter.
+- `VITE_API_BASE_URL=/api/v1`: same-origin API base for future integration.
+- `VITE_SEED_DEMO=false`: empty dataset for new browsers.
+- `VITE_SEED_DEMO=true`: explicitly opt in to fictional examples on an empty dataset.
+- `VITE_DEFAULT_CITY`, `VITE_DEFAULT_LAT`, and `VITE_DEFAULT_LNG`: initial map view.
+- `VITE_TILE_URL`, `VITE_TILE_ATTRIBUTION`, and `VITE_TILE_MAX_ZOOM`: raster tile provider.
+- `VITE_GEOCODER_BASE_URL`: Photon-compatible place lookup provider.
+
+Frontend variables are embedded in the build and are public. Runtime credentials belong in Cloudflare secrets. Rebuild after changing a `VITE_` value.
+
+Local reports and watchlists are origin-scoped. A preview domain, production domain, and localhost each have separate storage. Changing the seed flag does not erase an existing dataset.
+
+## Local checks
+
+Use Node.js 22 and npm, with Python available for the schema check.
 
 ```bash
 npm ci
 npm run verify
-npm run dev          # fast Vite UI development (mock service)
-npm run dev:worker   # build and run through the real Worker entry with Wrangler
+python scripts/check_schema.py
 ```
 
-Before deploying from a local Cloudflare-authenticated machine:
+For the frontend development server:
+
+```bash
+npm run dev
+```
+
+To build and test the actual Worker routing locally:
+
+```bash
+npm run dev:worker
+```
+
+To check the bundle and publish from an authenticated local environment:
 
 ```bash
 npm run deploy:dry-run
 npm run deploy
 ```
 
-GitHub Actions (`.github/workflows/ci.yml`) runs tests, a strict TypeScript
-production build, configuration checks and D1 migration checks on each push/PR.
+Check the Worker destination before the final command. The dry run does not publish.
 
-## 5. Activating D1/R2 and verified authentication later
+## Verify the deployed frontend
 
-Follow `docs/BACKEND.md`. Optional `DB` and `PHOTOS` bindings can be added to
-`wrangler.jsonc` after provisioning the actual Cloudflare resources. Binding
-those resources does **not** automatically switch the app to live mode or
-activate unsafe write endpoints. Implement and verify server-side authentication,
-repositories and uploads first; then change `VITE_SERVICE_MODE=api` and rebuild.
-Do not transfer preview reports to production without a dedicated import process.
+| Check | Expected result before backend integration |
+| --- | --- |
+| `/` and frontend deep links | Application loads and refreshes successfully. |
+| `/api/v1/health` | JSON with `status: "integration-pending"`. |
+| `/api/v1/categories` | JSON catalogue of 70 issue types. |
+| `/api/v1/cities` | D1-backed reporting areas if connected; otherwise an empty array. |
+| `/api/v1/auth/session` | Intentional JSON 401. |
+| `/api/v1/dataset` and `/api/v1/overview` | Intentional JSON 501. |
+| Unimplemented shared writes/uploads | Intentional JSON 501. |
+| Unknown API route | JSON 404, rather than the frontend HTML. |
+| Maps | Light basemap in both themes, visible attribution, working controls. |
+| Local reporting and discussion | Saved in the same browser; state survives reload. |
 
-### Troubleshooting
+Run the [manual verification checklist](docs/VERIFICATION.md) for navigation, reporting, camera, uploads, and report-to-map behaviour. Browser storage is limited; local photo persistence is a development capability, not durable hosted media.
 
-- **Missing entry-point or assets:** ensure `wrangler.jsonc` still has
-  `main: "./worker/index.ts"` and `assets.directory: "./dist"`, and that
-  `npm run build` succeeds.
-- **Workers command in a Pages project:** you created a Pages project or still
-  have `pages_build_output_dir`. Create a **new Worker** and deploy this source.
-- **API returns HTML:** inspect `assets.run_worker_first` and verify that
-  `worker/index.ts` owns all `/api/*` routes.
-- **Maps are blank:** open browser DevTools → Network and check requests to
-  `https://tile.openstreetmap.org/`. Remove old `VITE_TILE_URL` overrides in
-  Cloudflare build-time variables, then rebuild. Confirm that privacy software
-  or a network firewall is not blocking tiles. The public tile service has no
-  uptime SLA and enforces a usage policy.
-- **Old CARTO watermark appears:** an older deploy or Cloudflare build variable
-  is still configuring CARTO. Remove the override and redeploy with the new
-  source. Refresh the page after deployment.
-- **No cross-device sync:** expected with mock service; see backend activation.
+## Backend activation
 
-Official Cloudflare references:
-- https://developers.cloudflare.com/workers/static-assets/
-- https://developers.cloudflare.com/workers/static-assets/binding/
-- https://developers.cloudflare.com/workers/wrangler/configuration/
+The optional D1 `DB` and R2 `PHOTOS` bindings are scaffolding. Provisioning them alone does not activate report endpoints.
 
-## Worldwide place search
+Follow [docs/BACKEND.md](docs/BACKEND.md) and [docs/API.md](docs/API.md). Implement verified sessions, server authorization, shared repositories, validated uploads, moderation, and public-read pagination. Test on staging across independent browsers/devices before enabling the API adapter. Do not import fictional preview data into production implicitly.
 
-`VITE_GEOCODER_BASE_URL` optionally selects a compatible Photon API. The default
-public Photon demo is suitable for limited testing only; configure your own
-instance or a managed provider for substantial traffic. Geocoding is not
-required to publish a report: users can select a pin and enter locality, region
-and country manually. See `docs/GEOGRAPHY.md` for provider limits and backend
-requirements. No map/geocoder API key is required for the preview.
+## Alternative static hosting
 
-## Future changes without ZIP uploads
-After importing this version into your existing/new canonical GitHub repository, all future changes should be commits to that repository. Branch -> PR -> CI checks -> merge to `main` -> automatic Cloudflare deployment. See `docs/GOVERNANCE.md`. Avoid creating another Worker or repository per release.
+`vercel.json` provides a static frontend configuration. Use `npm ci`, `npm run build`, output `dist`, and Node.js 22. `npm run deploy` is a Cloudflare command and does not deploy to Vercel.
 
-## Important security limitation
-The UI initially uses local browser preview data. Admin roles, shared issue history, authenticated write APIs and D1-backed persistence require a real verified identity system before activation. The admin database helpers are not exposed as unsecured public endpoints. See `docs/GOVERNANCE.md`.
+The Worker API, D1 database, and R2 bucket do not migrate with static assets. Keep the local adapter until a working backend is available, and account for origin-scoped storage on the new URL.
 
+## Troubleshooting
 
-## Version note
+| Symptom | Check |
+| --- | --- |
+| Missing entry point or assets | Build first; retain `worker/index.ts` and `assets.directory` in Wrangler configuration. |
+| Deployment targets a different Worker | Reconcile the connected Worker's target with the checked-in `civicwatch-community` name. |
+| API returns HTML | Verify Worker-first API routing and the request path. |
+| Blank map | Check tile requests, network restrictions, and stale build-variable overrides. |
+| Place lookup fails or names the wrong locality | Check the geocoder provider; correct optional location labels manually. The pin remains usable. |
+| No reports in a new browser | Expected with the empty default and browser-local service. |
+| No cross-device sync | Expected before shared backend integration. |
+| Storage quota error | Remove large local attachments or use a fresh test origin; avoid clearing valuable local data without exporting it. |
+| Camera/location unavailable | Use HTTPS or localhost, check browser permissions, and try the upload/manual-pin alternatives. |
 
-This deployment package includes the v1.5 visual refresh and overview simplification.
+Public OSM tiles and the Photon demo are shared services with usage limits. Review provider suitability before increased traffic.
 
-
-## 6. Vercel preparation — defer until Cloudflare staging tests pass
-
-`vercel.json` contains the Vite output directory and CSP/other response headers.
-When ready, import the **same GitHub repository** into Vercel, use Node.js 22,
-`npm ci` and `npm run build`, output `dist`, and leave `VITE_SERVICE_MODE=mock`
-until real authentication and persistence are built. Do **not** use
-`npm run deploy` on Vercel: that command is for Cloudflare Wrangler.
-
-The Worker and its Cloudflare services will **not** migrate with these static
-assets. Local preview data is origin-scoped, so the Vercel URL will not see
-reports/watchlists stored under the Cloudflare URL. See
-`RELEASE_NOTES_v2_5_8.md` for the required staging QA and remaining checks.
+Official references: [Static Assets](https://developers.cloudflare.com/workers/static-assets/), [asset bindings](https://developers.cloudflare.com/workers/static-assets/binding/), and [Wrangler configuration](https://developers.cloudflare.com/workers/wrangler/configuration/).
