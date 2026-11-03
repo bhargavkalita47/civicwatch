@@ -7,12 +7,19 @@
     "directory": "./dist",
     "binding": "ASSETS",
     "not_found_handling": "single-page-application",
-    "run_worker_first": ["/api", "/api/*"]
+    "run_worker_first": [
+      "/api",
+      "/api/*"
+    ]
   },
   "previews": {
     "vars": {
       "SUPABASE_URL": "https://caacglqvyfwatnazhjie.supabase.co",
       "SUPABASE_PUBLISHABLE_KEY": "sb_publishable_cafqjwBBj6_JbOHUdo2bqw_93XoniZR"
     }
+  },
+  "vars": {
+    "SUPABASE_URL": "https://caacglqvyfwatnazhjie.supabase.co",
+    "SUPABASE_PUBLISHABLE_KEY": "sb_publishable_cafqjwBBj6_JbOHUdo2bqw_93XoniZR"
   }
 }
