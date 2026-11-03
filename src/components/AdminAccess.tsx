@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { ShieldCheck, ShieldPlus, ShieldMinus, EyeOff, Eye, History, RefreshCw, CheckCircle2 } from "lucide-react";
 import { useAuth } from "../services/auth";
-import { administrationService, type AdministrationSummary, type AdminModerationAction } from "../services/admin";
+import { administrationService, type AdministrationSummary } from "../services/admin";
 import { config } from "../config";
 import type { IssueStatus } from "../domain/types";
 import { ErrorNotice, Spinner } from "./ui";
