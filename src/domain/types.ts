@@ -101,6 +101,8 @@ export interface Issue {
   authorId: ID;
   organizationId: ID | null;
   confirmationUserIds: ID[];
+  /** Supplied by server-side browsing; map and mock records can omit it. */
+  commentCount?: number;
   attachments: Attachment[];
   createdAt: ISODate;
   updatedAt: ISODate;
