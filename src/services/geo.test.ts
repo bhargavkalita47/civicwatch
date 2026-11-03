@@ -49,7 +49,7 @@ it("uses the selected city or town name ahead of conflicting parent city metadat
 
 
 it("uses neighbouring Photon results to fill city and locality when nearest place has incomplete metadata", async () => {
-  const fetcher = vi.fn(async () => new Response(JSON.stringify({ features: [
+  const fetcher = vi.fn(async (_input: RequestInfo | URL) => new Response(JSON.stringify({ features: [
     { geometry: { coordinates: [88.36311, 22.57111] },
       properties: { name: "Ballygunge", osm_key: "place", osm_value: "suburb",
         state: "West Bengal", country: "India" } },
