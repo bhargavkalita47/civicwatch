@@ -73,7 +73,8 @@ describe("password recovery and OAuth security", () => {
       email, code: "123456", password: pass,
     }), env);
     expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({ changed: true });
+    const result = await response.json();
+    expect(result).toEqual({ changed: true });
     expect(requests.map(r => r.path)).toEqual([
       "/auth/v1/verify", "/auth/v1/user", "/auth/v1/logout",
     ]);
@@ -85,7 +86,7 @@ describe("password recovery and OAuth security", () => {
     expect(JSON.stringify(requests[1].init.body)).toContain(pass);
     const cookies = response.headers.get("Set-Cookie") || "";
     expect(cookies).toContain("Max-Age=0");
-    expect(JSON.stringify(await response.clone().text())).not.toContain("temporary-recovery-jwt");
+    expect(JSON.stringify(result)).not.toContain("temporary-recovery-jwt");
   });
 
   it("rejects a malformed recovery request without upstream calls", async () => {
