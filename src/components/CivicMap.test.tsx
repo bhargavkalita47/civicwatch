@@ -130,3 +130,14 @@ it("keeps resolved location markers clearly labeled when explicitly supplied", a
   await act(async()=>{root.render(<CivicMap categories={categories} clusters={[{id:issue.id,location:issue.location,issues:[issue],totalPeople:1}]} highlightedIssueId={issue.id}/>);});
   expect(container.querySelector(".civic-marker-highlighted")?.getAttribute("aria-label")).toContain("Resolved.");
 });
+
+
+it("does not show the redundant click-to-place-pin map text", async () => {
+  await act(async () => root.render(<Picker/>));
+  expect(container.textContent).not.toContain("Click to place your pin");
+  expect(container.querySelector(".picker-hint")).toBeNull();
+  await locate();
+  await found();
+  expect(container.querySelector(".picker-hint")).toBeNull();
+  expect(onPick).toHaveBeenCalled();
+});
