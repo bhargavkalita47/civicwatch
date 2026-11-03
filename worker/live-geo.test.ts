@@ -12,7 +12,7 @@ beforeEach(() => vi.unstubAllGlobals());
 afterEach(() => vi.unstubAllGlobals());
 
 it("serves pin reverse lookup same-origin without passing the query through Supabase", async () => {
-  const fetcher = vi.fn(async (input: RequestInfo | URL, opts?: RequestInit) => {
+  const fetcher = vi.fn(async (_input: RequestInfo | URL, opts?: RequestInit) => {
     expect(opts?.signal).toBeDefined();
     return Response.json({ features: [{
       geometry: { coordinates: [91.78713, 26.14226] },
@@ -55,7 +55,7 @@ it.each([
   "lat=26.14226&lon=190", "lat=&lon=14",
   "lat=26.14226&lon=91.78713&anything=ignore",
 ])("validates coordinates rather than forwarding caller-supplied URLs: %s", async params => {
-  const fetcher = vi.fn(async () => Response.json({ features: [] }));
+  const fetcher = vi.fn(async (_input: RequestInfo | URL) => Response.json({ features: [] }));
   vi.stubGlobal("fetch", fetcher);
   const response = await liveApi(request(params), env);
   if (params.includes("anything")) {
