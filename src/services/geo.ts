@@ -159,7 +159,7 @@ function mergeLookup(
   photon: PlaceResult | null, fallback: PlaceResult | null, point: Coordinate,
   cityFallback: PlaceResult | null = null, boundaryCity = "",
 ): PlaceResult | null {
-  if (!photon && !fallback && !cityFallback) return null;
+  if (!photon && !fallback && !cityFallback && !boundaryCity) return null;
   // City-level reverse lookup describes the enclosing settlement, not the
   // nearby street. Preserve the finer-grained locality from detailed results.
   const city = first(cityFallback?.city, fallback?.city, photon?.city, boundaryCity);
@@ -167,7 +167,9 @@ function mergeLookup(
   const region = first(fallback?.region, cityFallback?.region, photon?.region);
   const country = first(fallback?.country, cityFallback?.country, photon?.country);
   return {
-    ...(photon ?? fallback ?? cityFallback!), point, city, locality, region, country,
+    ...(photon ?? fallback ?? cityFallback ?? {
+      id: `boundary:${point.lat}:${point.lng}`, label: boundaryCity, point, area: null,
+    }), point, city, locality, region, country,
     area: city && region && country ? reportingArea(city, region, country, point) : null,
   };
 }
