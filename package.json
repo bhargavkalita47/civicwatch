@@ -11,13 +11,14 @@
     "test": "vitest run",
     "check": "tsc -b",
     "validate:config": "node scripts/validate-config.mjs",
-    "verify": "npm run test && npm run build && npm run validate:config && npm run validate:design && npm run validate:copy && npm run validate:mobile-nav && npm run validate:release",
+    "verify": "npm run test && npm run build && npm run validate:config && npm run validate:design && npm run validate:copy && npm run validate:mobile-nav && npm run validate:release && npm run validate:security",
     "deploy": "npx --yes wrangler@4.156.0 deploy",
     "deploy:dry-run": "npx --yes wrangler@4.156.0 deploy --dry-run --outdir .wrangler/dry-run",
     "validate:design": "node scripts/validate-design.mjs",
     "validate:copy": "node scripts/validate-copy.mjs",
     "validate:mobile-nav": "node scripts/validate-mobile-nav.mjs",
-    "validate:release": "node scripts/validate-release.mjs"
+    "validate:release": "node scripts/validate-release.mjs",
+    "validate:security": "node scripts/validate-security.mjs"
   },
   "dependencies": {
     "leaflet": "^1.9.4",
