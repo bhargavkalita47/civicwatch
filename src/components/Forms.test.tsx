@@ -172,3 +172,43 @@ it("places the only first-step Continue button above the map, preserving validat
   // Page two still has its own final submit button at the bottom.
   expect(container.querySelector(".form-actions button[type=submit]")).not.toBeNull();
 });
+
+
+it("offers a retry when pin reverse geocoding fails, then fills both fields", async () => {
+  reverse.mockRejectedValueOnce(new Error("Temporary provider outage"));
+  await click("Use my location");
+  expect(city().value).toBe("");
+  expect(locality().value).toBe("");
+  expect(container.textContent).toContain("The place lookup failed.");
+  expect(container.textContent).toContain("Retry place lookup");
+  reverse.mockResolvedValueOnce(match);
+  await click("Retry place lookup");
+  expect(city().value).toBe("Guwahati");
+  expect(locality().value).toBe("Ulubari");
+  expect(container.textContent).not.toContain("Retry place lookup");
+});
+
+it("allows retry after an incomplete pin lookup without losing manually typed city", async () => {
+  reverse.mockResolvedValueOnce(null);
+  await click("Use my location");
+  expect(container.textContent).toContain("Retry place lookup");
+  await fill(city(), "My manually chosen city");
+  reverse.mockResolvedValueOnce({ ...match, locality: "Resolved locality" });
+  await click("Retry place lookup");
+  expect(city().value).toBe("My manually chosen city");
+  expect(locality().value).toBe("Resolved locality");
+});
+
+it("updates both fields when the user moves a pin to a new city", async () => {
+  await click("Use my location");
+  expect(city().value).toBe("Guwahati");
+  expect(locality().value).toBe("Ulubari");
+  reverse.mockResolvedValueOnce({
+    ...match, city: "Shillong", locality: "Laitumkhrah",
+    region: "Meghalaya", point: { lat: 27, lng: 92 },
+  });
+  await click("Move pin");
+  expect(city().value).toBe("Shillong");
+  expect(locality().value).toBe("Laitumkhrah");
+  expect(reverse).toHaveBeenCalledTimes(2);
+});
