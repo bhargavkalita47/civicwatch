@@ -12,13 +12,11 @@ const photos = read('src/components/ui.tsx');
 
 // Source-of-truth copy and exact user-selected hero headlines.
 for (const phrase of [
-  'Lower your expectations. Open the map.',
+  'The backlog, by the numbers.',
   'Home is where the problems are.',
   'Disappointment has coordinates.',
   'New day. Same complaints.',
   'A face behind the complaints.',
-  'A scenic view of neglect.',
-  'Managed expectations, in numbers.',
   'The usual problems. Your chosen places.',
   'Put it on the record.',
   'The collective sigh',
@@ -32,6 +30,8 @@ assert.match(app, /copy\.reports\.resolved/);
 assert.match(app, /reportCount\(reportCounts\[reportSection\]/);
 assert.match(app, /watchlistReportGroups\(watchlist, cityIssues\)/);
 assert.match(overview, /stats\.platform/);
+assert.match(overview, /Explore map/);
+assert.doesNotMatch(overview, /<CivicMap/);
 assert.match(watchlist, /summarizeWatchlist/);
 assert.match(watchlist, /copy\.watchlist\.noData/);
 assert.match(watchlist, /onPointerDown=/);
