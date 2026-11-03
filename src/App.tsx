@@ -166,6 +166,7 @@ export default function App() {
     [loading, setLoading] = useState(true),
     [error, setError] = useState("");
   const [reportSection, setReportSection] = useState<ReportSection>("active");
+  const [reportsLimit, setReportsLimit] = useState(10);
   const [tab, setTab] = useState<Tab>("overview"),
     [query, setQuery] = useState(""),
     [categoryIds, setCategoryIds] = useState<string[]>([]),
@@ -437,6 +438,9 @@ useEffect(() => {
     ),
     [data, scopedIssues, query, categoryIds, status, sort, tab, reportGroups, reportSection, auth.session],
   );
+  // Search, category, watchlist and sorting always apply before pagination.
+  // Changing any of them returns the community Reports list to the first ten.
+  useEffect(() => setReportsLimit(10), [reportSection, query, categoryIds, status, sort, watchlist]);
   const clusters = useMemo(() => clusterIssues(visible), [visible]);
   const mapIssue = tab === "explore" ? data?.issues.find((issue) => issue.id === mapIssueId) : undefined;
   // A resolved report gets one temporary location marker, never a place in active totals.
@@ -936,9 +940,24 @@ useEffect(() => {
                 </label>
               </div>
               {visible.length ? (
-                <div className="community-grid">
-                  {visible.map((i) => issueCard(i, true))}
-                </div>
+                <>
+                  <div className="community-grid">
+                    {visible.slice(0, reportsLimit).map((i) => issueCard(i, true))}
+                  </div>
+                  {visible.length > 10 && (
+                    <div className="profile-report-pagination reports-load-more" aria-label="Community reports pagination">
+                      <p aria-live="polite">
+                        Showing {Math.min(reportsLimit, visible.length)} of {visible.length} reports
+                      </p>
+                      {visible.length > reportsLimit && (
+                        <button type="button" className="button secondary"
+                          onClick={() => setReportsLimit((count) => count + 10)}>
+                          Load more reports
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </>
               ) : (
                 <div className="empty-state">
                   <MapPin size={36} />
