@@ -272,7 +272,7 @@ export function ReportModal({
             </div>
             <PlaceSearch compact onSelect={(place) => void choosePoint(place.point, place)} />
             <div className="report-location-next">
-              <button className="button primary" type="submit" disabled={busy || saved || uploading}>
+              <button className="button primary" type="submit" disabled={busy || saved || uploading || locating} aria-busy={locating}>
                 Continue <ArrowRight size={16} />
               </button>
               <p>Choose a pin on the map below before continuing.</p>
