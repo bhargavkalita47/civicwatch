@@ -15,7 +15,7 @@ export const copy = {
     disclosure: "CivicWatch is independent. Reports are not automatically sent to a municipality. It is not an emergency service.",
   },
   pages: {
-    overview: { title: "Lower your expectations. Open the map.", subtitle: "Potholes, dead streetlights, and other long-term neighbourhood relationships." },
+    overview: { title: "The backlog, by the numbers.", subtitle: "Every reported problem adds up. The repairs? We'll count those too." },
     snapshots: { title: "Home is where the problems are.", subtitle: "Keep your towns and their unfinished business on a watchlist." },
     explore: { title: "Disappointment has coordinates.", subtitle: "Find reported issues nearby, compare notes, or pin another problem." },
     reports: { title: "New day. Same complaints.", subtitle: "Browse what your watched towns are still putting up with." },
@@ -30,7 +30,7 @@ export const copy = {
     mapInstruction: "Open a pin to view the report and discussion.",
     totalsHeading: "Managed expectations, in numbers.",
     captions: { reports: "The list grows. Naturally.", open: "Still part of the scenery.", resolved: "We also document plot twists.", people: "So it wasn’t just you." },
-    mapError: "The map could not be loaded.",
+    statsError: "The numbers could not be loaded.",
   },
   watchlist: {
     totalsHeading: "The usual problems. Your chosen places.", placesHeading: "Your towns",
