@@ -5,6 +5,8 @@ function number(value: string | undefined, fallback: number) {
 }
 export const config = {
   serviceMode: env.VITE_SERVICE_MODE === "api" ? "api" : "mock",
+  googleOAuthEnabled: env.VITE_GOOGLE_OAUTH_ENABLED === "true",
+  facebookOAuthEnabled: env.VITE_FACEBOOK_OAUTH_ENABLED === "true",
   apiBaseUrl: (env.VITE_API_BASE_URL || "/api/v1").replace(/\/$/, ""),
   // Empty by default: fictional reports must be enabled explicitly for local testing.
   seedDemo: env.VITE_SEED_DEMO === "true",

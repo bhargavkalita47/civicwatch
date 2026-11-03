@@ -1,7 +1,13 @@
 import { categories } from "../src/data/categories";
 import type { Attachment, City, Comment, Dataset, Issue, OverviewSnapshot, Profile, Role, Session } from "../src/domain/types";
 
-export interface LiveConfig { SUPABASE_URL: string; SUPABASE_PUBLISHABLE_KEY: string; SUPABASE_SERVICE_ROLE_KEY: string }
+export interface LiveConfig {
+  SUPABASE_URL: string;
+  SUPABASE_PUBLISHABLE_KEY: string;
+  SUPABASE_SERVICE_ROLE_KEY: string;
+  GOOGLE_OAUTH_ENABLED?: string;
+  FACEBOOK_OAUTH_ENABLED?: string;
+}
 type Row = Record<string, any>;
 class Failure extends Error {
   constructor(readonly status: number, message: string) { super(message); }
@@ -14,6 +20,40 @@ function field(value: unknown, max: number, min = 0) {
   if (typeof value !== "string" || value.trim().length < min || value.trim().length > max)
     throw new Failure(400, "Check the required fields and their lengths.");
   return value.trim();
+}
+
+/** Bound JSON requests before parsing. The Cloudflare Free plan has a 128 MB
+ * memory ceiling; accepting a 100 MB JSON request can exhaust an invocation.
+ * 128 KiB leaves room for a full 100-town watchlist at maximum field lengths. */
+async function boundedJson(req: Request): Promise<unknown> {
+  const maxBytes = 128 * 1024;
+  const advertised = req.headers.get("Content-Length");
+  if (advertised && Number(advertised) > maxBytes)
+    throw new Failure(413, "This request is too large.");
+  if (!req.body) throw new Failure(400, "A JSON request body is required.");
+  const reader = req.body.getReader();
+  const decoder = new TextDecoder();
+  let bytes = 0;
+  let content = "";
+  for (;;) {
+    const part = await reader.read();
+    if (part.done) break;
+    bytes += part.value.byteLength;
+    if (bytes > maxBytes) {
+      await reader.cancel().catch(() => undefined);
+      throw new Failure(413, "This request is too large.");
+    }
+    content += decoder.decode(part.value, { stream: true });
+  }
+  content += decoder.decode();
+  return JSON.parse(content);
+}
+
+async function jsonObject(req: Request): Promise<Row> {
+  const value = await boundedJson(req);
+  if (!value || typeof value !== "object" || Array.isArray(value))
+    throw new Failure(400, "A JSON object is required.");
+  return value as Row;
 }
 
 export async function liveApi(req: Request, env: LiveConfig): Promise<Response> {
@@ -159,6 +199,11 @@ export async function liveApi(req: Request, env: LiveConfig): Promise<Response> 
       }
       const provider = /^\/auth\/oauth\/(google|facebook)$/.exec(path)?.[1];
       if (provider) {
+        // Unverified email registration is permitted in this pilot. Until
+        // identity linking is secured, neither social login may start by default.
+        const enabled = provider === "google" ? env.GOOGLE_OAUTH_ENABLED === "true"
+          : env.FACEBOOK_OAUTH_ENABLED === "true";
+        if (!enabled) throw new Failure(503, "This sign-in method is not available yet.");
         const encode = (bytes: Uint8Array) => btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
         const verifier = encode(crypto.getRandomValues(new Uint8Array(48)));
         const challenge = encode(new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(verifier))));
@@ -227,9 +272,15 @@ export async function liveApi(req: Request, env: LiveConfig): Promise<Response> 
         return new Response(photo.body, { headers: { ...headers, "Content-Type": row.mime_type } });
       }
       if (["/dataset", "/cities", "/overview"].includes(path)) {
-        const reports = await db("reports", { moderation_state: "eq.visible", order: "created_at.desc,id" });
+        // Fetch only the columns the requested view consumes. Keeping the
+        // existing full-dataset response contract avoids breaking map filters.
+        const columns = path === "/cities"
+          ? "city_id,city_name,city_region,city_country,latitude,longitude"
+          : path === "/overview" ? "id,author_id,city_id,status"
+          : "id,category_id,city_id,city_name,city_region,city_country,title,description,address,latitude,longitude,status,author_id,attachments,created_at,updated_at";
+        const reports = await db("reports", { select: columns, moderation_state: "eq.visible", order: "created_at.desc,id" });
         if (path === "/cities") return reply(areaList(reports));
-        const confirmations = await db("confirmations", { order: "report_id,user_id" });
+        const confirmations = await db("confirmations", { select: "report_id,user_id", order: "report_id,user_id" });
         const byIssue = new Map<string, string[]>();
         for (const row of confirmations) {
           const users = byIssue.get(row.report_id) || [];
@@ -252,7 +303,7 @@ export async function liveApi(req: Request, env: LiveConfig): Promise<Response> 
             updatedAt: new Date().toISOString() } satisfies OverviewSnapshot);
         }
         const [comments, profiles] = await Promise.all([
-          db("comments", { order: "created_at,id" }),
+          db("comments", { select: "id,report_id,parent_id,author_id,body,attachments,moderation_state,created_at", order: "created_at,id" }),
           db("profiles", { select: "user_id,display_name", order: "user_id" }),
         ]);
         const visibleReportIds = new Set(reports.map(r => r.id));
@@ -268,7 +319,7 @@ export async function liveApi(req: Request, env: LiveConfig): Promise<Response> 
     }
 
     if (path === "/auth/sign-in" && method === "POST") {
-      const input = await req.json() as Row;
+      const input = await jsonObject(req);
       const email = field(input.email, 254, 3).toLowerCase();
       const password = input.password;
       if (typeof password !== "string" || password.length < 8 || password.length > 72)
@@ -300,7 +351,7 @@ export async function liveApi(req: Request, env: LiveConfig): Promise<Response> 
     if (path === "/admin/administrators" && method === "POST") {
       const user = await actor();
       if (await privilege(user.id) !== "owner") throw new Failure(403, "Only the owner can appoint administrators.");
-      const input = await req.json() as Row;
+      const input = await jsonObject(req);
       const target = input?.userId;
       if (typeof target !== "string" || !uuid.test(target)) throw new Failure(400, "Enter a valid account UUID.");
       if (target === user.id) throw new Failure(400, "The owner account cannot be reassigned.");
@@ -320,7 +371,7 @@ export async function liveApi(req: Request, env: LiveConfig): Promise<Response> 
     if (path === "/admin/moderation" && method === "POST") {
       const user = await actor();
       if (!await privilege(user.id)) throw new Failure(403, "Administrator access is required.");
-      const input = await req.json() as Row;
+      const input = await jsonObject(req);
       const actions = ["report_hide", "report_restore", "report_status", "comment_hide", "comment_restore"];
       if (!input || !actions.includes(input.action) || typeof input.id !== "string" || !uuid.test(input.id))
         throw new Failure(400, "Invalid moderation request.");
@@ -342,7 +393,7 @@ export async function liveApi(req: Request, env: LiveConfig): Promise<Response> 
     const user = await actor();
     if (path === "/watchlist" && method === "PUT") {
       if (req.headers.get("X-Civic-Account") !== user.id) throw new Failure(409, "The active account changed.");
-      const towns = await req.json();
+      const towns = await boundedJson(req);
       if (!Array.isArray(towns) || towns.length > 100) throw new Failure(400, "Choose up to 100 towns.");
       const clean = towns.map(town => {
         const lat = town?.center?.lat, lng = town?.center?.lng;
@@ -355,7 +406,7 @@ export async function liveApi(req: Request, env: LiveConfig): Promise<Response> 
       return reply();
     }
     if (path === "/profile" && method === "PATCH") {
-      const input = await req.json() as Row;
+      const input = await jsonObject(req);
       const row: Row = { user_id: user.id };
       for (const [key, column, limit] of [["displayName", "display_name", 80], ["city", "city", 120], ["bio", "bio", 500], ["website", "website", 300]] as const) {
         if (key in input) row[column] = field(input[key], limit);
@@ -394,7 +445,7 @@ export async function liveApi(req: Request, env: LiveConfig): Promise<Response> 
     }
 
     if (path === "/issues" && method === "POST") {
-      const input = await req.json() as Row;
+      const input = await jsonObject(req);
       if (!categories.some(c => c.id === input.categoryId)) throw new Failure(400, "Select a category.");
       const lat = input.location?.lat, lng = input.location?.lng;
       if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180)
@@ -426,11 +477,11 @@ export async function liveApi(req: Request, env: LiveConfig): Promise<Response> 
       let updated = row;
       if (!action && method === "PATCH") {
         if (!owner) throw new Failure(403, "Only the reporter can edit this report.");
-        const input = await req.json() as Row;
+        const input = await jsonObject(req);
         [updated] = await db("reports", scoped, "PATCH", { title: field(input.title, 160, 1),
           description: field(input.description, 5000), address: field(input.address, 500), updated_at: new Date().toISOString() });
       } else if (action === "status" && method === "PATCH") {
-        const input = await req.json() as Row;
+        const input = await jsonObject(req);
         if (!["reported", "acknowledged", "in_progress", "resolved"].includes(input.status)) throw new Failure(400, "Invalid status.");
         // Administrator status changes are always written with an audit event
         // in the same database transaction. Ordinary authors may only resolve their own reports.
@@ -451,7 +502,7 @@ export async function liveApi(req: Request, env: LiveConfig): Promise<Response> 
         if (row.status === "resolved") throw new Failure(400, "This report is resolved.");
         await db("confirmations", {}, "POST", { report_id: id, user_id: user.id }, true);
       } else if (action === "comments" && method === "POST") {
-        const input = await req.json() as Row;
+        const input = await jsonObject(req);
         const photos = await attachments(input.attachments, user.id);
         const [created] = await db("comments", {}, "POST", { report_id: id, author_id: user.id,
           parent_id: input.parentId == null ? null : field(input.parentId, 36, 36),

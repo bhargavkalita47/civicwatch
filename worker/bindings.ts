@@ -41,6 +41,8 @@ export interface WorkerEnv {
   SUPABASE_URL?: string;
   SUPABASE_PUBLISHABLE_KEY?: string;
   SUPABASE_SERVICE_ROLE_KEY?: string;
+  GOOGLE_OAUTH_ENABLED?: string;
+  FACEBOOK_OAUTH_ENABLED?: string;
   DB?: D1DatabaseBinding;
   PHOTOS?: R2BucketBinding;
   /** Do not enable the live API based on a client-supplied user or role. */
