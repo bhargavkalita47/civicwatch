@@ -1,4 +1,5 @@
 import { Profile, ProfileAvatar } from "./components/Profile";
+import { ResidentProfile } from "./components/ResidentProfile";
 import { categoryMarkerColor } from "./domain/markerPalette";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -52,6 +53,7 @@ import {
 import { civicService } from "./services";
 import { inMapBounds, type MapBounds } from "./domain/geography";
 import { ExploreSearch } from "./components/ExploreSearch";
+import { apiWatchlist } from "./services/api";
 import { useAuth } from "./services/auth";
 import {
   CategoryBadge,
@@ -66,9 +68,11 @@ import { ThreadPanel } from "./components/ThreadPanel";
 import { Overview } from "./components/Overview";
 import { LocalSnapshots } from "./components/LocalSnapshots";
 import { AdminAccess } from "./components/AdminAccess";
+import { usePublicReportPages } from "./services/publicReportPages";
 import { CivicWatchLogo } from "./components/CivicWatchLogo";
 import { restoreWatchlist, WATCHLIST_KEY, watchlistReportGroups } from "./domain/watchlist";
-type Tab = "explore" | "overview" | "snapshots" | "reports" | "mine" | "admin";
+type Tab = "explore" | "overview" | "snapshots" | "reports" | "mine" | "member" | "admin";
+type ThreadSelection = { cluster: LocationCluster; issueId?: string };
 type ReportSection = "active" | "inactive";
 type Theme = "light" | "dark";
 const THEME_STORAGE_KEY = "civicwatch.theme.v1";
@@ -117,7 +121,33 @@ function HeaderClock() {
 
 export default function App() {
 
+  const [localWatchlist, setLocalWatchlist] = useState<City[]>(restoreWatchlist);
+  const [accountWatchlist, setAccountWatchlist] = useState<{ id: string; towns: City[] } | null>(null);
+  const watchlistWrites = useRef(Promise.resolve());
   const auth = useAuth();
+  const watchlistAccount = config.serviceMode === "api" ? auth.session?.user.id : undefined;
+  const watchlist = watchlistAccount
+    ? accountWatchlist?.id === watchlistAccount ? accountWatchlist.towns : []
+    : localWatchlist;
+  const setWatchlist: React.Dispatch<React.SetStateAction<City[]>> = (change) => {
+    if (!watchlistAccount) return setLocalWatchlist(change);
+    if (accountWatchlist?.id !== watchlistAccount) return;
+    const towns = typeof change === "function" ? change(watchlist) : change;
+    setAccountWatchlist({ id: watchlistAccount, towns });
+    watchlistWrites.current = watchlistWrites.current.then(() => apiWatchlist.save(watchlistAccount, towns))
+      .catch((cause: Error) => setError(cause.message));
+  };
+  useEffect(() => {
+    if (!watchlistAccount) {
+      setAccountWatchlist(null);
+      return;
+    }
+    let active = true;
+    void apiWatchlist.get().then(towns => {
+      if (active) setAccountWatchlist({ id: watchlistAccount, towns });
+    }).catch((cause: Error) => { if (active) setError(cause.message); });
+    return () => { active = false; };
+  }, [watchlistAccount]);
   const [theme, setTheme] = useState<Theme>(() => {
     try { return window.localStorage.getItem(THEME_STORAGE_KEY) === "dark" ? "dark" : "light"; }
     catch { return "light"; }
@@ -136,8 +166,12 @@ export default function App() {
     [mapBounds, setMapBounds] = useState<MapBounds | null>(null),
     [loading, setLoading] = useState(true),
     [error, setError] = useState("");
-  const [watchlist, setWatchlist] = useState<City[]>(restoreWatchlist);
   const [reportSection, setReportSection] = useState<ReportSection>("active");
+  const [reportsLimit, setReportsLimit] = useState(10);
+  const [reportRevision, setReportRevision] = useState(0);
+  const [datasetLoading, setDatasetLoading] = useState(false);
+  const [datasetError, setDatasetError] = useState("");
+  const [datasetAttempt, setDatasetAttempt] = useState(0);
   const [tab, setTab] = useState<Tab>("overview"),
     [query, setQuery] = useState(""),
     [categoryIds, setCategoryIds] = useState<string[]>([]),
@@ -153,10 +187,9 @@ export default function App() {
     [about, setAbout] = useState(false),
     [signIn, setSignIn] = useState(false),
     [reportPoint, setReportPoint] = useState<Coordinate | null>(null),
-    [selection, setSelection] = useState<{
-      cluster: LocationCluster;
-      issueId?: string;
-    } | null>(null),
+    [selection, setSelection] = useState<ThreadSelection | null>(null),
+    [memberId, setMemberId] = useState<string | null>(null),
+    [memberReturn, setMemberReturn] = useState<{ tab: Tab; selection: ThreadSelection | null } | null>(null),
     [mapIssueId, setMapIssueId] = useState<string | null>(null),
     [focus, setFocus] = useState<Coordinate>(),
     [toast, setToast] = useState("");
@@ -236,18 +269,21 @@ useEffect(() => {
     const [dataset, snapshot] = await Promise.all([civicService.getDataset(), civicService.getOverviewStats()]);
     setData(dataset);
     setOverviewStats(snapshot);
+    setReportRevision(previous => previous + 1);
   }, []);
   const load = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
       const [dataset, catalogue, locations, snapshot] = await Promise.all([
-        civicService.getDataset(),
+        // Do not download the entire discussion/map archive to show totals
+        // or a ten-item list. It is loaded on the first map/thread visit.
+        config.serviceMode === "api" ? Promise.resolve(null) : civicService.getDataset(),
         civicService.getCategories(),
         civicService.getCities(),
         civicService.getOverviewStats(),
       ]);
-      setData(dataset);
+      if (dataset) setData(dataset);
       setCategories(catalogue);
       setCities(locations);
       setOverviewStats(snapshot);
@@ -264,10 +300,23 @@ useEffect(() => {
       if (toastTimer.current) clearTimeout(toastTimer.current);
     };
   }, [load]);
+
   useEffect(() => {
-    try { localStorage.setItem(WATCHLIST_KEY, JSON.stringify(watchlist)); }
+    if (config.serviceMode !== "api" || data ||
+      !["explore", "snapshots"].includes(tab)) return;
+    let active = true;
+    setDatasetLoading(true);
+    setDatasetError("");
+    void civicService.getDataset()
+      .then(dataset => { if (active) setData(dataset); })
+      .catch(cause => { if (active) setDatasetError((cause as Error).message); })
+      .finally(() => { if (active) setDatasetLoading(false); });
+    return () => { active = false; };
+  }, [tab, data, datasetAttempt]);
+  useEffect(() => {
+    try { localStorage.setItem(WATCHLIST_KEY, JSON.stringify(localWatchlist)); }
     catch { /* Private browsing or storage disabled: watchlist still works this session. */ }
-  }, [watchlist]);
+  }, [localWatchlist]);
   useEffect(() => {
     const update = (event: StorageEvent) => {
       if (event.key === config.storageKey)
@@ -292,12 +341,36 @@ useEffect(() => {
   function startReport(point: Coordinate = center.current) {
     ensureSession(() => {
       setSelection(null);
-      setReportPoint(point);
+      if (config.serviceMode === "api" && !data) {
+        // Nearby-issue detection must use current reports, never an
+        // accidental empty dataset after lazy startup.
+        void civicService.getDataset()
+          .then(dataset => { setData(dataset); setReportPoint(point); })
+          .catch(() => notify("Unable to load nearby reports. Try creating the report again."));
+      } else {
+        setReportPoint(point);
+      }
     });
   }
   const allClusters = useMemo(() => clusterIssues(activeIssues(data?.issues || [])), [data]);
   const openIssue = useCallback(
     (issue: Issue) => {
+      if (config.serviceMode === "api" && !data?.issues.some(item => item.id === issue.id)) {
+        // The list can contain a newer report than the lazily hydrated map.
+        // Load the full thread context on demand rather than silently failing.
+        void civicService.getDataset().then(dataset => {
+          setData(dataset);
+          const selectedIssue = dataset.issues.find(item => item.id === issue.id) ?? issue;
+          const related = clusterIssues(activeIssues(dataset.issues)).find(cluster =>
+            cluster.issues.some(item => item.id === selectedIssue.id));
+          setSelection({ cluster: related ?? {
+            id: selectedIssue.id, location: selectedIssue.location,
+            issues: [selectedIssue], totalPeople: peopleCount(selectedIssue),
+          }, issueId: selectedIssue.id });
+          setFocus(selectedIssue.location);
+        }).catch(() => notify("Could not open this report. Please try again."));
+        return;
+      }
       if (issue.status === "resolved") {
         // Historical deep links and My Reports must still work even if the
         // issue's town is not on the user's Reports watchlist.
@@ -322,13 +395,23 @@ useEffect(() => {
         );
       }
     },
-    [allClusters, watchlist, tab],
+    [allClusters, watchlist, tab, data, notify],
   );
   useEffect(() => {
-    if (!data) return;
     const hash = new URLSearchParams(location.hash.slice(1)),
       id = hash.get("issue");
-    if (id) {
+    const profileId = hash.get("profile");
+    if (profileId && /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(profileId)) {
+      setMemberId(profileId);
+      setTab("member");
+      return;
+    }
+    if (id && !data && config.serviceMode === "api") {
+      void civicService.getDataset().then(setData)
+        .catch(() => notify("Could not load this report link."));
+      return;
+    }
+    if (id && data) {
       const issue = data.issues.find((i) => i.id === id);
       if (issue) openIssue(issue);
       else
@@ -347,6 +430,23 @@ useEffect(() => {
   const citySummary = useMemo(() => summarizeIssues(scopedIssues), [scopedIssues]);
   const reportGroups = useMemo(() => watchlistReportGroups(watchlist, cityIssues), [watchlist, cityIssues]);
   const reportCounts = {total: reportGroups.all.length, active: reportGroups.active.length, inactive: reportGroups.inactive.length};
+  function openResidentProfile(userId: string) {
+    // Only UUIDs produced by the issue/comment data may enter the profile route.
+    if (!/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(userId)) return;
+    setMemberReturn({ tab, selection });
+    setMemberId(userId);
+    setSelection(null);
+    setTab("member");
+    history.pushState(null, "", `#profile=${encodeURIComponent(userId)}`);
+  }
+  function backFromResidentProfile() {
+    setTab(memberReturn?.tab ?? "reports");
+    setSelection(memberReturn?.selection ?? null);
+    setMemberId(null);
+    history.replaceState(null, "", memberReturn?.selection?.issueId
+      ? `#issue=${encodeURIComponent(memberReturn.selection.issueId)}`
+      : location.pathname + location.search);
+  }
   function viewIssueOnMap(issue: Issue) {
     setSelection(null);
     setMapIssueId(issue.id);
@@ -387,6 +487,21 @@ useEffect(() => {
     ),
     [data, scopedIssues, query, categoryIds, status, sort, tab, reportGroups, reportSection, auth.session],
   );
+  // Search, category, watchlist and sorting always apply before pagination.
+  // Changing any of them returns the community Reports list to the first ten.
+  useEffect(() => setReportsLimit(10), [reportSection, query, categoryIds, status, sort, watchlist]);
+  const liveReports = config.serviceMode === "api" && tab === "reports" && watchlist.length > 0;
+  const pagedReports = usePublicReportPages(liveReports, {
+    section: reportSection === "inactive" ? "resolved" : "active",
+    query, categoryIds, sort,
+    status: reportSection === "inactive" ? "resolved" : status,
+    cityIds: watchlist.map(town => town.id),
+  }, reportRevision);
+  const reportsShowing = liveReports ? pagedReports.items : visible.slice(0, reportsLimit);
+  const reportsTotal = liveReports ? pagedReports.total : visible.length;
+  const reportScopeCounts = liveReports && pagedReports.ready ? pagedReports.counts : {
+    total: reportCounts.total, active: reportCounts.active, resolved: reportCounts.inactive,
+  };
   const clusters = useMemo(() => clusterIssues(visible), [visible]);
   const mapIssue = tab === "explore" ? data?.issues.find((issue) => issue.id === mapIssueId) : undefined;
   // A resolved report gets one temporary location marker, never a place in active totals.
@@ -432,6 +547,7 @@ useEffect(() => {
     // Persist succeeded before this callback is called. Show the saved item
     // immediately; a failed follow-up GET is never a failed POST.
     setCityId(issue.cityId);
+    setReportRevision(n => n + 1);
     setData((current) => current ? {
       ...current,
       issues: [issue, ...current.issues.filter((entry) => entry.id !== issue.id)],
@@ -458,9 +574,9 @@ useEffect(() => {
   function issueCard(issue: Issue, large = false) {
     const c = categories.find((c) => c.id === issue.categoryId);
     if (!c) return null;
-    const comments =
-      data?.comments.filter((comment) => comment.issueId === issue.id).length ||
-      0;
+    const comments = typeof issue.commentCount === "number"
+      ? issue.commentCount
+      : data?.comments.filter((comment) => comment.issueId === issue.id).length || 0;
     return (
       <button
         className={`issue-card ${large ? "large-card" : ""}`}
@@ -566,7 +682,7 @@ useEffect(() => {
             <UserRound size={16} />
             {copy.nav.mine}
           </button>
-          {auth.session?.user.role === "administrator" && <button className={tab === "admin" ? "active" : ""} aria-current={tab === "admin" ? "page" : undefined} onClick={() => { setTab("admin"); closeMenu(); }}><ShieldCheck size={16}/> Admin</button>}
+          {(auth.session?.user.role === "administrator" || auth.session?.user.role === "moderator") && <button className={tab === "admin" ? "active" : ""} aria-current={tab === "admin" ? "page" : undefined} onClick={() => { setTab("admin"); closeMenu(); }}><ShieldCheck size={16}/> Admin</button>}
         </nav>
         <div className="header-actions">
           <div className="theme-control" role="group" aria-label="Color theme">
@@ -633,28 +749,38 @@ useEffect(() => {
           </button>
         </section>
         {auth.error && <ErrorNotice message={auth.error} />}
-        {tab === "mine" ? (
+        {tab === "member" && memberId ? (
+          <ResidentProfile key={memberId} userId={memberId}
+            data={data ?? { version: 1, users: [], issues: [], comments: [] }}
+            categories={categories}
+            isOwnProfile={auth.session?.user.id === memberId} onBack={backFromResidentProfile}
+            onOpenIssue={openIssue} onViewMap={viewIssueOnMap}
+            onOpenOwnProfile={() => { setMemberId(null); setSelection(null); setTab("mine"); history.replaceState(null, "", location.pathname + location.search); }} />
+        ) : tab === "mine" ? (
           <Profile key={auth.session?.user.id ?? "guest"} data={data} categories={categories} loading={loading} error={error}
             onRetry={() => void load()} onSignIn={() => setSignIn(true)} onOpenIssue={openIssue} onViewMap={viewIssueOnMap} onReport={() => startReport()}
-            onIssueUpdated={(issue) => setData((current) => current ? { ...current, issues: current.issues.map((entry) => entry.id === issue.id ? issue : entry) } : current)}
+            onIssueUpdated={(issue) => {
+              setData(current => current ? {
+                ...current, issues: current.issues.map(entry => entry.id === issue.id ? issue : entry),
+              } : current);
+              setReportRevision(value => value + 1);
+            }}
             onIssueDeleted={(id) => { setData((current) => current ? { ...current, issues: current.issues.filter((entry) => entry.id !== id), comments: current.comments.filter((entry) => entry.issueId !== id) } : current); void refresh().catch(() => notify("Report deleted. Refresh to update totals.")); }}
             onProfileSaved={() => { void auth.refreshSession().catch(() => notify("Profile saved. Refresh to update your account name.")); void refresh().catch(() => notify("Profile saved. Refresh to update report authors.")); }} notify={notify}/>
         ) : tab === "admin" ? (
-          <AdminAccess />
+          <AdminAccess onChanged={() => void refresh().catch(() => notify("Reports changed. Refresh to update totals."))} />
         ) : tab === "overview" ? (
           <Overview
             stats={overviewStats}
             loading={loading}
             error={error}
             onReload={() => void load()}
-            categories={categories}
-            issues={data?.issues ?? []}
-            onSelectCluster={(cluster) => setSelection({ cluster })}
             onOpenMap={() => { setSelection(null); setStatus("all"); setTab("explore"); }}
           />
         ) : tab === "snapshots" ? (
           <LocalSnapshots cities={cities} watchlist={watchlist} setWatchlist={setWatchlist} stats={overviewStats} issues={data?.issues ?? []} categories={categories}
-            loading={loading} error={error} onReload={() => void load()}
+            loading={loading || datasetLoading || (config.serviceMode === "api" && !data)}
+            error={error || datasetError} onReload={() => { setDatasetAttempt(n => n + 1); void load(); }}
             onExplore={exploreWatchCity} onReport={(city) => startReport(city.center)} onSelectCluster={(cluster) => setSelection({ cluster })} />
         ) : <section className="workspace" aria-label="Report workspace">
           <h2 className="sr-only">{tab === "explore" ? "Explore reports" : tab === "reports" ? "Watched town reports" : "My reports"}</h2>
@@ -663,7 +789,7 @@ useEffect(() => {
               <div className="watch-reports-overview">
                 <div className="watch-reports-total">
                   <span className="section-kicker" id="watch-reports-heading">{copy.reports.watchlistTotal}</span>
-                  <strong aria-label={`${reportCounts.total} reports in watched towns`}>{reportCounts.total.toLocaleString()}</strong>
+                  <strong aria-label={`${reportScopeCounts.total} reports in watched towns`}>{reportScopeCounts.total.toLocaleString()}</strong>
                 </div>
                 <div className="watch-reports-overview-detail">
                   <button className="watch-reports-manage" onClick={() => { setTab("snapshots"); setSelection(null); }}>
@@ -675,12 +801,12 @@ useEffect(() => {
                 <button type="button" className={reportSection === "active" ? "selected" : ""}
                   aria-pressed={reportSection === "active"} onClick={() => changeReportSection("active")}>
                   <span><span className="watch-reports-status-dot active"/>{copy.reports.open}</span>
-                  <strong>{reportCounts.active.toLocaleString()}</strong>
+                  <strong>{reportScopeCounts.active.toLocaleString()}</strong>
                 </button>
                 <button type="button" className={reportSection === "inactive" ? "selected" : ""}
                   aria-pressed={reportSection === "inactive"} onClick={() => changeReportSection("inactive")}>
                   <span><span className="watch-reports-status-dot inactive"/>{copy.reports.resolved}</span>
-                  <strong>{reportCounts.inactive.toLocaleString()}</strong>
+                  <strong>{reportScopeCounts.resolved.toLocaleString()}</strong>
                 </button>
               </div>
             </section>
@@ -761,7 +887,7 @@ useEffect(() => {
               </button>
             </div>
           )}
-          {loading ? (
+          {loading || (tab === "explore" && config.serviceMode === "api" && !data && !datasetError) ? (
             <div className="loading-workspace" role="status">
               <div className="skeleton-map" />
               <div className="loading-side">
@@ -770,12 +896,15 @@ useEffect(() => {
                 <p>The map will appear shortly.</p>
               </div>
             </div>
-          ) : error ? (
+          ) : error || (tab === "explore" && datasetError) ? (
             <div className="empty-state">
               <ShieldCheck size={38} />
               <h3>Reports could not be loaded.</h3>
-              <p>{error}</p>
-              <button className="button primary" onClick={() => void load()}>
+              <p>{error || datasetError}</p>
+              <button className="button primary" onClick={() => {
+                if (datasetError) { setDatasetError(""); setDatasetAttempt(n => n + 1); }
+                else void load();
+              }}>
                 Try again
               </button>
             </div>
@@ -869,8 +998,8 @@ useEffect(() => {
               <div className="board-toolbar">
                 <span>
                   {
-                    query.trim() || hasFilters ? `Showing ${visible.length.toLocaleString()} of ${reportCount(reportCounts[reportSection], reportSection === "active" ? "open" : "resolved")}`
-                      : reportCount(reportCounts[reportSection], reportSection === "active" ? "open" : "resolved")}
+                    query.trim() || hasFilters ? `Showing ${reportsTotal.toLocaleString()} of ${reportCount(reportScopeCounts[reportSection === "active" ? "active" : "resolved"], reportSection === "active" ? "open" : "resolved")}`
+                      : reportCount(reportScopeCounts[reportSection === "active" ? "active" : "resolved"], reportSection === "active" ? "open" : "resolved")}
                 </span>
                 <label>
                   Sort by
@@ -883,11 +1012,35 @@ useEffect(() => {
                   </select>
                 </label>
               </div>
-              {visible.length ? (
-                <div className="community-grid">
-                  {visible.map((i) => issueCard(i, true))}
-                </div>
-              ) : (
+              {liveReports && pagedReports.error && <div className="empty-state">
+                <ErrorNotice message={pagedReports.error}/>
+                <button className="button secondary" type="button"
+                  onClick={pagedReports.retry}>Retry reports</button>
+              </div>}
+              {liveReports && pagedReports.loading && <div className="admin-loading" role="status">
+                <Spinner/> Loading reports…
+              </div>}
+              {reportsShowing.length ? (
+                <>
+                  <div className="community-grid">
+                    {reportsShowing.map((i) => issueCard(i, true))}
+                  </div>
+                  {reportsTotal > 10 && (
+                    <div className="profile-report-pagination reports-load-more" aria-label="Community reports pagination">
+                      <p aria-live="polite">
+                        Showing {liveReports ? pagedReports.displayed : Math.min(reportsLimit, reportsTotal)} of {reportsTotal} reports
+                      </p>
+                      {(liveReports ? pagedReports.hasMore : reportsTotal > reportsLimit) && (
+                        <button type="button" className="button secondary"
+                          disabled={liveReports && pagedReports.loading}
+                          onClick={() => liveReports ? pagedReports.loadMore() : setReportsLimit(count => count + 10)}>
+                          Load more reports
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </>
+              ) : liveReports && (pagedReports.loading || pagedReports.error) ? null : (
                 <div className="empty-state">
                   <MapPin size={36} />
                   <h3>
@@ -1054,6 +1207,7 @@ useEffect(() => {
           }}
           onAdd={(point) => startReport(point)}
           onViewMap={viewIssueOnMap}
+          onOpenProfile={openResidentProfile}
           ensureSession={ensureSession}
           notify={notify}
         />

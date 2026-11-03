@@ -1,3 +1,4 @@
+import { liveApi } from "./live";
 import { categories } from "../src/data/categories";
 import type { WorkerEnv } from "./bindings";
 import { listCities } from "./repository";
@@ -28,6 +29,12 @@ export async function handleApi(request: Request, env: WorkerEnv): Promise<Respo
   if (pathname !== API_PREFIX && !pathname.startsWith(`${API_PREFIX}/`)) {
     return error(404, "NOT_FOUND", "API route not found.");
   }
+
+  const { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, SUPABASE_SERVICE_ROLE_KEY,
+    GOOGLE_OAUTH_ENABLED, FACEBOOK_OAUTH_ENABLED } = env;
+  if (SUPABASE_URL && SUPABASE_PUBLISHABLE_KEY && SUPABASE_SERVICE_ROLE_KEY)
+    return liveApi(request, { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY,
+      SUPABASE_SERVICE_ROLE_KEY, GOOGLE_OAUTH_ENABLED, FACEBOOK_OAUTH_ENABLED });
 
   const path = pathname.slice(API_PREFIX.length) || "/";
   if (path === "/health" || path === "/categories" || path === "/cities") {

@@ -41,11 +41,22 @@ export interface Profile {
   bio: string;
   website: string;
 }
+/** Publicly visible profile fields. Never include email or account settings. */
+export interface PublicProfile {
+  userId: ID;
+  displayName: string;
+  avatarUrl: string;
+  city: string;
+  bio: string;
+  website: string;
+}
 export type ProfileChanges = Partial<Omit<Profile, "userId">>;
 export interface EditIssueInput {
   title: string;
   description: string;
   address: string;
+  /** Absent preserves attachments for older clients; an explicit list replaces them. */
+  attachments?: Attachment[];
 }
 export interface PublicUser {
   id: ID;
@@ -90,6 +101,8 @@ export interface Issue {
   authorId: ID;
   organizationId: ID | null;
   confirmationUserIds: ID[];
+  /** Supplied by server-side browsing; map and mock records can omit it. */
+  commentCount?: number;
   attachments: Attachment[];
   createdAt: ISODate;
   updatedAt: ISODate;
@@ -139,6 +152,8 @@ export interface CreateCommentInput {
   attachments: Attachment[];
 }
 export interface SignInInput {
+  password?: string;
+  register?: boolean;
   displayName: string;
   email: string;
 }

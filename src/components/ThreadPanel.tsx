@@ -50,6 +50,7 @@ export function ThreadPanel({
   onResolved,
   onAdd,
   onViewMap,
+  onOpenProfile,
   ensureSession,
   notify,
 }: {
@@ -64,6 +65,7 @@ export function ThreadPanel({
   onResolved: () => Promise<void>;
   onAdd: (point: Issue["location"]) => void;
   onViewMap: (issue: Issue) => void;
+  onOpenProfile: (userId: string) => void;
   ensureSession: (action: () => void) => void;
   notify: (message: string) => void;
 }) {
@@ -184,16 +186,19 @@ export function ThreadPanel({
         className={`comment ${depth ? "comment-reply" : ""}`}
         key={comment.id}
       >
-        <div className="avatar small">
+        <button type="button" className="avatar small profile-avatar-link"
+          aria-label={`View ${writer?.displayName || "resident"}'s profile`}
+          onClick={() => onOpenProfile(comment.authorId)}>
           {writer?.displayName
             .split(" ")
             .map((n) => n[0])
             .slice(0, 2)
             .join("") || "N"}
-        </div>
+        </button>
         <div className="comment-content">
           <div className="comment-meta">
-            <b>{writer?.displayName || "Neighbour"}</b>
+            <button type="button" className="profile-name-link"
+              onClick={() => onOpenProfile(comment.authorId)}>{writer?.displayName || "Neighbour"}</button>
             <time>{relativeTime(comment.createdAt)}</time>
           </div>
           <p>{comment.body}</p>
@@ -305,24 +310,19 @@ export function ThreadPanel({
               <CategoryBadge category={category} />
               <StatusBadge status={issue.status} />
             </div>
-            <h1 className="thread-title">{issue.title}</h1>
-            <p className="thread-address">
-              <MapPin size={15} />
-              {issue.address}
-            </p>
-            <button type="button" className="button secondary full view-report-map" onClick={() => onViewMap(issue)}>
-              <MapPin size={17} /> View on map <ArrowUpRight size={16} />
-            </button>
             <div className="author-line">
-              <div className="avatar">
+              <button type="button" className="avatar profile-avatar-link"
+                aria-label={`View ${author?.displayName || "reporter"}'s profile`}
+                onClick={() => onOpenProfile(issue.authorId)}>
                 {author?.displayName
                   .split(" ")
                   .map((n) => n[0])
                   .slice(0, 2)
                   .join("") || "N"}
-              </div>
+              </button>
               <div>
-                <b>{author?.displayName || "Neighbour"}</b>
+                <button type="button" className="profile-name-link"
+                  onClick={() => onOpenProfile(issue.authorId)}>{author?.displayName || "Neighbour"}</button>
                 <small>Reported {relativeTime(issue.createdAt)}</small>
               </div>
               <button
@@ -333,8 +333,10 @@ export function ThreadPanel({
                 <Share2 size={17} />
               </button>
             </div>
-            <p className="issue-description">{issue.description}</p>
+            <h1 className="thread-title">{issue.title}</h1>
+            {issue.description.trim() && <p className="issue-description">{issue.description}</p>}
             <AttachmentGallery photos={issue.attachments} />
+            <section className="report-participation" aria-label="People confirming this issue">
             <div className="support-box">
               <div>
                 <span className="support-number">{peopleCount(issue)}</span>
@@ -387,45 +389,24 @@ export function ThreadPanel({
                           "N")[0]
                       }
                     </span>
-                    {data.users.find((u) => u.id === id)?.displayName ||
-                      "Neighbour"}
+                    <button type="button" className="profile-name-link"
+                      onClick={() => onOpenProfile(id)}>
+                      {data.users.find((u) => u.id === id)?.displayName || "Neighbour"}
+                    </button>
                     {id === issue.authorId && <small>Reporter</small>}
                   </div>
                 ))}
               </div>
             )}
-            {issue.authorId === auth.session?.user.id &&
-              issue.status !== "resolved" && (
-                <button
-                  className="button secondary full resolve-button"
-                  disabled={busy}
-                  onClick={() => void resolve()}
-                >
-                  <CheckCircle2 size={16} />
-                  The problem is fixed — mark resolved
-                </button>
-              )}
-            {issue.authorId === auth.session?.user.id && (
-              <div className="owner-tools">
-                {!deleteConfirm ? (
-                  <button className="delete-link" onClick={() => setDeleteConfirm(true)}>
-                    <Trash2 size={15}/> Delete my report
-                  </button>
-                ) : (
-                  <div className="delete-confirm" role="group" aria-labelledby="delete-report-title" aria-describedby="delete-report-desc">
-                    <div className="delete-confirm-icon"><Trash2 size={19}/></div>
-                    <div className="delete-confirm-copy">
-                      <h3 id="delete-report-title">Delete this report?</h3>
-                      <p id="delete-report-desc">This permanently removes the issue, its confirmations, photos and discussion. It cannot be undone.</p>
-                      <div className="delete-confirm-actions">
-                        <button className="button secondary" disabled={busy} onClick={() => setDeleteConfirm(false)}>Keep report</button>
-                        <button className="button danger" disabled={busy} onClick={() => void removeReport()}>{busy ? <Spinner/> : <Trash2 size={15}/>} Delete permanently</button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
+            </section>
+            <button type="button" className="button secondary full view-report-map" aria-label="View on map" aria-describedby="report-map-location" onClick={() => onViewMap(issue)}>
+              <MapPin size={19} />
+              <span className="view-report-map-copy">
+                <strong>View on map</strong>
+                <small id="report-map-location">{issue.address}</small>
+              </span>
+              <ArrowUpRight size={16} />
+            </button>
             <div className="discussion-heading">
               <h3>
                 <MessageSquare size={18} />
@@ -527,6 +508,44 @@ export function ThreadPanel({
                   Sign in to join the conversation
                 </button>
               </div>
+            )}
+            {issue.authorId === auth.session?.user.id && (
+              <section className="report-owner-actions" aria-label="Manage your report">
+                <h4>Manage your report</h4>
+            {issue.authorId === auth.session?.user.id &&
+              issue.status !== "resolved" && (
+                <button
+                  className="button secondary full resolve-button"
+                  disabled={busy}
+                  onClick={() => void resolve()}
+                >
+                  <CheckCircle2 size={16} />
+                  The problem is fixed — mark resolved
+                </button>
+              )}
+            {issue.authorId === auth.session?.user.id && (
+              <div className="owner-tools">
+                {!deleteConfirm ? (
+                  <button className="delete-link" onClick={() => setDeleteConfirm(true)}>
+                    <Trash2 size={15}/> Delete my report
+                  </button>
+                ) : (
+                  <div className="delete-confirm" role="group" aria-labelledby="delete-report-title" aria-describedby="delete-report-desc">
+                    <div className="delete-confirm-icon"><Trash2 size={19}/></div>
+                    <div className="delete-confirm-copy">
+                      <h3 id="delete-report-title">Delete this report?</h3>
+                      <p id="delete-report-desc">This permanently removes the issue, its confirmations, photos and discussion. It cannot be undone.</p>
+                      <div className="delete-confirm-actions">
+                        <button className="button secondary" disabled={busy} onClick={() => setDeleteConfirm(false)}>Keep report</button>
+                        <button className="button danger" disabled={busy} onClick={() => void removeReport()}>{busy ? <Spinner/> : <Trash2 size={15}/>} Delete permanently</button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+              </section>
             )}
           </>
         )}

@@ -85,7 +85,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
     const timer = setTimeout(
-      () => setSession(null),
+      () => {
+        if (config.serviceMode === "mock") setSession(null);
+        else void civicService.getSession().then(setSession).catch(() => setSession(null));
+      },
       Math.min(left, 2147483647),
     );
     return () => clearTimeout(timer);

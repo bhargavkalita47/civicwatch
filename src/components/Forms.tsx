@@ -22,6 +22,8 @@ export function SignInModal({
   const auth = useAuth(),
     [name, setName] = useState(""),
     [email, setEmail] = useState(""),
+    [password, setPassword] = useState(""),
+    [register, setRegister] = useState(false),
     [busy, setBusy] = useState(false),
     [error, setError] = useState("");
   async function submit(event: FormEvent) {
@@ -29,7 +31,7 @@ export function SignInModal({
     setBusy(true);
     setError("");
     try {
-      await auth.signIn({ displayName: name, email });
+      await auth.signIn(config.serviceMode === "api" ? { displayName: name, email, password, register } : { displayName: name, email });
       onDone();
     } catch (e) {
       setError((e as Error).message);
@@ -53,7 +55,7 @@ export function SignInModal({
             <p>Signing in here doesn't verify your email or publish reports to other people.</p>
           </div>
         )}
-        <label>
+        {(config.serviceMode === "mock" || register) && <label>
           Your name
           <input
             autoComplete="name"
@@ -64,7 +66,7 @@ export function SignInModal({
             onChange={(e) => setName(e.target.value)}
             placeholder="Your name"
           />
-        </label>
+        </label>}
         <label>
           Email address
           <input
@@ -77,17 +79,29 @@ export function SignInModal({
             placeholder="you@example.com"
           />
         </label>
+        {config.serviceMode === "api" && <label>
+          Password
+          <input type="password" autoComplete={register ? "new-password" : "current-password"}
+            required minLength={8} maxLength={72} value={password} onChange={e => setPassword(e.target.value)} />
+        </label>}
         <ErrorNotice message={error} />
         <button className="button primary full" disabled={busy}>
           {busy ? (
             <Spinner />
           ) : (
             <>
-              Continue
+              {config.serviceMode === "mock" ? "Continue" : register ? "Create account" : "Sign in"}
               <ArrowRight size={17} />
             </>
           )}
         </button>
+        {config.serviceMode === "api" && <>
+          <button className="button full" type="button" onClick={() => { setRegister(!register); setError(""); }}>
+            {register ? "Already have an account? Sign in" : "Create an account"}
+          </button>
+          {config.googleOAuthEnabled && <a className="button full" href={config.apiBaseUrl + "/auth/oauth/google"}>Continue with Google</a>}
+          {config.facebookOAuthEnabled && <a className="button full" href={config.apiBaseUrl + "/auth/oauth/facebook"}>Continue with Facebook</a>}
+        </>}
         <p className="fine-print">
           Be kind. Be factual. Keep personal information out of public posts.
         </p>
@@ -118,6 +132,7 @@ export function ReportModal({
     [region, setRegion] = useState(""),
     [country, setCountry] = useState(""),
     [locating, setLocating] = useState(false),
+    [lookupIncomplete, setLookupIncomplete] = useState(false),
     [lookupNotice, setLookupNotice] = useState(""),
     [category, setCategory] = useState(""),
     [title, setTitle] = useState(""),
@@ -139,6 +154,7 @@ export function ReportModal({
     if (!editedLocation.current.locality) setLocality(place?.locality || "");
     setRegion(place?.region || place?.area?.region || "");
     setCountry(place?.country || place?.area?.country || "");
+    setLookupIncomplete(!place?.city || !place?.locality);
     setLookupNotice(place?.city || place?.area?.name
       ? "Check the city and locality, and edit them if needed."
       : "You can add a city or locality below, or leave both blank.");
@@ -148,6 +164,7 @@ export function ReportModal({
     setPicked(true);
     setError("");
     setLocating(false);
+    setLookupIncomplete(false);
     setLookupNotice("");
     // A search selection or manual city edit survives pin adjustments.
     // A new search result deliberately replaces the previous selection.
@@ -167,10 +184,30 @@ export function ReportModal({
       const match = await geoService.reverse(next);
       if (ticket === latestLookup.current) populateArea(match);
     } catch {
-      if (ticket === latestLookup.current)
-        setLookupNotice("Place lookup is unavailable. City and locality are optional; the map pin is enough.");
+      if (ticket === latestLookup.current) {
+        setLookupIncomplete(true);
+        setLookupNotice("The place lookup failed. You can retry or enter city and locality yourself; the pin is still valid.");
+      }
     }
     finally { if (ticket === latestLookup.current) setLocating(false); }
+  }
+  async function retryPlaceLookup() {
+    if (!picked || locating) return;
+    const ticket = ++latestLookup.current;
+    setLocating(true);
+    setLookupIncomplete(false);
+    setLookupNotice("");
+    try {
+      const match = await geoService.reverse(point);
+      if (ticket === latestLookup.current) populateArea(match);
+    } catch {
+      if (ticket === latestLookup.current) {
+        setLookupIncomplete(true);
+        setLookupNotice("The place lookup failed again. You can still type city and locality manually.");
+      }
+    } finally {
+      if (ticket === latestLookup.current) setLocating(false);
+    }
   }
   const nearby = issues.filter(
     (i) =>
@@ -234,6 +271,13 @@ export function ReportModal({
               </p>
             </div>
             <PlaceSearch compact onSelect={(place) => void choosePoint(place.point, place)} />
+            <div className="report-location-next">
+              <button className="button primary" type="submit" disabled={busy || saved || uploading || locating} aria-busy={locating}>
+                Continue <ArrowRight size={16} />
+              </button>
+              <p>Choose a pin on the map below before continuing.</p>
+            </div>
+            <ErrorNotice message={error} />
             <CivicMap
               categories={categories}
               center={initial}
@@ -250,7 +294,13 @@ export function ReportModal({
                 ? `${point.lat.toFixed(5)}, ${point.lng.toFixed(5)}`
                 : copy.reporting.noLocation}
             </div>
-            <p className="field-help" role="status">{locating ? "Filling city and locality from the selected location…" : !picked ? copy.reporting.mapHint : lookupNotice}</p>
+            <p className="field-help" role="status">{locating ? "Looking up the selected city and locality…" : !picked ? copy.reporting.mapHint : lookupNotice}</p>
+            {picked && lookupIncomplete && !locating && (
+              <button type="button" className="text-button retry-place-lookup"
+                onClick={() => void retryPlaceLookup()}>
+                Retry place lookup
+              </button>
+            )}
             <div className="geo-field-grid">
               <label>City — optional
                 <input maxLength={100} value={city} onChange={(e) => { editedLocation.current.city = true; setCity(e.target.value); }} placeholder="e.g. Guwahati" autoComplete="address-level2" />
@@ -365,42 +415,33 @@ export function ReportModal({
             </p>
           </>
         )}
-        <ErrorNotice message={error} />
-        <div className="form-actions">
-          {step === 2 && (
-            <button
-              className="button secondary"
-              type="button"
-              onClick={() => {
-                setStep(1);
-                setError("");
-              }}
-            >
-              <ChevronLeft size={16} />
-              Back
-            </button>
-          )}
-          <button
-            className="button primary"
-            disabled={
-              busy ||
-              saved ||
-              uploading ||
-              (step === 2 && nearby.length > 0 && !separate)
-            }
-          >
-            {busy ? (
-              <Spinner />
-            ) : saved ? (
-              "Saved"
-            ) : (
-              <>
-                {step === 1 ? "Continue" : copy.reporting.submit}
-                <ArrowRight size={16} />
-              </>
-            )}
-          </button>
-        </div>
+        {step === 2 && (
+          <>
+            <ErrorNotice message={error} />
+            <div className="form-actions">
+              <button
+                className="button secondary"
+                type="button"
+                onClick={() => {
+                  setStep(1);
+                  setError("");
+                }}
+              >
+                <ChevronLeft size={16} />
+                Back
+              </button>
+              <button
+                className="button primary"
+                type="submit"
+                disabled={busy || saved || uploading || (nearby.length > 0 && !separate)}
+              >
+                {busy ? <Spinner /> : saved ? "Saved" : (
+                  <>{copy.reporting.submit}<ArrowRight size={16} /></>
+                )}
+              </button>
+            </div>
+          </>
+        )}
       </form>
     </Modal>
   );

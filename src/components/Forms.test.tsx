@@ -24,7 +24,7 @@ const createIssue = vi.mocked(civicService.createIssue);
 const city = () => container.querySelector<HTMLInputElement>('input[placeholder="e.g. Guwahati"]')!;
 const locality = () => container.querySelector<HTMLInputElement>('input[placeholder="e.g. Ulubari or GS Road"]')!;
 async function click(text: string) {
-  await act(async () => { [...container.querySelectorAll("button")].find((button) => button.textContent === text)!.click(); });
+  await act(async () => { [...container.querySelectorAll("button")].find((button) => button.textContent?.trim() === text)!.click(); });
 }
 async function fill(input: HTMLInputElement | HTMLTextAreaElement, value: string) {
   await act(async () => {
@@ -72,7 +72,7 @@ it("asks only for city and optional locality and fills both after live location"
 
 it("allows city-only manual entry when place lookup fails", async () => {
   reverse.mockRejectedValueOnce(new Error("offline"));await click("Use my location");
-  expect(container.textContent).toContain("Place lookup is unavailable");
+  expect(container.textContent).toContain("The place lookup failed.");
   await fill(city(),"LA");await publish();
   expect(createIssue).toHaveBeenCalledWith(expect.objectContaining({
     area:expect.objectContaining({name:"LA",region:"Unspecified region",country:"Unspecified country"}),
@@ -148,4 +148,82 @@ it("resets dialog scroll and focus on Continue and Back without resetting field 
 it("still requires an exact map pin before continuing", async () => {
   await submit();
   expect(container.textContent).toContain("Click the map to confirm the exact location.");
+});
+
+
+it("places the only first-step Continue button above the map, preserving validation", async () => {
+  const continueArea = container.querySelector(".report-location-next")!;
+  const continueButtons = [...container.querySelectorAll<HTMLButtonElement>("button")]
+    .filter(item => item.textContent?.trim() === "Continue");
+  expect(continueButtons).toHaveLength(1);
+  expect(continueArea.contains(continueButtons[0])).toBe(true);
+  const mapButton = [...container.querySelectorAll<HTMLButtonElement>("button")]
+    .find(item => item.textContent === "Use my location")!;
+  expect(continueArea.compareDocumentPosition(mapButton) & Node.DOCUMENT_POSITION_FOLLOWING)
+    .toBeTruthy();
+  await click("Continue");
+  expect(continueArea.nextElementSibling?.textContent)
+    .toContain("Click the map to confirm the exact location.");
+  await click("Use my location");
+  await click("Continue");
+  expect(container.querySelector(".report-location-next")).toBeNull();
+  expect([...container.querySelectorAll("button")].some(item => item.textContent?.trim() === "Back"))
+    .toBe(true);
+  // Page two still has its own final submit button at the bottom.
+  expect(container.querySelector(".form-actions button[type=submit]")).not.toBeNull();
+});
+
+
+it("offers a retry when pin reverse geocoding fails, then fills both fields", async () => {
+  reverse.mockRejectedValueOnce(new Error("Temporary provider outage"));
+  await click("Use my location");
+  expect(city().value).toBe("");
+  expect(locality().value).toBe("");
+  expect(container.textContent).toContain("The place lookup failed.");
+  expect(container.textContent).toContain("Retry place lookup");
+  reverse.mockResolvedValueOnce(match);
+  await click("Retry place lookup");
+  expect(city().value).toBe("Guwahati");
+  expect(locality().value).toBe("Ulubari");
+  expect(container.textContent).not.toContain("Retry place lookup");
+});
+
+it("allows retry after an incomplete pin lookup without losing manually typed city", async () => {
+  reverse.mockResolvedValueOnce(null);
+  await click("Use my location");
+  expect(container.textContent).toContain("Retry place lookup");
+  await fill(city(), "My manually chosen city");
+  reverse.mockResolvedValueOnce({ ...match, locality: "Resolved locality" });
+  await click("Retry place lookup");
+  expect(city().value).toBe("My manually chosen city");
+  expect(locality().value).toBe("Resolved locality");
+});
+
+it("updates both fields when the user moves a pin to a new city", async () => {
+  await click("Use my location");
+  expect(city().value).toBe("Guwahati");
+  expect(locality().value).toBe("Ulubari");
+  reverse.mockResolvedValueOnce({
+    ...match, city: "Shillong", locality: "Laitumkhrah",
+    region: "Meghalaya", point: { lat: 27, lng: 92 },
+  });
+  await click("Move pin");
+  expect(city().value).toBe("Shillong");
+  expect(locality().value).toBe("Laitumkhrah");
+  expect(reverse).toHaveBeenCalledTimes(2);
+});
+
+
+it("holds Continue until the selected pin lookup has settled", async () => {
+  let resolve!: (place: PlaceResult | null) => void;
+  reverse.mockImplementationOnce(() => new Promise(done => { resolve = done; }));
+  await click("Use my location");
+  const continueButton = [...container.querySelectorAll<HTMLButtonElement>("button")]
+    .find(button => button.textContent?.trim() === "Continue")!;
+  expect(continueButton.disabled).toBe(true);
+  expect(continueButton.getAttribute("aria-busy")).toBe("true");
+  await act(async () => { resolve(match); });
+  expect(continueButton.disabled).toBe(false);
+  expect(city().value).toBe("Guwahati");
+  expect(locality().value).toBe("Ulubari");
 });

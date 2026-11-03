@@ -15,7 +15,7 @@ import {
 } from "../domain/types";
 // The browser receives only an HttpOnly, Secure server session cookie in live mode.
 // No mock identity, client-supplied user ID or role is trusted by this adapter.
-async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+export async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const abort = new AbortController();
   const timer = setTimeout(() => abort.abort(), 15000);
   try {
@@ -64,6 +64,10 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
     clearTimeout(timer);
   }
 }
+export const apiWatchlist = {
+  get: () => request<City[]>("/watchlist"),
+  save: (id: string, towns: City[]) => request<void>("/watchlist", { method: "PUT", headers: { "X-Civic-Account": id }, body: JSON.stringify(towns) }),
+};
 export const apiService: CivicService = {
   getCategories: () => request<Category[]>("/categories"),
   getCities: () => request<City[]>("/cities"),
@@ -80,7 +84,7 @@ export const apiService: CivicService = {
   },
   getProfile: () => request<Profile>("/profile"),
   updateProfile: (changes) => request<Profile>("/profile", { method: "PATCH", body: JSON.stringify(changes) }),
-  prepareProfilePhoto: async () => { throw new ServiceError("Profile photos are available in local preview only for now.", "CONFIGURATION"); },
+  prepareProfilePhoto: async (file) => (await apiService.uploadPhoto(file)).url,
   updateIssue: (id, input) => request<Issue>(`/issues/${encodeURIComponent(id)}`, { method: "PATCH", body: JSON.stringify(input) }),
   signIn: (input) =>
     request<Session>("/auth/sign-in", {

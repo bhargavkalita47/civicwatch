@@ -12,6 +12,7 @@ import type {
   Category,
   Dataset,
   Issue,
+  Attachment,
   Profile as ProfileModel,
   ProfileChanges,
   IssueFilters,
@@ -19,8 +20,9 @@ import type {
 import { canEditReport, profileName } from "../domain/profile";
 import { relativeTime, filterIssues, statusLabels } from "../domain/logic";
 import { civicService } from "../services";
+import { usePublicReportPages } from "../services/publicReportPages";
 import { useAuth } from "../services/auth";
-import { CategoryBadge, ErrorNotice, Modal, Spinner, StatusBadge } from "./ui";
+import { CategoryBadge, ErrorNotice, Modal, PhotoPicker, Spinner, StatusBadge } from "./ui";
 import { categoryMarkerColor } from "../domain/markerPalette";
 import { config } from "../config";
 
@@ -110,7 +112,7 @@ export function EditProfile({
           }
         }}
       >
-        <p>Make yourself known. Or don't. Every field is optional.</p>
+        <p>Every field is optional. Your display name, photo, city, bio and website are visible to anyone who opens your public profile. Your email and watchlist remain private.</p>
         <ErrorNotice message={error} />
         <fieldset disabled={saving || preparing}>
           <legend className="sr-only">Personal details</legend>
@@ -244,7 +246,7 @@ export function EditProfile({
   );
 }
 
-function EditReport({
+export function EditReport({
   issue,
   onClose,
   onSaved,
@@ -258,15 +260,21 @@ function EditReport({
       description: issue.description,
       address: issue.address,
     }),
+    [photos, setPhotos] = useState<Attachment[]>(() => [...issue.attachments]),
+    [uploading, setUploading] = useState(false),
     [busy, setBusy] = useState(false),
     [error, setError] = useState("");
+  const photosChanged =
+    photos.length !== issue.attachments.length ||
+    photos.some((photo, index) => photo.id !== issue.attachments[index]?.id);
   const dirty =
     draft.title !== issue.title ||
     draft.description !== issue.description ||
-    draft.address !== issue.address;
-  useUnsavedChanges(dirty || busy);
+    draft.address !== issue.address ||
+    photosChanged;
+  useUnsavedChanges(dirty || busy || uploading);
   const close = () => {
-    if (!busy && (!dirty || confirm("Discard your unsaved report changes?")))
+    if (!busy && !uploading && (!dirty || confirm("Discard your unsaved report changes?")))
       onClose();
   };
   return (
@@ -275,11 +283,11 @@ function EditReport({
         className="form-body profile-edit"
         onSubmit={async (event) => {
           event.preventDefault();
-          if (busy || !dirty) return;
+          if (busy || uploading || !dirty) return;
           setBusy(true);
           setError("");
           try {
-            onSaved(await civicService.updateIssue(issue.id, draft));
+            onSaved(await civicService.updateIssue(issue.id, { ...draft, attachments: photos }));
           } catch (cause) {
             setError((cause as Error).message);
           } finally {
@@ -325,18 +333,26 @@ function EditReport({
               }
             />
           </label>
+          <div className="report-photos profile-edit-photos">
+            <span className="profile-edit-photos-title">Report photos — optional</span>
+            <p className="field-help">
+              Add photos or remove existing ones. Up to 3 JPG, PNG, or WebP photos, 15 MB each.
+              Changes appear on your report after you save.
+            </p>
+            <PhotoPicker value={photos} onChange={setPhotos} onBusy={setUploading} />
+          </div>
         </fieldset>
         <div className="form-actions">
           <button
             type="button"
             className="button secondary"
-            disabled={busy}
+            disabled={busy || uploading}
             onClick={close}
           >
             Cancel
           </button>
-          <button className="button primary" disabled={busy || !dirty}>
-            {busy ? "Saving…" : "Save report"}
+          <button type="submit" className="button primary" disabled={busy || uploading || !dirty}>
+            {busy ? "Saving…" : uploading ? "Preparing photos…" : "Save report"}
           </button>
         </div>
       </form>
@@ -393,6 +409,21 @@ export function Profile({
   const [reportStatus, setReportStatus] =
     useState<IssueFilters["status"]>("all");
   const [categoryIds, setCategoryIds] = useState<string[]>([]);
+  const [reportLimit, setReportLimit] = useState(10);
+  const [pageRevision, setPageRevision] = useState(0);
+  useEffect(() => { if (data) setPageRevision(n => n + 1); }, [data]);
+  const liveReports = config.serviceMode === "api" && !!user;
+  const pagedReports = usePublicReportPages(liveReports, {
+    mine: true,
+    section: section === "history" ? "all" : section,
+    query: reportQuery, categoryIds, sort: reportSort,
+    status: section === "resolved" ? "resolved" : reportStatus,
+  }, pageRevision);
+  // A new report section, search, filter, or sort restarts at the first ten.
+  // Results are filtered and sorted BEFORE they are sliced for display.
+  useEffect(() => setReportLimit(10), [
+    user?.id, section, reportQuery, reportSort, reportStatus, categoryIds,
+  ]);
   const clearFilters = () => {
     setReportQuery("");
     setReportStatus("all");
@@ -464,12 +495,16 @@ export function Profile({
     resolved = mine.filter((issue) => issue.status === "resolved");
   const sectionReports =
     section === "history" ? mine : section === "active" ? active : resolved;
-  const visible = filterIssues(sectionReports, {
+  const visible = liveReports ? pagedReports.items : filterIssues(sectionReports, {
     query: reportQuery,
     categoryIds,
     sort: reportSort,
     status: section === "resolved" ? "resolved" : reportStatus,
   });
+  const resultTotal = liveReports ? pagedReports.total : visible.length;
+  const counts = liveReports ? pagedReports.counts : {
+    total: mine.length, active: active.length, resolved: resolved.length,
+  };
   const hasFilters =
     !!reportQuery.trim() ||
     categoryIds.length > 0 ||
@@ -522,15 +557,15 @@ export function Profile({
             <dl className="profile-stats">
               <div>
                 <dt>Total reports</dt>
-                <dd>{mine.length}</dd>
+                <dd>{counts.total}</dd>
               </div>
               <div>
                 <dt>Active</dt>
-                <dd>{active.length}</dd>
+                <dd>{counts.active}</dd>
               </div>
               <div>
                 <dt>Resolved</dt>
-                <dd>{resolved.length}</dd>
+                <dd>{counts.resolved}</dd>
               </div>
             </dl>
             <div
@@ -630,7 +665,7 @@ export function Profile({
             </div>
             <div className="board-toolbar">
               <span>
-                {visible.length} {visible.length === 1 ? "report" : "reports"}
+                {resultTotal} {resultTotal === 1 ? "report" : "reports"}
               </span>
               <label>
                 Sort by
@@ -651,9 +686,17 @@ export function Profile({
                 Clear report filters
               </button>
             )}
+            {liveReports && pagedReports.error && <div className="empty-state">
+              <ErrorNotice message={pagedReports.error}/>
+              <button className="button secondary" type="button"
+                onClick={pagedReports.retry}>Retry reports</button>
+            </div>}
+            {liveReports && pagedReports.loading && <div className="admin-loading" role="status">
+              <Spinner/> Loading your reports…
+            </div>}
             {visible.length ? (
               <div className="profile-report-list">
-                {visible.map((issue) => {
+                {visible.slice(0, liveReports ? visible.length : reportLimit).map((issue) => {
                   const category = categories.find(
                     (c) => c.id === issue.categoryId,
                   );
@@ -727,8 +770,22 @@ export function Profile({
                     </article>
                   );
                 })}
+                {resultTotal > 10 && (
+                  <div className="profile-report-pagination" aria-label="Report list pagination">
+                    <p aria-live="polite">
+                      Showing {liveReports ? pagedReports.displayed : Math.min(reportLimit, resultTotal)} of {resultTotal} reports
+                    </p>
+                    {(liveReports ? pagedReports.hasMore : resultTotal > reportLimit) && (
+                      <button type="button" className="button secondary"
+                        disabled={liveReports && pagedReports.loading}
+                        onClick={() => liveReports ? pagedReports.loadMore() : setReportLimit(count => count + 10)}>
+                        Load more reports
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
-            ) : (
+            ) : liveReports && (pagedReports.loading || pagedReports.error) ? null : (
               <div className="empty-state">
                 <h3>
                   {hasFilters
@@ -895,7 +952,7 @@ export function Profile({
                 className="button primary"
                 onClick={() => setFiltersOpen(false)}
               >
-                Show {visible.length} reports
+                Show {resultTotal} reports
               </button>
             </div>
           </div>

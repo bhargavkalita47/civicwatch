@@ -2,7 +2,7 @@
   <img src="public/civicwatch-mark.svg" alt="CivicWatch C-and-eye logo" width="72" />
   <h1>CivicWatch</h1>
   <p><strong>Infrastructure ages. The complaints stay fresh.</strong></p>
-  <p>A map-first civic reporting app for documenting neighbourhood problems,<br />sharing photo evidence, and following the conversation around them.</p>
+  <p>A community civic reporting app for documenting neighbourhood problems,<br />sharing photo evidence, and following the conversation around them.</p>
   <p>
     <a href="https://civicwatch.bhargavkalita1327.workers.dev/">Live frontend</a> ·
     <a href="DEPLOYMENT.md">Deployment</a> ·
@@ -23,17 +23,17 @@ CivicWatch gives everyday infrastructure problems a place on the map: potholes, 
 
 The interface pairs plain controls with a dry, satirical “neighbourhood doomer” voice. CivicWatch is an independent community project; reports are not automatically sent to municipal authorities.
 
-> **Current stage: working frontend, backend integration pending.** Reports, photos, watchlists, and preview accounts currently use storage in the same browser and origin. They are not shared across devices. Sign-in does not verify email. The Cloudflare Worker and API adapter are scaffolded; verified authentication, shared persistence, and hosted uploads still need implementation.
+> **Current stage: backend private pilot on `dev/backend`, public `main` remains frontend-only.** The production URL still runs the existing browser-backed frontend. Cloudflare preview branches use Supabase Auth, PostgreSQL and private Storage for shared accounts, reports, discussion and uploads. Live backend administration is available on the preview. Password recovery and social sign-in are deliberately deferred. The public release is **not security-approved**; see [Backend security audit](docs/BACKEND_SECURITY_AUDIT.md) for verified fixes and remaining launch work.
 
 ## Features
 
 | Area | Current behaviour |
 | --- | --- |
-| **Overview** | Interactive map of active issues and platform-wide totals from the active service. In local mode, totals describe that browser's dataset. |
+| **Overview** | Statistics-first platform totals with a resolution indicator and link to Explore; no duplicate map. |
 | **Town watchlist** | Search for towns, add or remove them, reorder with drag or keyboard controls, and inspect selected-town activity and combined watchlist totals. |
 | **Explore map** | Pan and zoom worldwide, find places, filter report text from one search field, use six category-group quick filters, and refine individual categories, statuses, and sort order. |
-| **Reports** | Open and Resolved sections scoped to saved towns, with counts, search, filters, and ordering. |
-| **My reports** | Review reports created by the current local account. Creators can delete their reports or mark them resolved. |
+| **Reports** | Active and Resolved sections scoped to watched towns. Live mode loads ten records per server page, with filters, sorting, totals and Load more. |
+| **My reports** | Active, Resolved and All report history with server-side paging in live mode. Signed-in creators can edit or remove their reports; public profiles have the same filters. |
 | **Reporting** | Two-step location → details flow; choose a map pin, search for a place, or use device location. City, locality, description, and photos are optional. Category and title are required. |
 | **Issue catalogue** | 70 issue types across Safety & access, Roads & travel, Water & drainage, Waste & environment, Public utilities, and Public spaces, with a searchable grouped category picker. |
 | **Community threads** | Confirm an existing issue, read discussions and replies, attach photos, and open image previews. “View on map” opens Explore at the report's location and highlights its marker. |
@@ -98,20 +98,20 @@ React components call the typed `CivicService` interface. The service entry poin
 | `src/copy.ts` | Shared interface copy and count helpers. |
 | `src/App.tsx` | Page composition, navigation, and application interaction state. |
 | `worker/` | Worker entry, API routing, binding contracts, and repository/governance scaffolding. |
-| `backend/migrations/` | Versioned D1 SQL migrations. |
+| `supabase/migrations/` | Versioned PostgreSQL schema, security, moderation and performance migrations for the live backend. |
 | `scripts/` | Configuration, design, copy, navigation, release, and schema checks. |
 
-The current Worker implements `GET /api/v1/health`, `GET /api/v1/categories`, and `GET /api/v1/cities`. Session lookup returns 401 until authentication is connected. Shared report reads, writes, and uploads deliberately return 501 until implemented. A healthy static deployment does not activate those operations.
+The `dev/backend` Worker uses the dedicated CivicWatch Supabase project with HttpOnly sessions, PostgreSQL, private media, and role-checked moderation. `main` remains the separately released frontend.
 
-### Backend integration roadmap
+### Live backend performance
 
-1. Add verified authentication and server-managed sessions.
-2. Implement shared D1 repositories and enforce permissions on the server.
-3. Add validated R2 uploads and reliable media cleanup.
-4. Add moderation, rate limits, pagination, and geographic queries.
-5. Verify report visibility and permissions across independent devices, then enable the API adapter.
+- Report listings now use a validated, server-side paginated endpoint with exact counts and 10-record UI batches. My Reports always uses the authenticated server identity; public profiles are visible-records only.
+- Overview and town discovery are computed by private PostgreSQL aggregation functions, not by downloading all reports into Worker memory.
+- Initial Overview and report browsing avoid the full map archive; it loads only on a map, watchlist-activity or report-thread visit.
+- SQL paging and aggregation functions are `SECURITY INVOKER` with `service_role`-only execution. Migrations were applied to the dedicated CivicWatch Supabase pilot project.
+- The map archive is **still a scaling limit** until viewport-based map fetching and on-demand discussion hydration are introduced. This is a controlled backend pilot, not a high-traffic release claim.
 
-[Backend activation](docs/BACKEND.md), [API contract](docs/API.md), and [governance](docs/GOVERNANCE.md) describe the planned boundary. Client preview identities and roles are not production authorization.
+See [Scaling architecture](docs/SCALING.md) and the [Backend security audit](docs/BACKEND_SECURITY_AUDIT.md) before promoting the backend.
 
 ## Configuration
 
@@ -155,6 +155,6 @@ The latest merged work includes photo and camera support, location and form impr
 
 ## Contributing
 
-Use the existing repository: create a focused branch from `main`, open a pull request, run the checks, review the preview, and merge when ready. Backend work can use `dev/backend-integration` when that phase begins.
+Use focused pull requests. Production frontend work targets `main` after review; ongoing backend work starts from `dev/backend`, runs `npm run verify`, checks the Cloudflare preview, and merges back into `dev/backend` first.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md). Bug reports should include reproduction steps, expected/actual behaviour, browser and device details, and screenshots where useful, without private information.

@@ -49,7 +49,7 @@ it("selects GPS coordinates and draws the report pin without another map click",
   expect(onPick).toHaveBeenCalledWith(expect.objectContaining({ lat: 26.17 }));
   expect(onPick.mock.calls[0][0].lng).toBeCloseTo(91.76);
   expect(container.querySelector('[title="Selected report location"]')).not.toBeNull();
-  expect(container.querySelector(".picker-hint")?.textContent).toContain("Location selected");
+  expect(container.querySelector(".picker-hint")).toBeNull();
   expect(setView).toHaveBeenCalledWith([26.17, expect.closeTo(91.76)], 15, expect.objectContaining({ animate: false }));
   expect(getPosition).toHaveBeenCalledWith(expect.any(Function), expect.any(Function),
     { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
@@ -129,4 +129,15 @@ it("keeps resolved location markers clearly labeled when explicitly supplied", a
     organizationId:null,confirmationUserIds:[],createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()};
   await act(async()=>{root.render(<CivicMap categories={categories} clusters={[{id:issue.id,location:issue.location,issues:[issue],totalPeople:1}]} highlightedIssueId={issue.id}/>);});
   expect(container.querySelector(".civic-marker-highlighted")?.getAttribute("aria-label")).toContain("Resolved.");
+});
+
+
+it("does not show the redundant click-to-place-pin map text", async () => {
+  await act(async () => root.render(<Picker/>));
+  expect(container.textContent).not.toContain("Click to place your pin");
+  expect(container.querySelector(".picker-hint")).toBeNull();
+  await locate();
+  await found();
+  expect(container.querySelector(".picker-hint")).toBeNull();
+  expect(onPick).toHaveBeenCalled();
 });
