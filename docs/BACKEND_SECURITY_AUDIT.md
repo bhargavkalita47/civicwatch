@@ -22,8 +22,9 @@
 | **High** | Unfinished social providers were displayed and OAuth authorization could start despite the unverified-email account-linking risk | Both UI and Worker now default to disabled and require explicit respective build/runtime opt-in; leave flags off |
 | **Medium** | A client could submit up to Cloudflare's request-body limit as JSON and trigger excessive memory allocation or 500 responses on malformed objects | Stream JSON with a hard 128 KiB limit, validate object shapes, return 400/413 without contacting Supabase |
 | **Performance** | Cities, overview and dataset reads fetched every column for every row, wasting memory, bandwidth and database time | Select only the columns required by each response while preserving frontend contracts |
+| **Performance** | Supabase flagged three foreign keys without supporting indexes (comment author, confirmation user, audit actor) | Added indexed paths in migration `20261103105417_civicwatch_foreign_key_indexes.sql`; performance advisor confirms these missing-index warnings are resolved |
 
-The RLS migration `20261103104146_civicwatch_public_moderation_rls.sql` has already been applied to the CivicWatch pilot Supabase project and is mirrored in this Git branch.
+The RLS migration `20261103104146_civicwatch_public_moderation_rls.sql` has already been applied to the CivicWatch pilot Supabase project and is mirrored in this Git branch. The foreign-key index migration has also been applied; the database is currently about **12 MB**, with only **2 reports and 1 comment**, so index-usage warnings are expected to be noisy at this sample size and are not a reason to drop future-use indexes.
 
 ## Known blockers that still require work
 
