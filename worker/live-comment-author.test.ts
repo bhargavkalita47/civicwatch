@@ -25,7 +25,7 @@ let actingUser = authorId;
 let owningUser = authorId;
 let mediaOwner = authorId;
 let hidden = false;
-let persisted = { ...baseComment };
+let persisted: Record<string, unknown> = { ...baseComment };
 let writes: Array<{ method: string; path: string; query: string; body?: Record<string, unknown> }> = [];
 
 function request(method: "PATCH" | "DELETE", body?: object, signedIn = true) {
