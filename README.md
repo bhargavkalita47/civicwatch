@@ -23,7 +23,7 @@ CivicWatch gives everyday infrastructure problems a place on the map: potholes, 
 
 The interface pairs plain controls with a dry, satirical “neighbourhood doomer” voice. CivicWatch is an independent community project; reports are not automatically sent to municipal authorities.
 
-> **Current stage: working frontend, backend integration pending.** Reports, photos, watchlists, and preview accounts currently use storage in the same browser and origin. They are not shared across devices. Sign-in does not verify email. The Cloudflare Worker and API adapter are scaffolded; verified authentication, shared persistence, and hosted uploads still need implementation.
+> **Current stage: backend private pilot on `dev/backend`, public `main` remains frontend-only.** The production URL still runs the existing browser-backed frontend. Cloudflare preview branches use Supabase Auth, PostgreSQL and private Storage for shared accounts, reports, discussion and uploads. Live backend administration is available on the preview. Password recovery and social sign-in are deliberately deferred. The public release is **not security-approved**; see [Backend security audit](docs/BACKEND_SECURITY_AUDIT.md) for verified fixes and remaining launch work.
 
 ## Features
 
