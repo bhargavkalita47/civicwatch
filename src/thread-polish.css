@@ -1,0 +1,33 @@
+/* Keep report confirmations attached to the report heading, instead of
+   interrupting the transition from evidence to discussion. */
+.report-participation { margin: 0 0 4px; }
+.report-participation .support-box {
+  margin: 18px 0 10px;
+  padding: 15px 18px;
+  border-radius: 16px;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.report-participation .support-box > div { min-width: 0; }
+.report-participation .support-box > .button {
+  flex: 0 0 auto;
+  min-height: 42px;
+  padding-inline: 14px;
+}
+.report-participation .people-list {
+  margin: 0 0 10px;
+  padding: 8px 10px 10px;
+  border-radius: 12px;
+  background: var(--cw-soft);
+  border: 1px solid var(--cw-border);
+}
+.report-participation + .author-line {
+  border-top: 1px solid var(--cw-border);
+  padding-top: 18px;
+  margin-top: 18px;
+}
+@media (max-width: 520px) {
+  .report-participation .support-box { padding: 13px 14px; gap: 10px; }
+  .report-participation .support-box > .button { min-height: 44px; }
+  .report-participation .support-box .text-button { min-height: 30px; align-items: center; }
+}
