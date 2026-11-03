@@ -46,6 +46,44 @@ it("prefers the fallback city if Photon provides only an unnamed landmark", asyn
   expect(address).toMatchObject({ city: "Guwahati", locality: "Dispur", country: "India" });
 });
 
+it("autofills Guwahati from a city-level coordinate lookup without losing Zoo Rd Tiniali", async () => {
+  vi.mocked(request).mockResolvedValueOnce({
+    features: [{
+      geometry: { coordinates: [91.77556, 26.18020] },
+      properties: { name: "Zoo Rd Tiniali", suburb: "Zoo Rd Tiniali",
+        state: "Assam", country: "India" },
+    }],
+    fallback: {
+      place_id: 81, address: {
+        neighbourhood: "Zoo Rd Tiniali", road: "Rajgarh Road", state: "Assam", country: "India",
+      },
+    },
+    cityFallback: {
+      place_id: 82, name: "Guwahati", addresstype: "city",
+      address: { state: "Assam", country: "India" },
+    },
+  });
+  const address = await geoService.reverse({ lat: 26.18020, lng: 91.77556 });
+  expect(address).toMatchObject({
+    city: "Guwahati", locality: "Zoo Rd Tiniali", region: "Assam", country: "India",
+  });
+  expect(address?.point).toEqual({ lat: 26.18020, lng: 91.77556 });
+  expect(fetcher).not.toHaveBeenCalled();
+});
+
+it("uses settlement types globally rather than assuming Indian city metadata", async () => {
+  vi.mocked(request).mockResolvedValueOnce({
+    features: [], fallback: null,
+    cityFallback: {
+      place_id: 83, name: "Cambridge", addresstype: "city",
+      address: { state: "England", country: "United Kingdom" },
+    },
+  });
+  const address = await geoService.reverse({ lat: 52.20534, lng: 0.12182 });
+  expect(address).toMatchObject({ city: "Cambridge", locality: "",
+    region: "England", country: "United Kingdom" });
+});
+
 it("does not invent missing city metadata when no provider knows the location", async () => {
   vi.mocked(request).mockResolvedValueOnce({ features: [], fallback: null });
   const address = await geoService.reverse({ lat: 25.88888, lng: 90.77777 });
