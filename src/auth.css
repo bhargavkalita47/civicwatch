@@ -1,0 +1,14 @@
+/* Password recovery inherits CivicWatch's surface and typography tokens. */
+.auth-recovery .form-intro { margin-bottom: 14px; }
+.auth-recovery .info-note {
+  display: flex; align-items: flex-start; gap: 10px;
+  font-size: 13px; line-height: 1.55; border-radius: 12px;
+}
+.auth-recovery .info-note svg { flex: none; margin-top: 2px; }
+.auth-recovery-actions { display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; }
+.auth-recovery-actions .button { min-width: 132px; }
+.auth-recovery input[disabled] { opacity: .62; cursor: not-allowed; }
+@media (max-width: 520px) {
+ .auth-recovery-actions { display: grid; grid-template-columns: 1fr 1fr; }
+ .auth-recovery-actions .button { min-width: 0; }
+}
