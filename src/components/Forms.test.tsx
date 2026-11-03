@@ -72,7 +72,7 @@ it("asks only for city and optional locality and fills both after live location"
 
 it("allows city-only manual entry when place lookup fails", async () => {
   reverse.mockRejectedValueOnce(new Error("offline"));await click("Use my location");
-  expect(container.textContent).toContain("Place lookup is unavailable");
+  expect(container.textContent).toContain("The place lookup failed.");
   await fill(city(),"LA");await publish();
   expect(createIssue).toHaveBeenCalledWith(expect.objectContaining({
     area:expect.objectContaining({name:"LA",region:"Unspecified region",country:"Unspecified country"}),
