@@ -350,7 +350,7 @@ export function EditReport({
           >
             Cancel
           </button>
-          <button className="button primary" disabled={busy || uploading || !dirty}>
+          <button type="submit" className="button primary" disabled={busy || uploading || !dirty}>
             {busy ? "Saving…" : uploading ? "Preparing photos…" : "Save report"}
           </button>
         </div>
