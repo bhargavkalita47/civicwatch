@@ -1,4 +1,5 @@
 import { categories } from "../src/data/categories";
+import { reverseGeocodeResponse } from "./geoReverse";
 import type { Attachment, City, Comment, Dataset, Issue, OverviewSnapshot, Profile, Role, Session } from "../src/domain/types";
 
 export interface LiveConfig {
@@ -225,6 +226,7 @@ export async function liveApi(req: Request, env: LiveConfig): Promise<Response> 
         await upstream("/rest/v1/civic_reports?select=id&limit=1");
         return reply({ service: "civicwatch", status: "healthy", apiVersion: "v1" });
       }
+      if (path === "/geo/reverse") return reverseGeocodeResponse(req);
       if (path === "/categories") return reply(categories);
       if (path === "/auth/session") return reply(await session(await actor()));
       if (path === "/watchlist") {
