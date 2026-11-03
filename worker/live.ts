@@ -227,6 +227,26 @@ export async function liveApi(req: Request, env: LiveConfig): Promise<Response> 
         outputHeaders.set("Location", url.origin + "/");
         return new Response(null, { status: 303, headers: outputHeaders });
       }
+      // Public-facing profile cards reveal only fields the resident chose for
+      // their profile. Never include email, session data, roles or watchlists.
+      const memberProfileId = /^\/users\/([^/]+)\/profile$/.exec(path)?.[1];
+      if (memberProfileId) {
+        if (!uuid.test(memberProfileId)) throw new Failure(404, "Profile not found.");
+        const [member] = await db("profiles", {
+          select: "user_id,display_name,avatar_url,city,bio,website",
+          user_id: "eq." + memberProfileId,
+        });
+        if (!member) throw new Failure(404, "Profile not found.");
+        return reply({
+          userId: member.user_id,
+          displayName: member.display_name || "CivicWatch member",
+          avatarUrl: member.avatar_url || "",
+          city: member.city || "",
+          bio: member.bio || "",
+          website: typeof member.website === "string" && /^https?:\/\//i.test(member.website)
+            ? member.website : "",
+        });
+      }
       if (path === "/profile") return reply(await profile((await actor()).id));
       if (path === "/admin/summary") {
         const user = await actor();
