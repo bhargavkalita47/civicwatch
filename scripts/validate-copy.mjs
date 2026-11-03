@@ -27,7 +27,7 @@ assert.match(app, /copy\.pages\[tab\]\.subtitle/);
 assert.doesNotMatch(app, /The local paper trail|The venting thread|WATCHLIST FILTERS|YOUR REPORT TOOLS/);
 assert.match(app, /copy\.reports\.open/);
 assert.match(app, /copy\.reports\.resolved/);
-assert.match(app, /reportCount\(reportCounts\[reportSection\]/);
+assert.match(app, /reportCount\(reportScopeCounts\[reportSection === "active"/, "Report counts must use the paged API's scoped totals");
 assert.match(app, /watchlistReportGroups\(watchlist, cityIssues\)/);
 assert.match(overview, /stats\.platform/);
 assert.match(overview, /Explore map/);

@@ -4,6 +4,8 @@ import {
 } from "lucide-react";
 import type { Category, Dataset, Issue, IssueFilters, PublicProfile } from "../domain/types";
 import { publicProfiles } from "../services/publicProfiles";
+import { usePublicReportPages } from "../services/publicReportPages";
+import { config } from "../config";
 import { profileName } from "../domain/profile";
 import { filterIssues, relativeTime, statusLabels } from "../domain/logic";
 import { categoryMarkerColor } from "../domain/markerPalette";
@@ -45,6 +47,15 @@ export function ResidentProfile({
   const [categoryIds, setCategoryIds] = useState<string[]>([]);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [reportLimit, setReportLimit] = useState(10);
+  const [pageRevision, setPageRevision] = useState(0);
+  useEffect(() => setPageRevision(n => n + 1), [data]);
+  const liveReports = config.serviceMode === "api";
+  const pagedReports = usePublicReportPages(liveReports, {
+    authorId: userId,
+    section: section === "history" ? "all" : section,
+    query: reportQuery, categoryIds, sort: reportSort,
+    status: section === "resolved" ? "resolved" : reportStatus,
+  }, pageRevision);
 
   // Keep public profiles consistent with My Reports: ten at a time.
   // Changing the resident or any search/filter/sort starts a fresh batch.
@@ -78,12 +89,16 @@ export function ResidentProfile({
   const resolvedReports = reports.filter(issue => issue.status === "resolved");
   const sectionReports = section === "history" ? reports
     : section === "active" ? activeReports : resolvedReports;
-  const visible = filterIssues(sectionReports, {
+  const visible = liveReports ? pagedReports.items : filterIssues(sectionReports, {
     query: reportQuery,
     categoryIds,
     sort: reportSort,
     status: section === "resolved" ? "resolved" : reportStatus,
   });
+  const resultTotal = liveReports ? pagedReports.total : visible.length;
+  const counts = liveReports ? pagedReports.counts : {
+    total: reports.length, active: activeReports.length, resolved: resolvedReports.length,
+  };
   const hasFilters = Boolean(reportQuery.trim()) || categoryIds.length > 0
     || (section !== "resolved" && reportStatus !== "all");
   const groups = [...new Set(categories.map(category => category.group))];
@@ -132,9 +147,9 @@ export function ResidentProfile({
           <h2>Reports by {profileName(profile.displayName)}</h2>
           <p>Public reports on the record. Account details and watchlists stay private.</p>
           <dl className="profile-stats">
-            <div><dt>Public reports</dt><dd>{reports.length}</dd></div>
-            <div><dt>Active</dt><dd>{activeReports.length}</dd></div>
-            <div><dt>Resolved</dt><dd>{resolvedReports.length}</dd></div>
+            <div><dt>Public reports</dt><dd>{counts.total}</dd></div>
+            <div><dt>Active</dt><dd>{counts.active}</dd></div>
+            <div><dt>Resolved</dt><dd>{counts.resolved}</dd></div>
           </dl>
           <div className="profile-report-tabs" role="group" aria-label="Resident report sections">
             {(["active", "resolved", "history"] as const).map(key => (
@@ -182,7 +197,7 @@ export function ResidentProfile({
             </button>
           </div>
           <div className="board-toolbar">
-            <span>{visible.length} {visible.length === 1 ? "report" : "reports"}</span>
+            <span>{resultTotal} {resultTotal === 1 ? "report" : "reports"}</span>
             <label>
               Sort by
               <select aria-label="Sort resident reports" value={reportSort}
@@ -194,8 +209,16 @@ export function ResidentProfile({
           </div>
           {hasFilters && <button type="button" className="text-button"
             onClick={clearFilters}>Clear report filters</button>}
+          {liveReports && pagedReports.error && <div className="empty-state">
+            <ErrorNotice message={pagedReports.error}/>
+            <button className="button secondary" type="button"
+              onClick={pagedReports.retry}>Retry reports</button>
+          </div>}
+          {liveReports && pagedReports.loading && <div className="admin-loading" role="status">
+            <Spinner/> Loading public reports…
+          </div>}
           {visible.length ? <div className="profile-report-list">
-            {visible.slice(0, reportLimit).map(issue => {
+            {visible.slice(0, liveReports ? visible.length : reportLimit).map(issue => {
               const category = categories.find(item => item.id === issue.categoryId);
               return <article className="profile-report-card" key={issue.id}>
                 <div className="profile-report-meta">
@@ -214,14 +237,15 @@ export function ResidentProfile({
                 </div>
               </article>;
             })}
-            {visible.length > 10 && <div className="profile-report-pagination" aria-label="Report list pagination">
-              <p aria-live="polite">Showing {Math.min(reportLimit, visible.length)} of {visible.length} reports</p>
-              {visible.length > reportLimit && (
+            {resultTotal > 10 && <div className="profile-report-pagination" aria-label="Report list pagination">
+              <p aria-live="polite">Showing {liveReports ? pagedReports.displayed : Math.min(reportLimit, resultTotal)} of {resultTotal} reports</p>
+              {(liveReports ? pagedReports.hasMore : resultTotal > reportLimit) && (
                 <button type="button" className="button secondary"
-                  onClick={() => setReportLimit(count => count + 10)}>Load more reports</button>
+                  disabled={liveReports && pagedReports.loading}
+                  onClick={() => liveReports ? pagedReports.loadMore() : setReportLimit(count => count + 10)}>Load more reports</button>
               )}
             </div>}
-          </div> : <div className="empty-state">
+          </div> : liveReports && (pagedReports.loading || pagedReports.error) ? null : <div className="empty-state">
             <h3>{hasFilters ? "No matching reports." :
               section === "resolved" ? "No resolved reports yet." :
               section === "active" ? "No active reports." : "No public reports yet."}</h3>
@@ -257,7 +281,7 @@ export function ResidentProfile({
             <div className="form-actions">
               <button type="button" className="text-button" onClick={clearFilters}>Reset filters</button>
               <button type="button" className="button primary"
-                onClick={() => setFiltersOpen(false)}>Show {visible.length} reports</button>
+                onClick={() => setFiltersOpen(false)}>Show {resultTotal} reports</button>
             </div>
           </div>
         </Modal>}
