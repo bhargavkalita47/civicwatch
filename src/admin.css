@@ -1,0 +1,50 @@
+
+/* CivicWatch moderation console — inherits the existing light/dark brand tokens. */
+.admin-workspace { display: grid; gap: 24px; }
+.admin-workspace h2 { margin: 0; }
+.admin-heading { display:flex; justify-content:space-between; align-items:flex-start; gap:18px; }
+.admin-heading h2 { display:flex; gap:10px; align-items:center; }
+.admin-heading p { margin:10px 0 0; max-width:740px; color:var(--cw-muted); line-height:1.6; font-size:14px; }
+.admin-section { min-width:0; border:1px solid var(--cw-border); border-radius:18px; background:var(--cw-soft); padding:clamp(14px,2vw,24px); }
+.admin-section>header { display:flex; gap:12px; align-items:flex-start; margin-bottom:19px; color:var(--cw-heading); }
+.admin-section>header>svg { flex:none; margin-top:3px; }
+.admin-section h3 { font-size:20px; letter-spacing:-.02em; margin:0; color:var(--cw-heading); }
+.admin-section header p { margin:5px 0 0; color:var(--cw-muted); font-size:13px; line-height:1.55; }
+.admin-metrics { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; }
+.admin-metrics>div { display:flex; flex-direction:column; gap:7px; background:var(--cw-soft); border:1px solid var(--cw-border); padding:17px; border-radius:14px; }
+.admin-metrics strong { font-size:25px; line-height:1; color:var(--cw-heading); font-variant-numeric:tabular-nums; }
+.admin-metrics span { font-size:12px; color:var(--cw-muted); }
+.admin-grant-form { display:grid; grid-template-columns:auto minmax(160px,1fr) auto; gap:12px; align-items:center; margin:14px 0 18px; }
+.admin-grant-form label, .admin-reason-form label { font-size:12px; font-weight:700; color:var(--cw-heading); }
+.admin-grant-form input, .admin-reason-form textarea, .admin-actions select { background:var(--cw-panel); color:var(--cw-heading); border:1px solid var(--cw-border); border-radius:10px; font:inherit; padding:11px 12px; min-width:0; }
+.admin-grant-form input:focus-visible, .admin-reason-form textarea:focus-visible, .admin-actions select:focus-visible { outline:2px solid #d96d81; outline-offset:2px; }
+.admin-items { display:grid; gap:8px; }
+.admin-item { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:15px; background:var(--cw-panel); border:1px solid var(--cw-border); border-radius:12px; min-width:0; }
+.admin-item-main, .admin-item>div { min-width:0; overflow-wrap:anywhere; }
+.admin-item b { display:block; font-size:14px; line-height:1.45; color:var(--cw-heading); }
+.admin-item small { display:block; color:var(--cw-muted); font-size:11px; margin-top:5px; overflow-wrap:anywhere; }
+.admin-item-title { display:flex; align-items:center; flex-wrap:wrap; gap:9px; }
+.admin-actions { display:flex; flex-wrap:wrap; align-items:center; justify-content:flex-end; gap:8px; }
+.admin-actions .button, .admin-item>.button { white-space:nowrap; display:inline-flex; gap:6px; align-items:center; }
+.admin-actions select { max-width:180px; text-transform:capitalize; font-size:12px; }
+.admin-pill { display:inline-block; padding:3px 9px; background:rgba(85,151,127,.12); border-radius:99px; color:var(--cw-heading); font-size:11px; font-weight:700; }
+.admin-pill.is-hidden { background:rgba(216,103,119,.15); }
+.admin-reason-form { border:1px solid var(--cw-border); background:var(--cw-soft); border-radius:16px; padding:20px; display:grid; gap:12px; }
+.admin-reason-form p { margin:5px 0 0; color:var(--cw-muted); font-size:12px; }
+.admin-reason-form textarea { resize:vertical; width:100%; box-sizing:border-box; }
+.admin-notice { display:flex; gap:8px; align-items:center; background:var(--cw-soft); border:1px solid var(--cw-border); border-radius:10px; padding:12px; color:var(--cw-heading); }
+.admin-loading { display:flex; gap:12px; align-items:center; color:var(--cw-muted); }
+.admin-empty { color:var(--cw-muted); font-size:13px; padding:18px 0; }
+.admin-audit-reason { color:var(--cw-muted); line-height:1.55; font-size:12px; margin:6px 0 0; }
+@media (max-width:850px) {
+ .admin-metrics { grid-template-columns:repeat(2,minmax(0,1fr)); }
+ .admin-grant-form { grid-template-columns:1fr; }
+ .admin-report-item { align-items:stretch; flex-direction:column; }
+ .admin-actions { justify-content:flex-start; }
+}
+@media (max-width:550px) {
+ .admin-heading { flex-direction:column; }
+ .admin-item { align-items:stretch; flex-direction:column; }
+ .admin-item>.button { align-self:flex-start; }
+ .admin-actions .button { flex:0 0 auto; }
+}

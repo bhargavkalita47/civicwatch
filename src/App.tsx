@@ -592,7 +592,7 @@ useEffect(() => {
             <UserRound size={16} />
             {copy.nav.mine}
           </button>
-          {auth.session?.user.role === "administrator" && <button className={tab === "admin" ? "active" : ""} aria-current={tab === "admin" ? "page" : undefined} onClick={() => { setTab("admin"); closeMenu(); }}><ShieldCheck size={16}/> Admin</button>}
+          {(auth.session?.user.role === "administrator" || auth.session?.user.role === "moderator") && <button className={tab === "admin" ? "active" : ""} aria-current={tab === "admin" ? "page" : undefined} onClick={() => { setTab("admin"); closeMenu(); }}><ShieldCheck size={16}/> Admin</button>}
         </nav>
         <div className="header-actions">
           <div className="theme-control" role="group" aria-label="Color theme">
@@ -666,7 +666,7 @@ useEffect(() => {
             onIssueDeleted={(id) => { setData((current) => current ? { ...current, issues: current.issues.filter((entry) => entry.id !== id), comments: current.comments.filter((entry) => entry.issueId !== id) } : current); void refresh().catch(() => notify("Report deleted. Refresh to update totals.")); }}
             onProfileSaved={() => { void auth.refreshSession().catch(() => notify("Profile saved. Refresh to update your account name.")); void refresh().catch(() => notify("Profile saved. Refresh to update report authors.")); }} notify={notify}/>
         ) : tab === "admin" ? (
-          <AdminAccess />
+          <AdminAccess onChanged={() => void refresh().catch(() => notify("Reports changed. Refresh to update totals."))} />
         ) : tab === "overview" ? (
           <Overview
             stats={overviewStats}

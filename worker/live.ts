@@ -42,6 +42,8 @@ export async function liveApi(req: Request, env: LiveConfig): Promise<Response> 
     const response = await fetch(base + endpoint, { ...init, headers: requestHeaders });
     if (!response.ok) {
       if (response.status === 429) throw new Failure(429, "Please wait before trying again.");
+      if (endpoint.startsWith("/auth/v1/admin/users/") && response.status === 404)
+        throw new Failure(404, "This account does not exist. Check the account UUID.");
       if (endpoint === "/auth/v1/admin/users" && [400, 409, 422].includes(response.status))
         throw new Failure(400, "Could not create an account with those credentials.");
       if (endpoint.startsWith("/auth/")) throw new Failure(401, "Authentication failed. Check your credentials and try again.");
@@ -79,9 +81,13 @@ export async function liveApi(req: Request, env: LiveConfig): Promise<Response> 
     return { userId: id, displayName: row?.display_name || "", city: row?.city || "", bio: row?.bio || "",
       website: row?.website || "", avatarUrl: row?.avatar_url || "" };
   };
-  const role = async (id: string): Promise<Role> => {
+  const privilege = async (id: string): Promise<"owner" | "admin" | null> => {
     const [row] = await db("platform_roles", { user_id: "eq." + id });
-    return row?.role === "owner" ? "administrator" : row?.role === "admin" ? "moderator" : "resident";
+    return row?.role === "owner" ? "owner" : row?.role === "admin" ? "admin" : null;
+  };
+  const role = async (id: string): Promise<Role> => {
+    const assigned = await privilege(id);
+    return assigned === "owner" ? "administrator" : assigned === "admin" ? "moderator" : "resident";
   };
   const session = async (user: Row): Promise<Session> => {
     const [p, r] = await Promise.all([profile(user.id), role(user.id)]);
@@ -111,6 +117,15 @@ export async function liveApi(req: Request, env: LiveConfig): Promise<Response> 
     authorId: r.author_id, body: r.body, attachments: r.attachments || [], createdAt: r.created_at });
   const lookup = (id: string) => ({ id: "eq." + id });
   const areaList = (reports: Row[]) => [...new Map(reports.map(r => [r.city_id, city(r)])).values()];
+  // Bounded administrative reads; do not load the entire public dataset into the console.
+  const adminPage = async (table: "reports" | "comments" | "platform_roles" | "profiles" | "admin_audit",
+    select: string, order: string, limit: number): Promise<Row[]> => {
+    const query = new URLSearchParams({ select, order, limit: String(limit) });
+    return (await (await upstream(`/rest/v1/civic_${table}?${query}`)).json()) as Row[];
+  };
+  const runAdminTransaction = async (functionName: "civic_admin_set_role" | "civic_admin_moderate", input: object) => {
+    await upstream("/rest/v1/rpc/" + functionName, { method: "POST", body: JSON.stringify(input) });
+  };
 
   async function attachments(input: unknown, userId: string): Promise<Attachment[]> {
     if (!Array.isArray(input) || input.length > 3) throw new Failure(400, "Choose up to three photos.");
@@ -168,23 +183,51 @@ export async function liveApi(req: Request, env: LiveConfig): Promise<Response> 
         return new Response(null, { status: 303, headers: outputHeaders });
       }
       if (path === "/profile") return reply(await profile((await actor()).id));
+      if (path === "/admin/summary") {
+        const user = await actor();
+        const assigned = await privilege(user.id);
+        if (!assigned) throw new Failure(403, "Administrator access is required.");
+        const [reports, comments, history, assignedRoles, profiles] = await Promise.all([
+          adminPage("reports", "id,title,city_name,status,moderation_state,created_at", "created_at.desc", 100),
+          adminPage("comments", "id,report_id,body,moderation_state,created_at", "created_at.desc", 100),
+          adminPage("admin_audit", "id,actor_id,action,target_id,reason,created_at", "created_at.desc", 80),
+          assigned === "owner" ? adminPage("platform_roles", "user_id,role", "role", 100) : Promise.resolve([]),
+          assigned === "owner" ? adminPage("profiles", "user_id,display_name", "user_id", 1000) : Promise.resolve([]),
+        ]);
+        const names = new Map(profiles.map(row => [row.user_id, row.display_name]));
+        return reply({
+          viewerRole: assigned,
+          administrators: assignedRoles.filter(row => row.role === "admin")
+            .map(row => ({ userId: row.user_id, displayName: names.get(row.user_id) || "CivicWatch member" })),
+          reports: reports.map(row => ({ id: row.id, title: row.title, city: row.city_name, status: row.status,
+            moderationState: row.moderation_state || "visible", createdAt: row.created_at })),
+          comments: comments.map(row => ({ id: row.id, reportId: row.report_id,
+            body: row.body, moderationState: row.moderation_state || "visible", createdAt: row.created_at })),
+          history: history.map(row => ({ id: row.id, actorId: row.actor_id, action: row.action,
+            targetId: row.target_id, reason: row.reason || "", createdAt: row.created_at })),
+        });
+      }
       const mediaId = /^\/media\/([^/]+)$/.exec(path)?.[1];
       if (mediaId && uuid.test(mediaId)) {
         const [row] = await db("media", lookup(mediaId));
         if (!row) throw new Failure(404, "Photo unavailable.");
         const contained = "cs." + JSON.stringify([{ id: mediaId }]);
         const [reports, comments, avatars] = await Promise.all([
-          db("reports", { select: "id", attachments: contained }),
-          db("comments", { select: "id", attachments: contained }),
+          db("reports", { select: "id", attachments: contained, moderation_state: "eq.visible" }),
+          db("comments", { select: "report_id", attachments: contained, moderation_state: "eq.visible" }),
           db("profiles", { select: "user_id", avatar_url: "eq." + media(row).url }),
         ]);
-        if (!reports.length && !comments.length && !avatars.length && (await actor()).id !== row.owner_id)
+        const visibleParentReports = comments.length
+          ? await db("reports", { select: "id", id: "in.(" + [...new Set(comments.map(c => c.report_id))].join(",") + ")",
+            moderation_state: "eq.visible" })
+          : [];
+        if (!reports.length && !visibleParentReports.length && !avatars.length && (await actor()).id !== row.owner_id)
           throw new Failure(404, "Photo unavailable.");
         const photo = await upstream(`/storage/v1/object/authenticated/${bucket}/${mediaId}`);
         return new Response(photo.body, { headers: { ...headers, "Content-Type": row.mime_type } });
       }
       if (["/dataset", "/cities", "/overview"].includes(path)) {
-        const reports = await db("reports", { order: "created_at.desc,id" });
+        const reports = await db("reports", { moderation_state: "eq.visible", order: "created_at.desc,id" });
         if (path === "/cities") return reply(areaList(reports));
         const confirmations = await db("confirmations", { order: "report_id,user_id" });
         const byIssue = new Map<string, string[]>();
@@ -212,9 +255,15 @@ export async function liveApi(req: Request, env: LiveConfig): Promise<Response> 
           db("comments", { order: "created_at,id" }),
           db("profiles", { select: "user_id,display_name", order: "user_id" }),
         ]);
-        const publicAuthors = new Set([...reports, ...comments].map(r => r.author_id));
+        const visibleReportIds = new Set(reports.map(r => r.id));
+        const publicComments = comments.filter(row => visibleReportIds.has(row.report_id));
+        const publicAuthors = new Set([...reports, ...publicComments.filter(row => row.moderation_state !== "hidden")]
+          .map(r => r.author_id));
         return reply({ version: 1, areas: areaList(reports), issues: reports.map(r => issue(r, byIssue.get(r.id))),
-          comments: comments.map(comment), users: profiles.filter(p => publicAuthors.has(p.user_id)).map(p => ({ id: p.user_id, displayName: p.display_name, role: "resident" })) } satisfies Dataset);
+          comments: publicComments.map(row => row.moderation_state === "hidden"
+            ? { ...comment(row), body: "This comment was removed by a moderator.", attachments: [] }
+            : comment(row)),
+          users: profiles.filter(p => publicAuthors.has(p.user_id)).map(p => ({ id: p.user_id, displayName: p.display_name, role: "resident" })) } satisfies Dataset);
       }
     }
 
@@ -248,6 +297,45 @@ export async function liveApi(req: Request, env: LiveConfig): Promise<Response> 
       return reply();
     }
 
+    if (path === "/admin/administrators" && method === "POST") {
+      const user = await actor();
+      if (await privilege(user.id) !== "owner") throw new Failure(403, "Only the owner can appoint administrators.");
+      const input = await req.json() as Row;
+      const target = input?.userId;
+      if (typeof target !== "string" || !uuid.test(target)) throw new Failure(400, "Enter a valid account UUID.");
+      if (target === user.id) throw new Failure(400, "The owner account cannot be reassigned.");
+      await upstream("/auth/v1/admin/users/" + target);
+      await runAdminTransaction("civic_admin_set_role", { p_actor_id: user.id, p_target_id: target, p_enabled: true });
+      return reply({ success: true });
+    }
+    const removeAdminId = /^\/admin\/administrators\/([^/]+)$/.exec(path)?.[1];
+    if (removeAdminId && method === "DELETE") {
+      const user = await actor();
+      if (await privilege(user.id) !== "owner") throw new Failure(403, "Only the owner can revoke administrators.");
+      if (!uuid.test(removeAdminId) || user.id === removeAdminId) throw new Failure(400, "Invalid administrator.");
+      await runAdminTransaction("civic_admin_set_role", { p_actor_id: user.id,
+        p_target_id: removeAdminId, p_enabled: false });
+      return reply({ success: true });
+    }
+    if (path === "/admin/moderation" && method === "POST") {
+      const user = await actor();
+      if (!await privilege(user.id)) throw new Failure(403, "Administrator access is required.");
+      const input = await req.json() as Row;
+      const actions = ["report_hide", "report_restore", "report_status", "comment_hide", "comment_restore"];
+      if (!input || !actions.includes(input.action) || typeof input.id !== "string" || !uuid.test(input.id))
+        throw new Failure(400, "Invalid moderation request.");
+      const reason = input.reason === undefined ? "" : field(input.reason, 500);
+      if (["report_hide", "comment_hide"].includes(input.action) && reason.length < 3)
+        throw new Failure(400, "Explain why this content is being hidden.");
+      if (input.action === "report_status" &&
+        !["reported", "acknowledged", "in_progress", "resolved"].includes(input.status))
+        throw new Failure(400, "Invalid report status.");
+      await runAdminTransaction("civic_admin_moderate", {
+        p_actor_id: user.id, p_target_id: input.id, p_action: input.action,
+        p_status: input.action === "report_status" ? input.status : null, p_reason: reason,
+      });
+      return reply({ success: true });
+    }
     const match = /^\/issues\/([^/]+)(?:\/(confirmations|comments|status))?$/.exec(path);
     if (method === "GET" || (!match && !["/issues", "/attachments", "/profile", "/watchlist"].includes(path)))
       throw new Failure(404, "API route not found.");
@@ -323,6 +411,11 @@ export async function liveApi(req: Request, env: LiveConfig): Promise<Response> 
       const [, id, action] = match;
       const [row] = await db("reports", lookup(id));
       if (!row) throw new Failure(404, "Report not found.");
+      // Hidden reports cannot be confirmed, edited or discussed by ordinary users.
+      // The reporter may still permanently delete their own hidden report.
+      const deletingOwn = row.author_id === user.id && method === "DELETE" && !action;
+      if (row.moderation_state === "hidden" && !deletingOwn && !(await privilege(user.id)))
+        throw new Failure(404, "Report not found.");
       const owner = row.author_id === user.id;
       const scoped = { ...lookup(id), author_id: "eq." + user.id };
       if (!action && method === "DELETE") {
@@ -339,10 +432,21 @@ export async function liveApi(req: Request, env: LiveConfig): Promise<Response> 
       } else if (action === "status" && method === "PATCH") {
         const input = await req.json() as Row;
         if (!["reported", "acknowledged", "in_progress", "resolved"].includes(input.status)) throw new Failure(400, "Invalid status.");
-        if (!(owner && input.status === "resolved") && await role(user.id) === "resident")
+        // Administrator status changes are always written with an audit event
+        // in the same database transaction. Ordinary authors may only resolve their own reports.
+        const assigned = await privilege(user.id);
+        if (assigned) {
+          await runAdminTransaction("civic_admin_moderate", {
+            p_actor_id: user.id, p_target_id: id, p_action: "report_status",
+            p_status: input.status, p_reason: "",
+          });
+          [updated] = await db("reports", lookup(id));
+        } else if (owner && input.status === "resolved") {
+          [updated] = await db("reports", { ...lookup(id), status: "eq." + row.status }, "PATCH",
+            { status: input.status, updated_at: new Date().toISOString() });
+        } else {
           throw new Failure(403, "You cannot change this status.");
-        [updated] = await db("reports", { ...lookup(id), status: "eq." + row.status }, "PATCH",
-          { status: input.status, updated_at: new Date().toISOString() });
+        }
       } else if (action === "confirmations" && method === "POST") {
         if (row.status === "resolved") throw new Failure(400, "This report is resolved.");
         await db("confirmations", {}, "POST", { report_id: id, user_id: user.id }, true);
