@@ -245,7 +245,7 @@ export function EditProfile({
   );
 }
 
-function EditReport({
+export function EditReport({
   issue,
   onClose,
   onSaved,
