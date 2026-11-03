@@ -61,15 +61,23 @@ afterEach(async () => {
   vi.unstubAllGlobals();
 });
 
-it("places people see this directly under report details, before author evidence and discussion", () => {
-  const title = container.querySelector(".thread-title")!;
-  const support = container.querySelector(".report-participation .support-box")!;
+it("reads as reporter, headline, description, confirmations, map and then discussion", () => {
   const author = container.querySelector(".author-line")!;
+  const title = container.querySelector(".thread-title")!;
+  const description = container.querySelector(".issue-description")!;
+  const support = container.querySelector(".report-participation .support-box")!;
+  const map = container.querySelector(".view-report-map")!;
   const discussion = container.querySelector(".discussion-heading")!;
+  const order = [author, title, description, support, map, discussion];
+  for (let i = 0; i < order.length - 1; i++) {
+    expect(order[i].compareDocumentPosition(order[i + 1]) & Node.DOCUMENT_POSITION_FOLLOWING)
+      .toBeTruthy();
+  }
+  expect(description.textContent).toBe("Footpath ends mid road");
   expect(support.textContent).toContain("people see this too");
-  expect(title.compareDocumentPosition(support) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-  expect(support.compareDocumentPosition(author) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-  expect(support.compareDocumentPosition(discussion) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  expect(map.textContent).toContain("View on map");
+  expect(map.textContent).toContain(issue.address);
+  expect(container.querySelectorAll(".report-participation .support-box")).toHaveLength(1);
 });
 
 it("keeps view people accessible in its new position", async () => {
