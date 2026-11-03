@@ -308,6 +308,43 @@ export const mockService: CivicService = {
     save(data);
     return structuredClone(comment);
   },
+  async updateComment(commentId, input) {
+    await delay();
+    const user = requireUser();
+    const data = read();
+    const comment = data.comments.find(item => item.id === commentId);
+    if (!comment) throw new ServiceError("Comment not found.", "NOT_FOUND");
+    if (comment.authorId !== user.id)
+      throw new ServiceError("Only the comment author can edit it.", "FORBIDDEN");
+    if (comment.deletedAt)
+      throw new ServiceError("A deleted comment cannot be edited.", "VALIDATION");
+    if (typeof input.body !== "string" || input.body.length > 2000 ||
+        (input.body.trim().length < 2 && !input.attachments.length))
+      throw new ServiceError("Write 2–2,000 characters or attach a photo.", "VALIDATION");
+    checkAttachments(input.attachments);
+    comment.body = input.body.trim();
+    comment.attachments = [...input.attachments];
+    comment.editedAt = now();
+    save(data);
+    return structuredClone(comment);
+  },
+  async deleteComment(commentId) {
+    await delay();
+    const user = requireUser();
+    const data = read();
+    const comment = data.comments.find(item => item.id === commentId);
+    if (!comment) throw new ServiceError("Comment not found.", "NOT_FOUND");
+    if (comment.authorId !== user.id)
+      throw new ServiceError("Only the comment author can delete it.", "FORBIDDEN");
+    if (comment.deletedAt)
+      throw new ServiceError("This comment was already deleted.", "VALIDATION");
+    // Keep a tombstone so other residents' replies are not destroyed.
+    comment.body = "";
+    comment.attachments = [];
+    comment.deletedAt = now();
+    save(data);
+    return structuredClone(comment);
+  },
   async uploadPhoto(file) {
     await delay();
     requireUser();

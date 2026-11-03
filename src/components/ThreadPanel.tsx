@@ -6,6 +6,7 @@ import {
   CheckCircle2,
   MapPin,
   MessageSquare,
+  Pencil,
   Plus,
   Send,
   Share2,
@@ -78,6 +79,11 @@ export function ThreadPanel({
     [body, setBody] = useState(""),
     [photos, setPhotos] = useState<Attachment[]>([]),
     [uploading, setUploading] = useState(false),
+    [editingId, setEditingId] = useState<string | null>(null),
+    [editBody, setEditBody] = useState(""),
+    [editPhotos, setEditPhotos] = useState<Attachment[]>([]),
+    [editUploading, setEditUploading] = useState(false),
+    [deleteCommentId, setDeleteCommentId] = useState<string | null>(null),
     [busy, setBusy] = useState(false),
     [confirming, setConfirming] = useState(false),
     [deleteConfirm, setDeleteConfirm] = useState(false),
@@ -139,6 +145,56 @@ export function ThreadPanel({
       setBusy(false);
     }
   }
+  function startEditing(comment: Comment) {
+    if (comment.authorId !== auth.session?.user.id || comment.deletedAt) return;
+    setEditingId(comment.id);
+    setEditBody(comment.body);
+    setEditPhotos([...comment.attachments]);
+    setDeleteCommentId(null);
+    setError("");
+  }
+  async function saveEditedComment(event: FormEvent, comment: Comment) {
+    event.preventDefault();
+    if (busy || editUploading || editingId !== comment.id ||
+        comment.authorId !== auth.session?.user.id || comment.deletedAt) return;
+    setBusy(true);
+    setError("");
+    try {
+      const updated = await civicService.updateComment(comment.id, {
+        body: editBody, attachments: editPhotos,
+      });
+      onCommentCreated(updated);
+      setEditingId(null);
+      notify("Your comment was updated.");
+      try { await onRefresh(); } catch {
+        notify("Comment updated. Other updates could not be refreshed.");
+      }
+    } catch (cause) {
+      setError((cause as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function removeComment(comment: Comment) {
+    if (busy || comment.authorId !== auth.session?.user.id || comment.deletedAt) return;
+    setBusy(true);
+    setError("");
+    try {
+      const deleted = await civicService.deleteComment(comment.id);
+      onCommentCreated(deleted);
+      if (reply?.id === comment.id) setReply(null);
+      setDeleteCommentId(null);
+      setEditingId(null);
+      notify("Your comment and its photos have been removed from the discussion.");
+      try { await onRefresh(); } catch {
+        notify("Comment removed. Other updates could not be refreshed.");
+      }
+    } catch (cause) {
+      setError((cause as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
   async function resolve() {
     if (!issue) return;
     setBusy(true);
@@ -181,11 +237,11 @@ export function ThreadPanel({
   }
   function renderComment(comment: Comment, depth = 0): React.ReactNode {
     const writer = data.users.find((u) => u.id === comment.authorId);
+    const isAuthor = !!auth.session && comment.authorId === auth.session.user.id;
+    const editing = editingId === comment.id;
+    const deleting = deleteCommentId === comment.id;
     return (
-      <div
-        className={`comment ${depth ? "comment-reply" : ""}`}
-        key={comment.id}
-      >
+      <div className={`comment ${depth ? "comment-reply" : ""}`} key={comment.id}>
         <button type="button" className="avatar small profile-avatar-link"
           aria-label={`View ${writer?.displayName || "resident"}'s profile`}
           onClick={() => onOpenProfile(comment.authorId)}>
@@ -200,22 +256,68 @@ export function ThreadPanel({
             <button type="button" className="profile-name-link"
               onClick={() => onOpenProfile(comment.authorId)}>{writer?.displayName || "Neighbour"}</button>
             <time>{relativeTime(comment.createdAt)}</time>
+            {comment.editedAt && !comment.deletedAt && <span className="comment-edited">Edited</span>}
           </div>
-          <p>{comment.body}</p>
-          <AttachmentGallery photos={comment.attachments} />
-          <button
-            className="text-button"
-            onClick={() =>
-              ensureSession(() => {
-                setReply(comment);
-                document.getElementById("comment-body")?.focus();
-              })
-            }
-          >
-            Reply
-          </button>
-          {comments
-            .filter((c) => c.parentId === comment.id)
+          {comment.deletedAt ? (
+            <p className="comment-deleted">Comment deleted by its author.</p>
+          ) : editing ? (
+            <form className="comment-edit-form" onSubmit={(event) => void saveEditedComment(event, comment)}>
+              <label className="sr-only" htmlFor={`edit-comment-${comment.id}`}>Edit your comment</label>
+              <textarea
+                id={`edit-comment-${comment.id}`} rows={3} maxLength={2000}
+                value={editBody} onChange={(event) => setEditBody(event.target.value)}
+                disabled={busy}
+              />
+              <PhotoPicker value={editPhotos} onChange={setEditPhotos} onBusy={setEditUploading} />
+              <div className="comment-edit-actions">
+                <button type="button" className="button secondary" disabled={busy || editUploading}
+                  onClick={() => { setEditingId(null); setError(""); }}>Cancel</button>
+                <button type="submit" className="button primary"
+                  disabled={busy || editUploading || (editBody.trim().length < 2 && !editPhotos.length)}>
+                  {busy ? <Spinner /> : <Check size={15} />} Save changes
+                </button>
+              </div>
+              <ErrorNotice message={error} />
+            </form>
+          ) : (
+            <>
+              {comment.body && <p>{comment.body}</p>}
+              <AttachmentGallery photos={comment.attachments} />
+              <div className="comment-actions">
+                <button type="button" className="text-button" onClick={() =>
+                  ensureSession(() => {
+                    setReply(comment);
+                    document.getElementById("comment-body")?.focus();
+                  })
+                }>Reply</button>
+                {isAuthor && (
+                  <>
+                    <button type="button" className="text-button" disabled={busy}
+                      onClick={() => startEditing(comment)}><Pencil size={13} /> Edit</button>
+                    <button type="button" className="text-button comment-delete-button" disabled={busy}
+                      onClick={() => { setDeleteCommentId(comment.id); setEditingId(null); setError(""); }}>
+                      <Trash2 size={13} /> Delete
+                    </button>
+                  </>
+                )}
+              </div>
+              {isAuthor && deleting && (
+                <div className="comment-delete-confirm" role="group" aria-label="Confirm comment deletion">
+                  <p>Delete this comment and remove its photos? Replies from other people will stay.</p>
+                  <div className="comment-edit-actions">
+                    <button type="button" className="button secondary" disabled={busy}
+                      onClick={() => setDeleteCommentId(null)}>Keep comment</button>
+                    <button type="button" className="button danger" disabled={busy}
+                      onClick={() => void removeComment(comment)}>
+                      {busy ? <Spinner /> : <Trash2 size={14} />} Delete comment
+                    </button>
+                  </div>
+                  <ErrorNotice message={error} />
+                </div>
+              )}
+            </>
+          )}
+          {comments.filter((c) => c.parentId === comment.id)
             .map((c) => renderComment(c, depth + 1))}
         </div>
       </div>

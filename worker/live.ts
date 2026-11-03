@@ -155,7 +155,9 @@ export async function liveApi(req: Request, env: LiveConfig): Promise<Response> 
     createdAt: r.created_at, updatedAt: r.updated_at,
   });
   const comment = (r: Row): Comment => ({ id: r.id, issueId: r.report_id, parentId: r.parent_id,
-    authorId: r.author_id, body: r.body, attachments: r.attachments || [], createdAt: r.created_at });
+    authorId: r.author_id, body: r.deleted_at ? "" : r.body,
+    attachments: r.deleted_at ? [] : (r.attachments || []),
+    createdAt: r.created_at, editedAt: r.edited_at ?? null, deletedAt: r.deleted_at ?? null });
   const lookup = (id: string) => ({ id: "eq." + id });
   const areaList = (reports: Row[]) => [...new Map(reports.map(r => [r.city_id, city(r)])).values()];
   // Bounded administrative reads; do not load the entire public dataset into the console.
@@ -462,7 +464,7 @@ export async function liveApi(req: Request, env: LiveConfig): Promise<Response> 
             updatedAt: new Date().toISOString() } satisfies OverviewSnapshot);
         }
         const [comments, profiles] = await Promise.all([
-          db("comments", { select: "id,report_id,parent_id,author_id,body,attachments,moderation_state,created_at", order: "created_at,id" }),
+          db("comments", { select: "id,report_id,parent_id,author_id,body,attachments,moderation_state,created_at,edited_at,deleted_at", order: "created_at,id" }),
           db("profiles", { select: "user_id,display_name", order: "user_id" }),
         ]);
         const visibleReportIds = new Set(reports.map(r => r.id));
@@ -547,9 +549,41 @@ export async function liveApi(req: Request, env: LiveConfig): Promise<Response> 
       return reply({ success: true });
     }
     const match = /^\/issues\/([^/]+)(?:\/(confirmations|comments|status))?$/.exec(path);
-    if (method === "GET" || (!match && !["/issues", "/attachments", "/profile", "/watchlist"].includes(path)))
+    const commentMatch = /^\/comments\/([^/]+)$/.exec(path);
+    if (method === "GET" || (!match && !commentMatch && !["/issues", "/attachments", "/profile", "/watchlist"].includes(path)))
       throw new Failure(404, "API route not found.");
     const user = await actor();
+    if (commentMatch) {
+      const commentId = commentMatch[1];
+      if (!uuid.test(commentId) || !["PATCH", "DELETE"].includes(method))
+        throw new Failure(404, "API route not found.");
+      const [existing] = await db("comments", lookup(commentId));
+      if (!existing) throw new Failure(404, "Comment not found.");
+      if (existing.author_id !== user.id)
+        throw new Failure(403, "Only the comment author can change this comment.");
+      if (existing.deleted_at)
+        throw new Failure(409, "This comment has already been deleted.");
+      if (method === "PATCH" && existing.moderation_state === "hidden")
+        throw new Failure(403, "A hidden comment cannot be edited.");
+      const scoped = { ...lookup(commentId), author_id: "eq." + user.id, deleted_at: "is.null" };
+      if (method === "PATCH") {
+        const input = await jsonObject(req);
+        const photos = await attachments(input.attachments, user.id);
+        const text = field(input.body, 2000, photos.length ? 0 : 2);
+        const [updated] = await db("comments", scoped, "PATCH", {
+          body: text, attachments: photos, edited_at: new Date().toISOString(),
+        });
+        if (!updated) throw new Failure(409, "The comment changed. Reload and try again.");
+        return reply(comment(updated));
+      }
+      // A deletion is a tombstone rather than a hard delete. The row remains
+      // so replies authored by OTHER users are not cascaded away.
+      const [deleted] = await db("comments", scoped, "PATCH", {
+        body: "", attachments: [], deleted_at: new Date().toISOString(),
+      });
+      if (!deleted) throw new Failure(409, "The comment changed. Reload and try again.");
+      return reply(comment(deleted));
+    }
     if (path === "/watchlist" && method === "PUT") {
       if (req.headers.get("X-Civic-Account") !== user.id) throw new Failure(409, "The active account changed.");
       const towns = await boundedJson(req);

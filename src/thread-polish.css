@@ -97,3 +97,72 @@
   .view-report-map { min-height: 58px; padding: 11px 12px; }
   .view-report-map + .discussion-heading { margin-top: 24px; padding-top: 23px; }
 }
+
+
+/* Author-only comment controls, shared by mobile and desktop. */
+.comment-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 8px;
+}
+.comment-actions .text-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 30px;
+  color: var(--cw-muted);
+}
+.comment-actions .comment-delete-button { color: var(--cw-muted); }
+.comment-actions .comment-delete-button:hover { color: #bd5565; }
+.comment-edited {
+  font-size: 10px;
+  color: var(--cw-muted);
+}
+.comment p.comment-deleted {
+  color: var(--cw-muted);
+  font-style: italic;
+  opacity: .85;
+}
+.comment-edit-form,
+.comment-delete-confirm {
+  margin: 10px 0 12px;
+  padding: 12px;
+  border: 1px solid var(--cw-border);
+  border-radius: 12px;
+  background: var(--cw-soft);
+}
+.comment-edit-form textarea {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 92px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--cw-border);
+  background: var(--cw-surface, var(--cw-soft));
+  color: var(--cw-heading);
+  resize: vertical;
+  font: inherit;
+  line-height: 1.5;
+}
+.comment-edit-form .photo-picker { margin-top: 12px; }
+.comment-edit-actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+.comment-edit-actions .button {
+  min-height: 38px;
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+}
+.comment-delete-confirm > p { margin: 0; }
+@media (max-width: 520px) {
+  .comment-edit-actions .button { flex: 1 1 auto; justify-content: center; }
+  .comment-edit-form, .comment-delete-confirm { padding: 10px; }
+}

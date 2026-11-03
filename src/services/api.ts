@@ -103,6 +103,13 @@ export const apiService: CivicService = {
       method: "POST",
       body: JSON.stringify(input),
     }),
+  updateComment: (id, input) =>
+    request<Comment>(`/comments/${encodeURIComponent(id)}`, {
+      method: "PATCH",
+      body: JSON.stringify(input),
+    }),
+  deleteComment: (id) =>
+    request<Comment>(`/comments/${encodeURIComponent(id)}`, { method: "DELETE" }),
   uploadPhoto: async (file) => {
     const prepared = await preparePhoto(file);
     const body = new FormData();
