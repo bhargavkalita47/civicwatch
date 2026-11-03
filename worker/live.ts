@@ -163,6 +163,40 @@ export async function liveApi(req: Request, env: LiveConfig): Promise<Response> 
     const query = new URLSearchParams({ select, order, limit: String(limit) });
     return (await (await upstream(`/rest/v1/civic_${table}?${query}`)).json()) as Row[];
   };
+  // Paginated moderation reads: use bounded PostgREST result windows and
+  // exact counts instead of hiding anything older than the summary's recent 100.
+  const adminQueue = async (
+    table: "reports" | "comments" | "admin_audit",
+    select: string, order: string, page: number,
+    queryText: string, visibility: string,
+  ) => {
+    const limit = 10;
+    const offset = (page - 1) * limit;
+    const query = new URLSearchParams({
+      select, order, limit: String(limit), offset: String(offset),
+    });
+    if (table !== "admin_audit" && visibility !== "all")
+      query.set("moderation_state", "eq." + visibility);
+    if (queryText) {
+      const safe = queryText.replace(/[^\p{L}\p{N}\s._-]/gu, "").trim().replace(/\s+/g, " ");
+      if (safe) {
+        const field = table === "reports" ? "title" : table === "comments" ? "body" : "action";
+        query.set(field, "ilike.*" + safe + "*");
+      }
+    }
+    const response = await upstream("/rest/v1/civic_" + table + "?" + query, {
+      headers: { Prefer: "count=exact" },
+    });
+    const items = await response.json() as Row[];
+    const range = response.headers.get("Content-Range") || "";
+    const totalText = range.split("/")[1];
+    const total = totalText && totalText !== "*" ? Number(totalText) : null;
+    return {
+      page, pageSize: limit,
+      total: total !== null && Number.isFinite(total) ? total : offset + items.length,
+      items,
+    };
+  };
   const runAdminTransaction = async (functionName: "civic_admin_set_role" | "civic_admin_moderate", input: object) => {
     await upstream("/rest/v1/rpc/" + functionName, { method: "POST", body: JSON.stringify(input) });
   };
@@ -248,6 +282,50 @@ export async function liveApi(req: Request, env: LiveConfig): Promise<Response> 
         });
       }
       if (path === "/profile") return reply(await profile((await actor()).id));
+      if (path === "/admin/queue") {
+        const user = await actor();
+        if (!await privilege(user.id))
+          throw new Failure(403, "Administrator access is required.");
+        const section = url.searchParams.get("section");
+        if (!["reports", "comments", "activity"].includes(section || ""))
+          throw new Failure(400, "Choose a valid moderation section.");
+        const rawPage = url.searchParams.get("page") || "1";
+        if (!/^[1-9]\d{0,5}$/.test(rawPage))
+          throw new Failure(400, "Choose a valid page.");
+        const page = Number(rawPage);
+        const search = url.searchParams.get("q") || "";
+        if (search.length > 80)
+          throw new Failure(400, "Search is too long.");
+        const visibility = url.searchParams.get("visibility") || "all";
+        if (!["all", "visible", "hidden"].includes(visibility) ||
+          (section === "activity" && visibility !== "all"))
+          throw new Failure(400, "Invalid visibility filter.");
+        if (section === "reports") {
+          const result = await adminQueue("reports",
+            "id,title,city_name,status,moderation_state,created_at",
+            "created_at.desc,id.desc", page, search, visibility);
+          return reply({ ...result, items: result.items.map(row => ({
+            id: row.id, title: row.title, city: row.city_name, status: row.status,
+            moderationState: row.moderation_state || "visible", createdAt: row.created_at,
+          })) });
+        }
+        if (section === "comments") {
+          const result = await adminQueue("comments",
+            "id,report_id,body,moderation_state,created_at",
+            "created_at.desc,id.desc", page, search, visibility);
+          return reply({ ...result, items: result.items.map(row => ({
+            id: row.id, reportId: row.report_id, body: row.body,
+            moderationState: row.moderation_state || "visible", createdAt: row.created_at,
+          })) });
+        }
+        const result = await adminQueue("admin_audit",
+          "id,actor_id,action,target_id,reason,created_at",
+          "created_at.desc,id.desc", page, search, "all");
+        return reply({ ...result, items: result.items.map(row => ({
+          id: row.id, actorId: row.actor_id, action: row.action,
+          targetId: row.target_id, reason: row.reason || "", createdAt: row.created_at,
+        })) });
+      }
       if (path === "/admin/summary") {
         const user = await actor();
         const assigned = await privilege(user.id);

@@ -302,7 +302,7 @@ export function CivicMap({
           Map tiles unavailable. Check connection and retry.
         </button>
       )}
-      {compact && onPick && <span className="picker-hint">{pick || locatedPoint ? "Location selected · tap the map to adjust" : "Click to place your pin"}</span>}
+
     </div>
   );
 }
