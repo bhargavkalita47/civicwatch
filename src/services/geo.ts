@@ -178,6 +178,7 @@ interface ProxyReverseResult {
   fallback: NominatimReverse | null;
   cityFallback?: NominatimReverse | null;
   boundaryCity?: string | null;
+  nearbyCity?: string | null;
 }
 async function nominatimReverse(point: Coordinate, zoom: 18 | 10 = 18): Promise<PlaceResult | null> {
   const key = `${zoom}:${point.lat.toFixed(5)},${point.lng.toFixed(5)}`;
@@ -219,7 +220,8 @@ export const geoService = {
         .filter((place): place is PlaceResult => place !== null), point);
       const fallback = parseNominatim(payload.fallback, point);
       const cityFallback = parseNominatim(payload.cityFallback ?? null, point);
-      return mergeLookup(photon, fallback, point, cityFallback, payload.boundaryCity ?? "");
+      return mergeLookup(photon, fallback, point, cityFallback,
+        payload.boundaryCity || payload.nearbyCity || "");
     }
     let photon: PlaceResult | null = null;
     try {
