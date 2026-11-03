@@ -12,11 +12,15 @@ interface NominatimResult {
   address?: Record<string, unknown>;
   display_name?: string;
   place_id?: string | number;
+  name?: string;
+  type?: string;
+  addresstype?: string;
   error?: string;
 }
 export interface ReversePayload {
   features: PhotonFeature[];
   fallback: NominatimResult | null;
+  cityFallback: NominatimResult | null;
 }
 const CACHE_SUCCESS_SECONDS = 12 * 60 * 60;
 const CACHE_FAILURE_SECONDS = 60;
@@ -42,6 +46,17 @@ const administrativeCity = (p: Record<string, unknown>) =>
   value(p.city) || value(p.town) || value(p.municipality) ||
   (value(p.osm_key) === "place" && ["city", "town", "village", "hamlet"].includes(value(p.osm_value))
     ? value(p.name) : "") || value(p.village) || value(p.hamlet);
+/** Read only explicit settlement classifications, never a county or a street. */
+function nominatimCity(result: NominatimResult | null): string {
+  const address = result?.address;
+  if (!address || result?.error) return "";
+  const kind = value(result.addresstype) || value(result.type);
+  const namedSettlement = ["city", "town", "municipality", "village", "hamlet"].includes(kind)
+    ? value(result.name) : "";
+  return value(address.city) || value(address.town) || value(address.municipality) ||
+    value(address.village) || value(address.hamlet) || namedSettlement;
+}
+
 const locality = (p: Record<string, unknown>, city: string) =>
   value(p.suburb) || value(p.neighbourhood) || value(p.quarter) ||
   value(p.locality) || value(p.city_district) || value(p.street) ||
@@ -50,6 +65,27 @@ const isComplete = (features: PhotonFeature[]) => {
   const city = features.map(feature => administrativeCity(feature.properties ?? {})).find(Boolean) || "";
   return Boolean(city && features.some(feature => locality(feature.properties ?? {}, city)));
 };
+
+/** Pilot-only upstream: keep Nominatim requests user-triggered, cached and spaced.
+ * This queue is per isolate, not a global application-wide rate limiter.
+ * A paid or self-hosted provider is required for public-scale traffic.
+ */
+async function nominatimReverse(point: { lat: string; lon: string }, zoom: 18 | 10): Promise<NominatimResult | null> {
+  const gap = 1100 - (timestamp() - lastFallbackRequest);
+  if (gap > 0) await new Promise<void>(resolve => setTimeout(resolve, gap));
+  lastFallbackRequest = timestamp();
+  const nominatimUrl = "https://nominatim.openstreetmap.org/reverse?" +
+    new URLSearchParams({
+      ...point, format: "jsonv2", zoom: String(zoom), addressdetails: "1",
+      layer: "address", "accept-language": "en",
+    });
+  const raw = await jsonWithin(nominatimUrl, 3500, {
+    Accept: "application/json",
+    "User-Agent": "CivicWatch/0.1 (https://civicwatch.bhargavkalita1327.workers.dev/)",
+    Referer: "https://civicwatch.bhargavkalita1327.workers.dev/",
+  }) as NominatimResult | null;
+  return raw?.address && !raw.error ? raw : null;
+}
 
 export async function reverseGeocodeResponse(req: Request): Promise<Response> {
   const url = new URL(req.url);
@@ -66,7 +102,8 @@ export async function reverseGeocodeResponse(req: Request): Promise<Response> {
   // Fixed precision protects the cache from unbounded coordinate variants.
   const point = { lat: lat.toFixed(5), lon: lon.toFixed(5) };
   const key = new URL(req.url);
-  key.search = new URLSearchParams(point).toString();
+  // Invalidate cached partial lookups from the previous resolver revision.
+  key.search = new URLSearchParams({ ...point, resolver: "2" }).toString();
   const cache = (globalThis as unknown as { caches?: { default?: Cache } }).caches?.default;
   if (cache) {
     try {
@@ -83,38 +120,31 @@ export async function reverseGeocodeResponse(req: Request): Promise<Response> {
   }) as { features?: PhotonFeature[] } | null;
   const features = Array.isArray(rawPhoton?.features) ? rawPhoton.features.slice(0, 8) : [];
   let fallback: NominatimResult | null = null;
+  let cityFallback: NominatimResult | null = null;
+  const photonCity = features.map(feature => administrativeCity(feature.properties ?? {})).find(Boolean) || "";
   if (!isComplete(features)) {
-    // Shared public Nominatim cannot serve unrestricted traffic; throttle
-    // requests per instance and cache successful responses at the edge.
-    // A contracted provider and global limiter are required for a public launch.
+    // An address-level lookup may identify a road/locality but omit its city.
+    // Only then ask for the enclosing city-level administrative place (zoom 10).
+    // These are explicit pin lookups for a low-traffic pilot, not background scans.
     let release!: () => void;
     const next = new Promise<void>(resolve => { release = resolve; });
     const prior = fallbackQueue;
     fallbackQueue = next;
     await prior;
     try {
-      const gap = 1100 - (timestamp() - lastFallbackRequest);
-      if (gap > 0) await new Promise(resolve => setTimeout(resolve, gap));
-      lastFallbackRequest = timestamp();
-      const nominatimUrl = "https://nominatim.openstreetmap.org/reverse?" +
-        new URLSearchParams({
-          ...point, format: "jsonv2", zoom: "18", addressdetails: "1",
-          "accept-language": "en",
-        });
-      const raw = await jsonWithin(nominatimUrl, 3500, {
-        Accept: "application/json",
-        "User-Agent": "CivicWatch/0.1 (https://civicwatch.bhargavkalita1327.workers.dev/)",
-        Referer: "https://civicwatch.bhargavkalita1327.workers.dev/",
-      }) as NominatimResult | null;
-      fallback = raw?.address && !raw.error ? raw : null;
+      fallback = await nominatimReverse(point, 18);
+      if (!photonCity && !nominatimCity(fallback))
+        cityFallback = await nominatimReverse(point, 10);
     } finally {
       release();
     }
   }
 
-  const payload: ReversePayload = { features, fallback };
-  const complete = isComplete(features) || Boolean(fallback?.address);
-  const ttl = complete ? CACHE_SUCCESS_SECONDS : CACHE_FAILURE_SECONDS;
+  const payload: ReversePayload = { features, fallback, cityFallback };
+  // A response containing only a road, suburb or arbitrary address is incomplete.
+  // Do not keep it at the edge for 12 hours as though the city was resolved.
+  const hasCity = Boolean(photonCity || nominatimCity(fallback) || nominatimCity(cityFallback));
+  const ttl = hasCity ? CACHE_SUCCESS_SECONDS : CACHE_FAILURE_SECONDS;
   const response = Response.json(payload, {
     headers: {
       "Cache-Control": `public, max-age=${ttl}`,
