@@ -169,20 +169,25 @@ export function ReportModal({
     // A search selection or manual city edit survives pin adjustments.
     // A new search result deliberately replaces the previous selection.
     if (place) {
-      chosenCity.current = place.city || place.area?.name || "";
+      chosenCity.current = place.city || place.area?.name || null;
       editedLocation.current = { city: false, locality: false };
-      setCity(chosenCity.current);
+      setCity(chosenCity.current || "");
     } else {
       editedLocation.current.locality = false;
       if (chosenCity.current === null && !editedLocation.current.city) setCity("");
     }
     setLocality(""); setRegion(""); setCountry("");
     const ticket = ++latestLookup.current;
-    if (place) { populateArea(place); return; }
+    // A landmark search result often has a locality but no city.
+    // Do not treat that incomplete result as final; reverse-geocode its pin.
+    if (place && chosenCity.current) { populateArea(place); return; }
     setLocating(true);
     try {
       const match = await geoService.reverse(next);
-      if (ticket === latestLookup.current) populateArea(match);
+      if (ticket === latestLookup.current) populateArea(match ? {
+        ...match,
+        locality: match.locality || place?.locality || "",
+      } : place ?? null);
     } catch {
       if (ticket === latestLookup.current) {
         setLookupIncomplete(true);

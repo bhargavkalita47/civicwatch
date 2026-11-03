@@ -13,7 +13,12 @@ vi.mock("./CivicMap", () => ({ CivicMap: ({ onPick }: { onPick: (p: {lat:number;
   <div><button type="button" onClick={() => onPick({ lat: 26.17, lng: 91.76 })}>Use my location</button>
     <button type="button" onClick={() => onPick({ lat: 27, lng: 92 })}>Move pin</button></div> }));
 vi.mock("./PlaceSearch", () => ({ PlaceSearch: ({ onSelect }: { onSelect: (place: PlaceResult) => void }) =>
-  <button type="button" onClick={() => onSelect(match)}>Select searched city</button> }));
+  <div>
+    <button type="button" onClick={() => onSelect(match)}>Select searched city</button>
+    <button type="button" onClick={() => onSelect({
+      ...match, city: "", locality: "Zoo Rd Tiniali", area: null,
+    })}>Select landmark without city</button>
+  </div> }));
 const match: PlaceResult = { id: "test", label: "Ulubari, Guwahati", point: { lat: 26.17, lng: 91.76 },
   city: "Guwahati", locality: "Ulubari", region: "Assam", country: "India", area: null };
 let container: HTMLDivElement;
@@ -124,6 +129,18 @@ it("keeps the searched city when a new pin reverse-geocodes to a different city"
   expect(city().value).toBe("Edited city");
   await click("Select searched city");
   expect(city().value).toBe("Guwahati");
+});
+
+it("reverse-geocodes a landmark search result that provides a locality but no city", async () => {
+  reverse.mockResolvedValueOnce({ ...match, city: "Guwahati", locality: "" });
+  await click("Select landmark without city");
+  expect(reverse).toHaveBeenCalledTimes(1);
+  expect(city().value).toBe("Guwahati");
+  expect(locality().value).toBe("Zoo Rd Tiniali");
+  reverse.mockResolvedValueOnce({ ...match, city: "Another city", locality: "Another locality" });
+  await click("Move pin");
+  expect(city().value).toBe("Another city");
+  expect(locality().value).toBe("Another locality");
 });
 
 it("allows a deliberately cleared searched city to stay blank after pin adjustments", async () => {
