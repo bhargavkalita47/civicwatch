@@ -132,6 +132,7 @@ export function ReportModal({
     [region, setRegion] = useState(""),
     [country, setCountry] = useState(""),
     [locating, setLocating] = useState(false),
+    [lookupIncomplete, setLookupIncomplete] = useState(false),
     [lookupNotice, setLookupNotice] = useState(""),
     [category, setCategory] = useState(""),
     [title, setTitle] = useState(""),
@@ -153,6 +154,7 @@ export function ReportModal({
     if (!editedLocation.current.locality) setLocality(place?.locality || "");
     setRegion(place?.region || place?.area?.region || "");
     setCountry(place?.country || place?.area?.country || "");
+    setLookupIncomplete(!place?.city || !place?.locality);
     setLookupNotice(place?.city || place?.area?.name
       ? "Check the city and locality, and edit them if needed."
       : "You can add a city or locality below, or leave both blank.");
@@ -162,6 +164,7 @@ export function ReportModal({
     setPicked(true);
     setError("");
     setLocating(false);
+    setLookupIncomplete(false);
     setLookupNotice("");
     // A search selection or manual city edit survives pin adjustments.
     // A new search result deliberately replaces the previous selection.
@@ -181,10 +184,30 @@ export function ReportModal({
       const match = await geoService.reverse(next);
       if (ticket === latestLookup.current) populateArea(match);
     } catch {
-      if (ticket === latestLookup.current)
-        setLookupNotice("Place lookup is unavailable. City and locality are optional; the map pin is enough.");
+      if (ticket === latestLookup.current) {
+        setLookupIncomplete(true);
+        setLookupNotice("The place lookup failed. You can retry or enter city and locality yourself; the pin is still valid.");
+      }
     }
     finally { if (ticket === latestLookup.current) setLocating(false); }
+  }
+  async function retryPlaceLookup() {
+    if (!picked || locating) return;
+    const ticket = ++latestLookup.current;
+    setLocating(true);
+    setLookupIncomplete(false);
+    setLookupNotice("");
+    try {
+      const match = await geoService.reverse(point);
+      if (ticket === latestLookup.current) populateArea(match);
+    } catch {
+      if (ticket === latestLookup.current) {
+        setLookupIncomplete(true);
+        setLookupNotice("The place lookup failed again. You can still type city and locality manually.");
+      }
+    } finally {
+      if (ticket === latestLookup.current) setLocating(false);
+    }
   }
   const nearby = issues.filter(
     (i) =>
@@ -271,7 +294,13 @@ export function ReportModal({
                 ? `${point.lat.toFixed(5)}, ${point.lng.toFixed(5)}`
                 : copy.reporting.noLocation}
             </div>
-            <p className="field-help" role="status">{locating ? "Filling city and locality from the selected location…" : !picked ? copy.reporting.mapHint : lookupNotice}</p>
+            <p className="field-help" role="status">{locating ? "Looking up the selected city and locality…" : !picked ? copy.reporting.mapHint : lookupNotice}</p>
+            {picked && lookupIncomplete && !locating && (
+              <button type="button" className="text-button retry-place-lookup"
+                onClick={() => void retryPlaceLookup()}>
+                Retry place lookup
+              </button>
+            )}
             <div className="geo-field-grid">
               <label>City — optional
                 <input maxLength={100} value={city} onChange={(e) => { editedLocation.current.city = true; setCity(e.target.value); }} placeholder="e.g. Guwahati" autoComplete="address-level2" />
