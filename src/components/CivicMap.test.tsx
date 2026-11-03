@@ -49,7 +49,7 @@ it("selects GPS coordinates and draws the report pin without another map click",
   expect(onPick).toHaveBeenCalledWith(expect.objectContaining({ lat: 26.17 }));
   expect(onPick.mock.calls[0][0].lng).toBeCloseTo(91.76);
   expect(container.querySelector('[title="Selected report location"]')).not.toBeNull();
-  expect(container.querySelector(".picker-hint")?.textContent).toContain("Location selected");
+  expect(container.querySelector(".picker-hint")).toBeNull();
   expect(setView).toHaveBeenCalledWith([26.17, expect.closeTo(91.76)], 15, expect.objectContaining({ animate: false }));
   expect(getPosition).toHaveBeenCalledWith(expect.any(Function), expect.any(Function),
     { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
