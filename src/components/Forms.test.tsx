@@ -212,3 +212,18 @@ it("updates both fields when the user moves a pin to a new city", async () => {
   expect(locality().value).toBe("Laitumkhrah");
   expect(reverse).toHaveBeenCalledTimes(2);
 });
+
+
+it("holds Continue until the selected pin lookup has settled", async () => {
+  let resolve!: (place: PlaceResult | null) => void;
+  reverse.mockImplementationOnce(() => new Promise(done => { resolve = done; }));
+  await click("Use my location");
+  const continueButton = [...container.querySelectorAll<HTMLButtonElement>("button")]
+    .find(button => button.textContent?.trim() === "Continue")!;
+  expect(continueButton.disabled).toBe(true);
+  expect(continueButton.getAttribute("aria-busy")).toBe("true");
+  await act(async () => { resolve(match); });
+  expect(continueButton.disabled).toBe(false);
+  expect(city().value).toBe("Guwahati");
+  expect(locality().value).toBe("Ulubari");
+});
