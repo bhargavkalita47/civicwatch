@@ -20,6 +20,7 @@ export const copy = {
     explore: { title: "Disappointment has coordinates.", subtitle: "Find reported issues nearby, compare notes, or pin another problem." },
     reports: { title: "New day. Same complaints.", subtitle: "Browse what your watched towns are still putting up with." },
     mine: { title: "A face behind the complaints.", subtitle: "Make yourself known. Your neighbourhood already knows the problems." },
+    member: { title: "The people behind the pins.", subtitle: "A public profile. The complaints come with names." },
     admin: { title: "Someone has to run this thing.", subtitle: "Keep the complaint desk running." },
   },
   actions: { report: "Report an issue", clearFilters: "Clear filters", signIn: "Sign in", search: "Search", about: "About CivicWatch" },

@@ -41,6 +41,15 @@ export interface Profile {
   bio: string;
   website: string;
 }
+/** Publicly visible profile fields. Never include email or account settings. */
+export interface PublicProfile {
+  userId: ID;
+  displayName: string;
+  avatarUrl: string;
+  city: string;
+  bio: string;
+  website: string;
+}
 export type ProfileChanges = Partial<Omit<Profile, "userId">>;
 export interface EditIssueInput {
   title: string;

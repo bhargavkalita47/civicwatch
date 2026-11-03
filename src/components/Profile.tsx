@@ -110,7 +110,7 @@ export function EditProfile({
           }
         }}
       >
-        <p>Make yourself known. Or don't. Every field is optional.</p>
+        <p>Every field is optional. Your display name, photo, city, bio and website are visible to anyone who opens your public profile. Your email and watchlist remain private.</p>
         <ErrorNotice message={error} />
         <fieldset disabled={saving || preparing}>
           <legend className="sr-only">Personal details</legend>
