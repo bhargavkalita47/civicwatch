@@ -1,5 +1,6 @@
 import { config } from "../config";
 import { reportingArea } from "../domain/geography";
+import { request } from "./api";
 import type { City, Coordinate } from "../domain/types";
 
 export interface PlaceResult {
@@ -133,6 +134,36 @@ function mergeNearbyResults(results: PlaceResult[], point: Coordinate): PlaceRes
  * traffic: requests are explicit, throttled, and cached per session here.
  * Before broad launch replace this with a dedicated/contracted provider.
  */
+function parseNominatim(data: NominatimReverse | null, point: Coordinate): PlaceResult | null {
+  if (!data?.address || data.error) return null;
+  const a = data.address;
+  const city = first(a.city, a.town, a.municipality, a.village, a.hamlet);
+  const locality = first(a.suburb, a.neighbourhood, a.quarter,
+    a.city_district, a.residential, a.borough, a.road, a.pedestrian);
+  const region = first(a.state, a.region, a.county);
+  const country = text(a.country);
+  return {
+    id: "nominatim:" + String(data.place_id ?? `${point.lat}:${point.lng}`),
+    point, label: text(data.display_name) || [locality, city, region, country].filter(Boolean).join(", "),
+    city, locality, region, country,
+    area: city && region && country ? reportingArea(city, region, country, point) : null,
+  };
+}
+function mergeLookup(photon: PlaceResult | null, fallback: PlaceResult | null, point: Coordinate): PlaceResult | null {
+  if (!fallback) return photon;
+  const city = fallback.city || photon?.city || "";
+  const locality = fallback.locality || photon?.locality || "";
+  const region = fallback.region || photon?.region || "";
+  const country = fallback.country || photon?.country || "";
+  return {
+    ...(photon ?? fallback), point, city, locality, region, country,
+    area: city && region && country ? reportingArea(city, region, country, point) : null,
+  };
+}
+interface ProxyReverseResult {
+  features: PhotonFeature[];
+  fallback: NominatimReverse | null;
+}
 async function nominatimReverse(point: Coordinate): Promise<PlaceResult | null> {
   const key = `${point.lat.toFixed(5)},${point.lng.toFixed(5)}`;
   if (reverseCache.has(key)) return reverseCache.get(key) ?? null;
@@ -142,21 +173,8 @@ async function nominatimReverse(point: Coordinate): Promise<PlaceResult | null> 
       zoom: "18", addressdetails: "1", "accept-language": "en",
     });
   const data = await scheduled(() => fetchJson(url, 6500)) as NominatimReverse;
-  if (!data || data.error || !data.address) {
-    return null;
-  }
-  const a = data.address;
-  const city = first(a.city, a.town, a.municipality, a.village, a.hamlet);
-  const locality = first(a.suburb, a.neighbourhood, a.quarter,
-    a.city_district, a.residential, a.borough, a.road, a.pedestrian);
-  const region = first(a.state, a.region, a.county);
-  const country = text(a.country);
-  const result: PlaceResult = {
-    id: "nominatim:" + String(data.place_id ?? key),
-    point, label: text(data.display_name) || [locality, city, region, country].filter(Boolean).join(", "),
-    city, locality, region, country,
-    area: city && region && country ? reportingArea(city, region, country, point) : null,
-  };
+  const result = parseNominatim(data, point);
+  if (!result) return null;
   reverseCache.set(key, result);
   if (reverseCache.size > 120) reverseCache.delete(reverseCache.keys().next().value!);
   return result;
@@ -172,6 +190,21 @@ export const geoService = {
   async reverse(point: Coordinate): Promise<PlaceResult | null> {
     if (!Number.isFinite(point.lat) || !Number.isFinite(point.lng) ||
       Math.abs(point.lat) > 90 || Math.abs(point.lng) > 180) return null;
+    if (config.serviceMode === "api") {
+      // Same-origin reverse lookup avoids cross-origin browser restrictions.
+      // The Worker bounds provider timeouts, caches results and keeps any
+      // upstream provider failures separate from the map's pin state.
+      const params = new URLSearchParams({
+        lat: point.lat.toFixed(5), lon: point.lng.toFixed(5),
+      });
+      const payload = await request<ProxyReverseResult>("/geo/reverse?" + params.toString());
+      const features = Array.isArray(payload.features) ? payload.features : [];
+      const photon = mergeNearbyResults(features
+        .map(feature => parseFeature(feature, false))
+        .filter((place): place is PlaceResult => place !== null), point);
+      const fallback = parseNominatim(payload.fallback, point);
+      return mergeLookup(photon, fallback, point);
+    }
     let photon: PlaceResult | null = null;
     try {
       const results = await query("/reverse", new URLSearchParams({
@@ -179,22 +212,11 @@ export const geoService = {
       }));
       photon = mergeNearbyResults(results, point);
     } catch {
-      // The public Photon demo may be unavailable or rate-limited; use a
-      // separate provider once rather than silently leaving both fields blank.
+      // Direct provider lookup remains for the static browser-only preview.
     }
     if (photon?.city && photon?.locality) return photon;
     try {
-      const fallback = await nominatimReverse(point);
-      if (!fallback) return photon;
-      const city = fallback.city || photon?.city || "";
-      const locality = fallback.locality || photon?.locality || "";
-      const region = fallback.region || photon?.region || "";
-      const country = fallback.country || photon?.country || "";
-      return {
-        ...(photon ?? fallback),
-        point, city, locality, region, country,
-        area: city && region && country ? reportingArea(city, region, country, point) : null,
-      };
+      return mergeLookup(photon, await nominatimReverse(point), point);
     } catch {
       return photon;
     }
