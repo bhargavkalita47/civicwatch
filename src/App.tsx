@@ -702,9 +702,6 @@ useEffect(() => {
             loading={loading}
             error={error}
             onReload={() => void load()}
-            categories={categories}
-            issues={data?.issues ?? []}
-            onSelectCluster={(cluster) => setSelection({ cluster })}
             onOpenMap={() => { setSelection(null); setStatus("all"); setTab("explore"); }}
           />
         ) : tab === "snapshots" ? (
