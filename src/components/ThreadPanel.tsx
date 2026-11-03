@@ -50,6 +50,7 @@ export function ThreadPanel({
   onResolved,
   onAdd,
   onViewMap,
+  onOpenProfile,
   ensureSession,
   notify,
 }: {
@@ -64,6 +65,7 @@ export function ThreadPanel({
   onResolved: () => Promise<void>;
   onAdd: (point: Issue["location"]) => void;
   onViewMap: (issue: Issue) => void;
+  onOpenProfile: (userId: string) => void;
   ensureSession: (action: () => void) => void;
   notify: (message: string) => void;
 }) {
@@ -184,16 +186,19 @@ export function ThreadPanel({
         className={`comment ${depth ? "comment-reply" : ""}`}
         key={comment.id}
       >
-        <div className="avatar small">
+        <button type="button" className="avatar small profile-avatar-link"
+          aria-label={`View ${writer?.displayName || "resident"}'s profile`}
+          onClick={() => onOpenProfile(comment.authorId)}>
           {writer?.displayName
             .split(" ")
             .map((n) => n[0])
             .slice(0, 2)
             .join("") || "N"}
-        </div>
+        </button>
         <div className="comment-content">
           <div className="comment-meta">
-            <b>{writer?.displayName || "Neighbour"}</b>
+            <button type="button" className="profile-name-link"
+              onClick={() => onOpenProfile(comment.authorId)}>{writer?.displayName || "Neighbour"}</button>
             <time>{relativeTime(comment.createdAt)}</time>
           </div>
           <p>{comment.body}</p>
@@ -314,15 +319,18 @@ export function ThreadPanel({
               <MapPin size={17} /> View on map <ArrowUpRight size={16} />
             </button>
             <div className="author-line">
-              <div className="avatar">
+              <button type="button" className="avatar profile-avatar-link"
+                aria-label={`View ${author?.displayName || "reporter"}'s profile`}
+                onClick={() => onOpenProfile(issue.authorId)}>
                 {author?.displayName
                   .split(" ")
                   .map((n) => n[0])
                   .slice(0, 2)
                   .join("") || "N"}
-              </div>
+              </button>
               <div>
-                <b>{author?.displayName || "Neighbour"}</b>
+                <button type="button" className="profile-name-link"
+                  onClick={() => onOpenProfile(issue.authorId)}>{author?.displayName || "Neighbour"}</button>
                 <small>Reported {relativeTime(issue.createdAt)}</small>
               </div>
               <button
@@ -387,8 +395,10 @@ export function ThreadPanel({
                           "N")[0]
                       }
                     </span>
-                    {data.users.find((u) => u.id === id)?.displayName ||
-                      "Neighbour"}
+                    <button type="button" className="profile-name-link"
+                      onClick={() => onOpenProfile(id)}>
+                      {data.users.find((u) => u.id === id)?.displayName || "Neighbour"}
+                    </button>
                     {id === issue.authorId && <small>Reporter</small>}
                   </div>
                 ))}
