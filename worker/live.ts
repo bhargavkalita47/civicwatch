@@ -1,7 +1,13 @@
 import { categories } from "../src/data/categories";
 import type { Attachment, City, Comment, Dataset, Issue, OverviewSnapshot, Profile, Role, Session } from "../src/domain/types";
 
-export interface LiveConfig { SUPABASE_URL: string; SUPABASE_PUBLISHABLE_KEY: string; SUPABASE_SERVICE_ROLE_KEY: string }
+export interface LiveConfig {
+  SUPABASE_URL: string;
+  SUPABASE_PUBLISHABLE_KEY: string;
+  SUPABASE_SERVICE_ROLE_KEY: string;
+  GOOGLE_OAUTH_ENABLED?: string;
+  FACEBOOK_OAUTH_ENABLED?: string;
+}
 type Row = Record<string, any>;
 class Failure extends Error {
   constructor(readonly status: number, message: string) { super(message); }
@@ -193,6 +199,11 @@ export async function liveApi(req: Request, env: LiveConfig): Promise<Response> 
       }
       const provider = /^\/auth\/oauth\/(google|facebook)$/.exec(path)?.[1];
       if (provider) {
+        // Unverified email registration is permitted in this pilot. Until
+        // identity linking is secured, neither social login may start by default.
+        const enabled = provider === "google" ? env.GOOGLE_OAUTH_ENABLED === "true"
+          : env.FACEBOOK_OAUTH_ENABLED === "true";
+        if (!enabled) throw new Failure(503, "This sign-in method is not available yet.");
         const encode = (bytes: Uint8Array) => btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
         const verifier = encode(crypto.getRandomValues(new Uint8Array(48)));
         const challenge = encode(new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(verifier))));
