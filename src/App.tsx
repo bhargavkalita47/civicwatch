@@ -171,6 +171,7 @@ export default function App() {
   const [reportRevision, setReportRevision] = useState(0);
   const [datasetLoading, setDatasetLoading] = useState(false);
   const [datasetError, setDatasetError] = useState("");
+  const [datasetAttempt, setDatasetAttempt] = useState(0);
   const [tab, setTab] = useState<Tab>("overview"),
     [query, setQuery] = useState(""),
     [categoryIds, setCategoryIds] = useState<string[]>([]),
@@ -311,7 +312,7 @@ useEffect(() => {
       .catch(cause => { if (active) setDatasetError((cause as Error).message); })
       .finally(() => { if (active) setDatasetLoading(false); });
     return () => { active = false; };
-  }, [tab, data]);
+  }, [tab, data, datasetAttempt]);
   useEffect(() => {
     try { localStorage.setItem(WATCHLIST_KEY, JSON.stringify(localWatchlist)); }
     catch { /* Private browsing or storage disabled: watchlist still works this session. */ }
@@ -546,6 +547,7 @@ useEffect(() => {
     // Persist succeeded before this callback is called. Show the saved item
     // immediately; a failed follow-up GET is never a failed POST.
     setCityId(issue.cityId);
+    setReportRevision(n => n + 1);
     setData((current) => current ? {
       ...current,
       issues: [issue, ...current.issues.filter((entry) => entry.id !== issue.id)],
@@ -778,7 +780,7 @@ useEffect(() => {
         ) : tab === "snapshots" ? (
           <LocalSnapshots cities={cities} watchlist={watchlist} setWatchlist={setWatchlist} stats={overviewStats} issues={data?.issues ?? []} categories={categories}
             loading={loading || datasetLoading || (config.serviceMode === "api" && !data)}
-            error={error || datasetError} onReload={() => void load()}
+            error={error || datasetError} onReload={() => { setDatasetAttempt(n => n + 1); void load(); }}
             onExplore={exploreWatchCity} onReport={(city) => startReport(city.center)} onSelectCluster={(cluster) => setSelection({ cluster })} />
         ) : <section className="workspace" aria-label="Report workspace">
           <h2 className="sr-only">{tab === "explore" ? "Explore reports" : tab === "reports" ? "Watched town reports" : "My reports"}</h2>
@@ -900,7 +902,7 @@ useEffect(() => {
               <h3>Reports could not be loaded.</h3>
               <p>{error || datasetError}</p>
               <button className="button primary" onClick={() => {
-                if (datasetError) { setDatasetError(""); setData(null); }
+                if (datasetError) { setDatasetError(""); setDatasetAttempt(n => n + 1); }
                 else void load();
               }}>
                 Try again
