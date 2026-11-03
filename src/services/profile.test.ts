@@ -133,3 +133,50 @@ it("requires a session and prevents editing another user's or progressed reports
     code: "FORBIDDEN",
   });
 });
+
+
+it("updates evidence photos on an owned report without changing its location or discussion", async () => {
+  const session = await signIn();
+  const data = createSeed();
+  const issue = data.issues[0];
+  issue.authorId = session.user.id;
+  issue.status = "reported";
+  issue.attachments = [];
+  localStorage.setItem(config.storageKey, JSON.stringify(data));
+  const photo = {
+    id: "test-photo", url: "data:image/jpeg;base64,YQ==", name: "new.jpg",
+    mimeType: "image/jpeg", size: 1, createdAt: new Date().toISOString(),
+  };
+  const input = { title: issue.title, description: issue.description, address: issue.address };
+  const saved = await run(mockService.updateIssue(issue.id, { ...input, attachments: [photo] }));
+  expect(saved.attachments).toEqual([photo]);
+  expect(saved.location).toEqual(issue.location);
+  expect((await run(mockService.getDataset())).issues.find(row => row.id === issue.id)?.attachments)
+    .toEqual([photo]);
+  const removed = await run(mockService.updateIssue(issue.id, { ...input, attachments: [] }));
+  expect(removed.attachments).toEqual([]);
+  // Clients that do not provide attachments must preserve the existing list.
+  const readded = await run(mockService.updateIssue(issue.id, { ...input, attachments: [photo] }));
+  const kept = await run(mockService.updateIssue(issue.id, input));
+  expect(kept.attachments).toEqual(readded.attachments);
+});
+
+it("rejects more than three photos when editing a report without changing its stored evidence", async () => {
+  const session = await signIn();
+  const data = createSeed();
+  const issue = data.issues[0];
+  issue.authorId = session.user.id;
+  issue.status = "reported";
+  issue.attachments = [];
+  localStorage.setItem(config.storageKey, JSON.stringify(data));
+  const photo = {
+    id: "test-photo", url: "data:image/jpeg;base64,YQ==", name: "new.jpg",
+    mimeType: "image/jpeg", size: 1, createdAt: new Date().toISOString(),
+  };
+  await expect(run(mockService.updateIssue(issue.id, {
+    title: issue.title, description: issue.description, address: issue.address,
+    attachments: [photo, photo, photo, photo],
+  }))).rejects.toMatchObject({ code: "VALIDATION" });
+  expect((await run(mockService.getDataset())).issues.find(row => row.id === issue.id)?.attachments)
+    .toEqual([]);
+});
