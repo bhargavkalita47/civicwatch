@@ -403,7 +403,7 @@ export function ThreadPanel({
               <MapPin size={19} />
               <span className="view-report-map-copy">
                 <strong>View on map</strong>
-                <small>{issue.address}</small>
+                <small id="report-map-location">{issue.address}</small>
               </span>
               <ArrowUpRight size={16} />
             </button>
