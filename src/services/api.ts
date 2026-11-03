@@ -15,7 +15,7 @@ import {
 } from "../domain/types";
 // The browser receives only an HttpOnly, Secure server session cookie in live mode.
 // No mock identity, client-supplied user ID or role is trusted by this adapter.
-async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+export async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const abort = new AbortController();
   const timer = setTimeout(() => abort.abort(), 15000);
   try {
