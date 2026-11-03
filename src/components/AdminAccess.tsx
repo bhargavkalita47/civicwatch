@@ -38,6 +38,7 @@ export function AdminAccess({ onChanged }: { onChanged?: () => void }) {
 
   useEffect(() => {
     if (!eligible || config.serviceMode !== "api") { setLoading(false); return; }
+    setLoading(true);
     let active = true;
     administrationService.summary().then(result => { if (active) setSummary(result); })
       .catch(cause => { if (active) setError((cause as Error).message); })
@@ -45,7 +46,11 @@ export function AdminAccess({ onChanged }: { onChanged?: () => void }) {
     return () => { active = false; };
   }, [eligible]);
 
-  async function perform(action: () => Promise<unknown>, key: string, message: string, updatesReports = false) {
+  useEffect(() => {
+    if (pending) document.getElementById("admin-reason-form")?.scrollIntoView?.({ behavior: "smooth", block: "center" });
+  }, [pending]);
+
+  async function perform(action: () => Promise<unknown>, key: string, message: string, updatesReports = false): Promise<boolean> {
     setBusy(key);
     setError("");
     setNotice("");
@@ -56,8 +61,10 @@ export function AdminAccess({ onChanged }: { onChanged?: () => void }) {
       setReason("");
       setNotice(message);
       if (updatesReports) onChanged?.();
+      return true;
     } catch (cause) {
       setError((cause as Error).message);
+      return false;
     } finally {
       setBusy("");
     }
@@ -87,7 +94,7 @@ export function AdminAccess({ onChanged }: { onChanged?: () => void }) {
     const target = targetUser.trim();
     if (!uuid.test(target)) { setError("Enter a valid Supabase user UUID."); return; }
     void perform(() => administrationService.grant(target), "grant", "Administrator appointed.")
-      .then(() => setTargetUser(""));
+      .then(success => { if (success) setTargetUser(""); });
   }
   function revoke(id: string) {
     if (!window.confirm("Revoke this administrator's moderation access?")) return;
@@ -140,7 +147,7 @@ export function AdminAccess({ onChanged }: { onChanged?: () => void }) {
             </article>
           )}</div>}
       </section>}
-      {pending && <form className="admin-reason-form" onSubmit={submitReason}>
+      {pending && <form id="admin-reason-form" className="admin-reason-form" onSubmit={submitReason}>
         <div><strong>Hide {pending.action === "report_hide" ? "report" : "comment"}</strong>
           <p>{pending.title}</p></div>
         <label htmlFor="moderation-reason">Reason for moderation</label>
