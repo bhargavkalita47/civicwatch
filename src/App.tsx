@@ -1,4 +1,5 @@
 import { Profile, ProfileAvatar } from "./components/Profile";
+import { ResidentProfile } from "./components/ResidentProfile";
 import { categoryMarkerColor } from "./domain/markerPalette";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -69,7 +70,8 @@ import { LocalSnapshots } from "./components/LocalSnapshots";
 import { AdminAccess } from "./components/AdminAccess";
 import { CivicWatchLogo } from "./components/CivicWatchLogo";
 import { restoreWatchlist, WATCHLIST_KEY, watchlistReportGroups } from "./domain/watchlist";
-type Tab = "explore" | "overview" | "snapshots" | "reports" | "mine" | "admin";
+type Tab = "explore" | "overview" | "snapshots" | "reports" | "mine" | "member" | "admin";
+type ThreadSelection = { cluster: LocationCluster; issueId?: string };
 type ReportSection = "active" | "inactive";
 type Theme = "light" | "dark";
 const THEME_STORAGE_KEY = "civicwatch.theme.v1";
@@ -179,10 +181,9 @@ export default function App() {
     [about, setAbout] = useState(false),
     [signIn, setSignIn] = useState(false),
     [reportPoint, setReportPoint] = useState<Coordinate | null>(null),
-    [selection, setSelection] = useState<{
-      cluster: LocationCluster;
-      issueId?: string;
-    } | null>(null),
+    [selection, setSelection] = useState<ThreadSelection | null>(null),
+    [memberId, setMemberId] = useState<string | null>(null),
+    [memberReturn, setMemberReturn] = useState<{ tab: Tab; selection: ThreadSelection | null } | null>(null),
     [mapIssueId, setMapIssueId] = useState<string | null>(null),
     [focus, setFocus] = useState<Coordinate>(),
     [toast, setToast] = useState("");
@@ -354,6 +355,12 @@ useEffect(() => {
     if (!data) return;
     const hash = new URLSearchParams(location.hash.slice(1)),
       id = hash.get("issue");
+    const profileId = hash.get("profile");
+    if (profileId && /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(profileId)) {
+      setMemberId(profileId);
+      setTab("member");
+      return;
+    }
     if (id) {
       const issue = data.issues.find((i) => i.id === id);
       if (issue) openIssue(issue);
@@ -373,6 +380,23 @@ useEffect(() => {
   const citySummary = useMemo(() => summarizeIssues(scopedIssues), [scopedIssues]);
   const reportGroups = useMemo(() => watchlistReportGroups(watchlist, cityIssues), [watchlist, cityIssues]);
   const reportCounts = {total: reportGroups.all.length, active: reportGroups.active.length, inactive: reportGroups.inactive.length};
+  function openResidentProfile(userId: string) {
+    // Only UUIDs produced by the issue/comment data may enter the profile route.
+    if (!/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(userId)) return;
+    setMemberReturn({ tab, selection });
+    setMemberId(userId);
+    setSelection(null);
+    setTab("member");
+    history.pushState(null, "", `#profile=${encodeURIComponent(userId)}`);
+  }
+  function backFromResidentProfile() {
+    setTab(memberReturn?.tab ?? "reports");
+    setSelection(memberReturn?.selection ?? null);
+    setMemberId(null);
+    history.replaceState(null, "", memberReturn?.selection?.issueId
+      ? `#issue=${encodeURIComponent(memberReturn.selection.issueId)}`
+      : location.pathname + location.search);
+  }
   function viewIssueOnMap(issue: Issue) {
     setSelection(null);
     setMapIssueId(issue.id);
@@ -659,8 +683,13 @@ useEffect(() => {
           </button>
         </section>
         {auth.error && <ErrorNotice message={auth.error} />}
-        {tab === "mine" ? (
-          <Profile key={auth.session?.user.id ?? "guest"} data={data} categories={categories} loading={loading} error={error}
+        {tab === "member" && memberId && data ? (
+          <ResidentProfile key={memberId} userId={memberId} data={data} categories={categories}
+            isOwnProfile={auth.session?.user.id === memberId} onBack={backFromResidentProfile}
+            onOpenIssue={openIssue} onViewMap={viewIssueOnMap}
+            onOpenOwnProfile={() => { setMemberId(null); setSelection(null); setTab("mine"); history.replaceState(null, "", location.pathname + location.search); }} />
+        ) : tab === "mine" ? (
+          <Profile key={auth.session?.user.id ?? "guest" data={data} categories={categories} loading={loading} error={error}
             onRetry={() => void load()} onSignIn={() => setSignIn(true)} onOpenIssue={openIssue} onViewMap={viewIssueOnMap} onReport={() => startReport()}
             onIssueUpdated={(issue) => setData((current) => current ? { ...current, issues: current.issues.map((entry) => entry.id === issue.id ? issue : entry) } : current)}
             onIssueDeleted={(id) => { setData((current) => current ? { ...current, issues: current.issues.filter((entry) => entry.id !== id), comments: current.comments.filter((entry) => entry.issueId !== id) } : current); void refresh().catch(() => notify("Report deleted. Refresh to update totals.")); }}
@@ -1080,6 +1109,7 @@ useEffect(() => {
           }}
           onAdd={(point) => startReport(point)}
           onViewMap={viewIssueOnMap}
+          onOpenProfile={openResidentProfile}
           ensureSession={ensureSession}
           notify={notify}
         />
