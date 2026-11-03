@@ -74,7 +74,7 @@ beforeEach(async () => {
   vi.mocked(administrationService.summary).mockResolvedValue(summary);
   vi.mocked(administrationService.reports).mockImplementation(async opts => ({
     items: reportRows.slice((opts.page - 1) * 10, opts.page * 10)
-      .filter(row => opts.visibility !== "hidden"),
+      .filter(() => opts.visibility !== "hidden"),
     page: opts.page, pageSize: 10,
     total: opts.visibility === "hidden" ? 0 : reportRows.length,
   }));
