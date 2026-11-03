@@ -107,6 +107,33 @@ it("fills the city from a containing administrative boundary while retaining the
   });
 });
 
+it("fills Guwahati and retains Zoo Rd Tiniali from the exact reported reverse-geocoding response", async () => {
+  vi.mocked(request).mockResolvedValueOnce({
+    features: [],
+    fallback: {
+      place_id: 242049513, addresstype: "secondary",
+      name: "Radha Gobinda Baruah Road",
+      address: { road: "Radha Gobinda Baruah Road", suburb: "Zoo Rd Tiniali",
+        county: "Dispur", state_district: "Kamrup Metropolitan",
+        state: "Assam", country: "India" },
+    },
+    cityFallback: {
+      place_id: 242300571, name: "Dispur", addresstype: "county",
+      address: { county: "Dispur", state_district: "Kamrup Metropolitan",
+        state: "Assam", country: "India" },
+    },
+    boundaryCity: null,
+    nearbyCity: "Guwahati",
+  });
+  const address = await geoService.reverse({ lat: 26.17999, lng: 91.77539 });
+  expect(address).toMatchObject({
+    city: "Guwahati", locality: "Zoo Rd Tiniali",
+    region: "Assam", country: "India",
+    point: { lat: 26.17999, lng: 91.77539 },
+  });
+  expect(fetcher).not.toHaveBeenCalled();
+});
+
 it("does not invent missing city metadata when no provider knows the location", async () => {
   vi.mocked(request).mockResolvedValueOnce({ features: [], fallback: null });
   const address = await geoService.reverse({ lat: 25.88888, lng: 90.77777 });
