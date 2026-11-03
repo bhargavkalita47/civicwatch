@@ -432,10 +432,21 @@ export async function liveApi(req: Request, env: LiveConfig): Promise<Response> 
       } else if (action === "status" && method === "PATCH") {
         const input = await req.json() as Row;
         if (!["reported", "acknowledged", "in_progress", "resolved"].includes(input.status)) throw new Failure(400, "Invalid status.");
-        if (!(owner && input.status === "resolved") && await role(user.id) === "resident")
+        // Administrator status changes are always written with an audit event
+        // in the same database transaction. Ordinary authors may only resolve their own reports.
+        const assigned = await privilege(user.id);
+        if (assigned) {
+          await runAdminTransaction("civic_admin_moderate", {
+            p_actor_id: user.id, p_target_id: id, p_action: "report_status",
+            p_status: input.status, p_reason: "",
+          });
+          [updated] = await db("reports", lookup(id));
+        } else if (owner && input.status === "resolved") {
+          [updated] = await db("reports", { ...lookup(id), status: "eq." + row.status }, "PATCH",
+            { status: input.status, updated_at: new Date().toISOString() });
+        } else {
           throw new Failure(403, "You cannot change this status.");
-        [updated] = await db("reports", { ...lookup(id), status: "eq." + row.status }, "PATCH",
-          { status: input.status, updated_at: new Date().toISOString() });
+        }
       } else if (action === "confirmations" && method === "POST") {
         if (row.status === "resolved") throw new Failure(400, "This report is resolved.");
         await db("confirmations", {}, "POST", { report_id: id, user_id: user.id }, true);
