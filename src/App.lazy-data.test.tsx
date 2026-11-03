@@ -87,7 +87,7 @@ it("shows Overview and paged Reports without loading all map threads on startup"
 
 it("loads map data when a saved watchlist's Local Snapshot is opened", async () => {
   expect(calls.getDataset).not.toHaveBeenCalled();
-  await click("Local Snapshot");
+  await click("Town watchlist");
   await act(async () => { await Promise.resolve(); });
   expect(calls.getDataset).toHaveBeenCalledTimes(1);
 });
