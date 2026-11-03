@@ -261,9 +261,15 @@ export async function liveApi(req: Request, env: LiveConfig): Promise<Response> 
         return new Response(photo.body, { headers: { ...headers, "Content-Type": row.mime_type } });
       }
       if (["/dataset", "/cities", "/overview"].includes(path)) {
-        const reports = await db("reports", { moderation_state: "eq.visible", order: "created_at.desc,id" });
+        // Fetch only the columns the requested view consumes. Keeping the
+        // existing full-dataset response contract avoids breaking map filters.
+        const columns = path === "/cities"
+          ? "city_id,city_name,city_region,city_country,latitude,longitude"
+          : path === "/overview" ? "id,author_id,city_id,status"
+          : "id,category_id,city_id,city_name,city_region,city_country,title,description,address,latitude,longitude,status,author_id,attachments,created_at,updated_at";
+        const reports = await db("reports", { select: columns, moderation_state: "eq.visible", order: "created_at.desc,id" });
         if (path === "/cities") return reply(areaList(reports));
-        const confirmations = await db("confirmations", { order: "report_id,user_id" });
+        const confirmations = await db("confirmations", { select: "report_id,user_id", order: "report_id,user_id" });
         const byIssue = new Map<string, string[]>();
         for (const row of confirmations) {
           const users = byIssue.get(row.report_id) || [];
@@ -286,7 +292,7 @@ export async function liveApi(req: Request, env: LiveConfig): Promise<Response> 
             updatedAt: new Date().toISOString() } satisfies OverviewSnapshot);
         }
         const [comments, profiles] = await Promise.all([
-          db("comments", { order: "created_at,id" }),
+          db("comments", { select: "id,report_id,parent_id,author_id,body,attachments,moderation_state,created_at", order: "created_at,id" }),
           db("profiles", { select: "user_id,display_name", order: "user_id" }),
         ]);
         const visibleReportIds = new Set(reports.map(r => r.id));
