@@ -20,6 +20,7 @@ import type {
 import { canEditReport, profileName } from "../domain/profile";
 import { relativeTime, filterIssues, statusLabels } from "../domain/logic";
 import { civicService } from "../services";
+import { usePublicReportPages } from "../services/publicReportPages";
 import { useAuth } from "../services/auth";
 import { CategoryBadge, ErrorNotice, Modal, PhotoPicker, Spinner, StatusBadge } from "./ui";
 import { categoryMarkerColor } from "../domain/markerPalette";
@@ -409,6 +410,15 @@ export function Profile({
     useState<IssueFilters["status"]>("all");
   const [categoryIds, setCategoryIds] = useState<string[]>([]);
   const [reportLimit, setReportLimit] = useState(10);
+  const [pageRevision, setPageRevision] = useState(0);
+  useEffect(() => { if (data) setPageRevision(n => n + 1); }, [data]);
+  const liveReports = config.serviceMode === "api" && !!user;
+  const pagedReports = usePublicReportPages(liveReports, {
+    mine: true,
+    section: section === "history" ? "all" : section,
+    query: reportQuery, categoryIds, sort: reportSort,
+    status: section === "resolved" ? "resolved" : reportStatus,
+  }, pageRevision);
   // A new report section, search, filter, or sort restarts at the first ten.
   // Results are filtered and sorted BEFORE they are sliced for display.
   useEffect(() => setReportLimit(10), [
@@ -485,12 +495,16 @@ export function Profile({
     resolved = mine.filter((issue) => issue.status === "resolved");
   const sectionReports =
     section === "history" ? mine : section === "active" ? active : resolved;
-  const visible = filterIssues(sectionReports, {
+  const visible = liveReports ? pagedReports.items : filterIssues(sectionReports, {
     query: reportQuery,
     categoryIds,
     sort: reportSort,
     status: section === "resolved" ? "resolved" : reportStatus,
   });
+  const resultTotal = liveReports ? pagedReports.total : visible.length;
+  const counts = liveReports ? pagedReports.counts : {
+    total: mine.length, active: active.length, resolved: resolved.length,
+  };
   const hasFilters =
     !!reportQuery.trim() ||
     categoryIds.length > 0 ||
@@ -543,15 +557,15 @@ export function Profile({
             <dl className="profile-stats">
               <div>
                 <dt>Total reports</dt>
-                <dd>{mine.length}</dd>
+                <dd>{counts.total}</dd>
               </div>
               <div>
                 <dt>Active</dt>
-                <dd>{active.length}</dd>
+                <dd>{counts.active}</dd>
               </div>
               <div>
                 <dt>Resolved</dt>
-                <dd>{resolved.length}</dd>
+                <dd>{counts.resolved}</dd>
               </div>
             </dl>
             <div
@@ -651,7 +665,7 @@ export function Profile({
             </div>
             <div className="board-toolbar">
               <span>
-                {visible.length} {visible.length === 1 ? "report" : "reports"}
+                {resultTotal} {resultTotal === 1 ? "report" : "reports"}
               </span>
               <label>
                 Sort by
@@ -672,9 +686,17 @@ export function Profile({
                 Clear report filters
               </button>
             )}
+            {liveReports && pagedReports.error && <div className="empty-state">
+              <ErrorNotice message={pagedReports.error}/>
+              <button className="button secondary" type="button"
+                onClick={pagedReports.retry}>Retry reports</button>
+            </div>}
+            {liveReports && pagedReports.loading && <div className="admin-loading" role="status">
+              <Spinner/> Loading your reports…
+            </div>}
             {visible.length ? (
               <div className="profile-report-list">
-                {visible.slice(0, reportLimit).map((issue) => {
+                {visible.slice(0, liveReports ? visible.length : reportLimit).map((issue) => {
                   const category = categories.find(
                     (c) => c.id === issue.categoryId,
                   );
@@ -748,21 +770,22 @@ export function Profile({
                     </article>
                   );
                 })}
-                {visible.length > 10 && (
+                {resultTotal > 10 && (
                   <div className="profile-report-pagination" aria-label="Report list pagination">
                     <p aria-live="polite">
-                      Showing {Math.min(reportLimit, visible.length)} of {visible.length} reports
+                      Showing {liveReports ? pagedReports.displayed : Math.min(reportLimit, resultTotal)} of {resultTotal} reports
                     </p>
-                    {visible.length > reportLimit && (
+                    {(liveReports ? pagedReports.hasMore : resultTotal > reportLimit) && (
                       <button type="button" className="button secondary"
-                        onClick={() => setReportLimit((count) => count + 10)}>
+                        disabled={liveReports && pagedReports.loading}
+                        onClick={() => liveReports ? pagedReports.loadMore() : setReportLimit(count => count + 10)}>
                         Load more reports
                       </button>
                     )}
                   </div>
                 )}
               </div>
-            ) : (
+            ) : liveReports && (pagedReports.loading || pagedReports.error) ? null : (
               <div className="empty-state">
                 <h3>
                   {hasFilters
@@ -929,7 +952,7 @@ export function Profile({
                 className="button primary"
                 onClick={() => setFiltersOpen(false)}
               >
-                Show {visible.length} reports
+                Show {resultTotal} reports
               </button>
             </div>
           </div>
