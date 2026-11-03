@@ -22,6 +22,8 @@ export function SignInModal({
   const auth = useAuth(),
     [name, setName] = useState(""),
     [email, setEmail] = useState(""),
+    [password, setPassword] = useState(""),
+    [register, setRegister] = useState(false),
     [busy, setBusy] = useState(false),
     [error, setError] = useState("");
   async function submit(event: FormEvent) {
@@ -29,7 +31,7 @@ export function SignInModal({
     setBusy(true);
     setError("");
     try {
-      await auth.signIn({ displayName: name, email });
+      await auth.signIn(config.serviceMode === "api" ? { displayName: name, email, password, register } : { displayName: name, email });
       onDone();
     } catch (e) {
       setError((e as Error).message);
@@ -53,7 +55,7 @@ export function SignInModal({
             <p>Signing in here doesn't verify your email or publish reports to other people.</p>
           </div>
         )}
-        <label>
+        {(config.serviceMode === "mock" || register) && <label>
           Your name
           <input
             autoComplete="name"
@@ -64,7 +66,7 @@ export function SignInModal({
             onChange={(e) => setName(e.target.value)}
             placeholder="Your name"
           />
-        </label>
+        </label>}
         <label>
           Email address
           <input
@@ -77,17 +79,29 @@ export function SignInModal({
             placeholder="you@example.com"
           />
         </label>
+        {config.serviceMode === "api" && <label>
+          Password
+          <input type="password" autoComplete={register ? "new-password" : "current-password"}
+            required minLength={8} maxLength={72} value={password} onChange={e => setPassword(e.target.value)} />
+        </label>}
         <ErrorNotice message={error} />
         <button className="button primary full" disabled={busy}>
           {busy ? (
             <Spinner />
           ) : (
             <>
-              Continue
+              {config.serviceMode === "mock" ? "Continue" : register ? "Create account" : "Sign in"}
               <ArrowRight size={17} />
             </>
           )}
         </button>
+        {config.serviceMode === "api" && <>
+          <button className="button full" type="button" onClick={() => { setRegister(!register); setError(""); }}>
+            {register ? "Already have an account? Sign in" : "Create an account"}
+          </button>
+          <a className="button full" href={config.apiBaseUrl + "/auth/oauth/google"}>Continue with Google</a>
+          <a className="button full" href={config.apiBaseUrl + "/auth/oauth/facebook"}>Continue with Facebook</a>
+        </>}
         <p className="fine-print">
           Be kind. Be factual. Keep personal information out of public posts.
         </p>

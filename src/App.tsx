@@ -52,6 +52,7 @@ import {
 import { civicService } from "./services";
 import { inMapBounds, type MapBounds } from "./domain/geography";
 import { ExploreSearch } from "./components/ExploreSearch";
+import { apiWatchlist } from "./services/api";
 import { useAuth } from "./services/auth";
 import {
   CategoryBadge,
@@ -117,7 +118,33 @@ function HeaderClock() {
 
 export default function App() {
 
+  const [localWatchlist, setLocalWatchlist] = useState<City[]>(restoreWatchlist);
+  const [accountWatchlist, setAccountWatchlist] = useState<{ id: string; towns: City[] } | null>(null);
+  const watchlistWrites = useRef(Promise.resolve());
   const auth = useAuth();
+  const watchlistAccount = config.serviceMode === "api" ? auth.session?.user.id : undefined;
+  const watchlist = watchlistAccount
+    ? accountWatchlist?.id === watchlistAccount ? accountWatchlist.towns : []
+    : localWatchlist;
+  const setWatchlist: React.Dispatch<React.SetStateAction<City[]>> = (change) => {
+    if (!watchlistAccount) return setLocalWatchlist(change);
+    if (accountWatchlist?.id !== watchlistAccount) return;
+    const towns = typeof change === "function" ? change(watchlist) : change;
+    setAccountWatchlist({ id: watchlistAccount, towns });
+    watchlistWrites.current = watchlistWrites.current.then(() => apiWatchlist.save(watchlistAccount, towns))
+      .catch((cause: Error) => setError(cause.message));
+  };
+  useEffect(() => {
+    if (!watchlistAccount) {
+      setAccountWatchlist(null);
+      return;
+    }
+    let active = true;
+    void apiWatchlist.get().then(towns => {
+      if (active) setAccountWatchlist({ id: watchlistAccount, towns });
+    }).catch((cause: Error) => { if (active) setError(cause.message); });
+    return () => { active = false; };
+  }, [watchlistAccount]);
   const [theme, setTheme] = useState<Theme>(() => {
     try { return window.localStorage.getItem(THEME_STORAGE_KEY) === "dark" ? "dark" : "light"; }
     catch { return "light"; }
@@ -136,7 +163,6 @@ export default function App() {
     [mapBounds, setMapBounds] = useState<MapBounds | null>(null),
     [loading, setLoading] = useState(true),
     [error, setError] = useState("");
-  const [watchlist, setWatchlist] = useState<City[]>(restoreWatchlist);
   const [reportSection, setReportSection] = useState<ReportSection>("active");
   const [tab, setTab] = useState<Tab>("overview"),
     [query, setQuery] = useState(""),
@@ -265,9 +291,9 @@ useEffect(() => {
     };
   }, [load]);
   useEffect(() => {
-    try { localStorage.setItem(WATCHLIST_KEY, JSON.stringify(watchlist)); }
+    try { localStorage.setItem(WATCHLIST_KEY, JSON.stringify(localWatchlist)); }
     catch { /* Private browsing or storage disabled: watchlist still works this session. */ }
-  }, [watchlist]);
+  }, [localWatchlist]);
   useEffect(() => {
     const update = (event: StorageEvent) => {
       if (event.key === config.storageKey)

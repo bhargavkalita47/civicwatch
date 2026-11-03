@@ -139,6 +139,8 @@ export interface CreateCommentInput {
   attachments: Attachment[];
 }
 export interface SignInInput {
+  password?: string;
+  register?: boolean;
   displayName: string;
   email: string;
 }

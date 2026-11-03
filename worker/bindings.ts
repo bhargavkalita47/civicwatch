@@ -38,6 +38,9 @@ export interface R2BucketBinding {
 
 export interface WorkerEnv {
   ASSETS: AssetFetcher;
+  SUPABASE_URL?: string;
+  SUPABASE_PUBLISHABLE_KEY?: string;
+  SUPABASE_SERVICE_ROLE_KEY?: string;
   DB?: D1DatabaseBinding;
   PHOTOS?: R2BucketBinding;
   /** Do not enable the live API based on a client-supplied user or role. */
