@@ -171,7 +171,7 @@ export function ReportModal({
     if (place) {
       chosenCity.current = place.city || place.area?.name || null;
       editedLocation.current = { city: false, locality: false };
-      setCity(chosenCity.current);
+      setCity(chosenCity.current || "");
     } else {
       editedLocation.current.locality = false;
       if (chosenCity.current === null && !editedLocation.current.city) setCity("");
