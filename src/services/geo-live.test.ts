@@ -84,6 +84,29 @@ it("uses settlement types globally rather than assuming Indian city metadata", a
     region: "England", country: "United Kingdom" });
 });
 
+it("fills the city from a containing administrative boundary while retaining the original locality", async () => {
+  vi.mocked(request).mockResolvedValueOnce({
+    features: [{
+      geometry: { coordinates: [91.77541, 26.17973] },
+      properties: { name: "Zoo Rd Tiniali", suburb: "Zoo Rd Tiniali",
+        state: "Assam", country: "India" },
+    }],
+    fallback: { place_id: 91, address: {
+      neighbourhood: "Zoo Rd Tiniali", state: "Assam", country: "India",
+    } },
+    cityFallback: { place_id: 92, address: {
+      state: "Assam", country: "India",
+    } },
+    boundaryCity: "Guwahati",
+  });
+  const result = await geoService.reverse({ lat: 26.17973, lng: 91.77541 });
+  expect(result).toMatchObject({
+    city: "Guwahati", locality: "Zoo Rd Tiniali",
+    region: "Assam", country: "India",
+    point: { lat: 26.17973, lng: 91.77541 },
+  });
+});
+
 it("does not invent missing city metadata when no provider knows the location", async () => {
   vi.mocked(request).mockResolvedValueOnce({ features: [], fallback: null });
   const address = await geoService.reverse({ lat: 25.88888, lng: 90.77777 });
