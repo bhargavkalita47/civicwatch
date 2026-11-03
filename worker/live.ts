@@ -282,7 +282,7 @@ export async function liveApi(req: Request, env: LiveConfig): Promise<Response> 
     if (path === "/auth/recovery/request" && method === "POST") {
       const input = await req.json() as Row;
       const email = field(input.email, 254, 3).toLowerCase();
-      if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email))
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
         throw new Failure(400, "Enter a valid email address.");
       // Supabase performs its own per-email recovery cooldown. Do not leak
       // whether the address belongs to a CivicWatch account.
@@ -302,8 +302,8 @@ export async function liveApi(req: Request, env: LiveConfig): Promise<Response> 
       const email = field(input.email, 254, 3).toLowerCase();
       const token = field(input.code, 8, 6);
       const password = input.password;
-      if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)
-        || !/^\\d{6,8}$/.test(token))
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+        || !/^\d{6,8}$/.test(token))
         throw new Failure(400, "Enter the email address and code from your recovery message.");
       if (typeof password !== "string" || password.length < 8 || password.length > 72)
         throw new Failure(400, "Choose a new password between 8 and 72 characters.");
