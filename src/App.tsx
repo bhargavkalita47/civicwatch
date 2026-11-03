@@ -68,6 +68,7 @@ import { ThreadPanel } from "./components/ThreadPanel";
 import { Overview } from "./components/Overview";
 import { LocalSnapshots } from "./components/LocalSnapshots";
 import { AdminAccess } from "./components/AdminAccess";
+import { usePublicReportPages } from "./services/publicReportPages";
 import { CivicWatchLogo } from "./components/CivicWatchLogo";
 import { restoreWatchlist, WATCHLIST_KEY, watchlistReportGroups } from "./domain/watchlist";
 type Tab = "explore" | "overview" | "snapshots" | "reports" | "mine" | "member" | "admin";
@@ -167,6 +168,7 @@ export default function App() {
     [error, setError] = useState("");
   const [reportSection, setReportSection] = useState<ReportSection>("active");
   const [reportsLimit, setReportsLimit] = useState(10);
+  const [reportRevision, setReportRevision] = useState(0);
   const [tab, setTab] = useState<Tab>("overview"),
     [query, setQuery] = useState(""),
     [categoryIds, setCategoryIds] = useState<string[]>([]),
@@ -264,6 +266,7 @@ useEffect(() => {
     const [dataset, snapshot] = await Promise.all([civicService.getDataset(), civicService.getOverviewStats()]);
     setData(dataset);
     setOverviewStats(snapshot);
+    setReportRevision(previous => previous + 1);
   }, []);
   const load = useCallback(async () => {
     setLoading(true);
@@ -441,6 +444,18 @@ useEffect(() => {
   // Search, category, watchlist and sorting always apply before pagination.
   // Changing any of them returns the community Reports list to the first ten.
   useEffect(() => setReportsLimit(10), [reportSection, query, categoryIds, status, sort, watchlist]);
+  const liveReports = config.serviceMode === "api" && tab === "reports" && watchlist.length > 0;
+  const pagedReports = usePublicReportPages(liveReports, {
+    section: reportSection === "inactive" ? "resolved" : "active",
+    query, categoryIds, sort,
+    status: reportSection === "inactive" ? "resolved" : status,
+    cityIds: watchlist.map(town => town.id),
+  }, reportRevision);
+  const reportsShowing = liveReports ? pagedReports.items : visible.slice(0, reportsLimit);
+  const reportsTotal = liveReports ? pagedReports.total : visible.length;
+  const reportScopeCounts = liveReports && pagedReports.ready ? pagedReports.counts : {
+    total: reportCounts.total, active: reportCounts.active, resolved: reportCounts.inactive,
+  };
   const clusters = useMemo(() => clusterIssues(visible), [visible]);
   const mapIssue = tab === "explore" ? data?.issues.find((issue) => issue.id === mapIssueId) : undefined;
   // A resolved report gets one temporary location marker, never a place in active totals.
@@ -512,9 +527,9 @@ useEffect(() => {
   function issueCard(issue: Issue, large = false) {
     const c = categories.find((c) => c.id === issue.categoryId);
     if (!c) return null;
-    const comments =
-      data?.comments.filter((comment) => comment.issueId === issue.id).length ||
-      0;
+    const comments = typeof issue.commentCount === "number"
+      ? issue.commentCount
+      : data?.comments.filter((comment) => comment.issueId === issue.id).length || 0;
     return (
       <button
         className={`issue-card ${large ? "large-card" : ""}`}
@@ -719,7 +734,7 @@ useEffect(() => {
               <div className="watch-reports-overview">
                 <div className="watch-reports-total">
                   <span className="section-kicker" id="watch-reports-heading">{copy.reports.watchlistTotal}</span>
-                  <strong aria-label={`${reportCounts.total} reports in watched towns`}>{reportCounts.total.toLocaleString()}</strong>
+                  <strong aria-label={`${reportScopeCounts.total} reports in watched towns`}>{reportScopeCounts.total.toLocaleString()}</strong>
                 </div>
                 <div className="watch-reports-overview-detail">
                   <button className="watch-reports-manage" onClick={() => { setTab("snapshots"); setSelection(null); }}>
@@ -731,12 +746,12 @@ useEffect(() => {
                 <button type="button" className={reportSection === "active" ? "selected" : ""}
                   aria-pressed={reportSection === "active"} onClick={() => changeReportSection("active")}>
                   <span><span className="watch-reports-status-dot active"/>{copy.reports.open}</span>
-                  <strong>{reportCounts.active.toLocaleString()}</strong>
+                  <strong>{reportScopeCounts.active.toLocaleString()}</strong>
                 </button>
                 <button type="button" className={reportSection === "inactive" ? "selected" : ""}
                   aria-pressed={reportSection === "inactive"} onClick={() => changeReportSection("inactive")}>
                   <span><span className="watch-reports-status-dot inactive"/>{copy.reports.resolved}</span>
-                  <strong>{reportCounts.inactive.toLocaleString()}</strong>
+                  <strong>{reportScopeCounts.resolved.toLocaleString()}</strong>
                 </button>
               </div>
             </section>
@@ -925,8 +940,8 @@ useEffect(() => {
               <div className="board-toolbar">
                 <span>
                   {
-                    query.trim() || hasFilters ? `Showing ${visible.length.toLocaleString()} of ${reportCount(reportCounts[reportSection], reportSection === "active" ? "open" : "resolved")}`
-                      : reportCount(reportCounts[reportSection], reportSection === "active" ? "open" : "resolved")}
+                    query.trim() || hasFilters ? `Showing ${reportsTotal.toLocaleString()} of ${reportCount(reportScopeCounts[reportSection === "active" ? "active" : "resolved"], reportSection === "active" ? "open" : "resolved")}`
+                      : reportCount(reportScopeCounts[reportSection === "active" ? "active" : "resolved"], reportSection === "active" ? "open" : "resolved")}
                 </span>
                 <label>
                   Sort by
@@ -939,26 +954,35 @@ useEffect(() => {
                   </select>
                 </label>
               </div>
-              {visible.length ? (
+              {liveReports && pagedReports.error && <div className="empty-state">
+                <ErrorNotice message={pagedReports.error}/>
+                <button className="button secondary" type="button"
+                  onClick={pagedReports.retry}>Retry reports</button>
+              </div>}
+              {liveReports && pagedReports.loading && <div className="admin-loading" role="status">
+                <Spinner/> Loading reports…
+              </div>}
+              {reportsShowing.length ? (
                 <>
                   <div className="community-grid">
-                    {visible.slice(0, reportsLimit).map((i) => issueCard(i, true))}
+                    {reportsShowing.map((i) => issueCard(i, true))}
                   </div>
-                  {visible.length > 10 && (
+                  {reportsTotal > 10 && (
                     <div className="profile-report-pagination reports-load-more" aria-label="Community reports pagination">
                       <p aria-live="polite">
-                        Showing {Math.min(reportsLimit, visible.length)} of {visible.length} reports
+                        Showing {liveReports ? pagedReports.displayed : Math.min(reportsLimit, reportsTotal)} of {reportsTotal} reports
                       </p>
-                      {visible.length > reportsLimit && (
+                      {(liveReports ? pagedReports.hasMore : reportsTotal > reportsLimit) && (
                         <button type="button" className="button secondary"
-                          onClick={() => setReportsLimit((count) => count + 10)}>
+                          disabled={liveReports && pagedReports.loading}
+                          onClick={() => liveReports ? pagedReports.loadMore() : setReportsLimit(count => count + 10)}>
                           Load more reports
                         </button>
                       )}
                     </div>
                   )}
                 </>
-              ) : (
+              ) : liveReports && (pagedReports.loading || pagedReports.error) ? null : (
                 <div className="empty-state">
                   <MapPin size={36} />
                   <h3>
