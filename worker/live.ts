@@ -282,6 +282,54 @@ export async function liveApi(req: Request, env: LiveConfig): Promise<Response> 
         });
       }
       if (path === "/profile") return reply(await profile((await actor()).id));
+      if (path === "/reports/page") {
+        // Page report lists on the server. Public profiles may request any
+        // resident's *visible* reports; the 'mine' option derives its author
+        // from the authenticated session, never from client-supplied identity.
+        const params = url.searchParams;
+        const section = params.get("section") || "active";
+        const sort = params.get("sort") || "recent";
+        const status = params.get("status") || "all";
+        const query = params.get("q") || "";
+        const mine = params.get("mine") === "1";
+        const suppliedAuthor = params.get("author");
+        const rawLimit = params.get("limit") || "10";
+        const rawOffset = params.get("offset") || "0";
+        const cityIds = params.getAll("city");
+        const categoryIds = params.getAll("category");
+        if (!["active", "resolved", "all"].includes(section) ||
+          !["recent", "supported"].includes(sort) ||
+          !["all", "reported", "acknowledged", "in_progress", "resolved"].includes(status) ||
+          query.length > 120 || !/^\d{1,2}$/.test(rawLimit) ||
+          !/^\d{1,6}$/.test(rawOffset) ||
+          Number(rawLimit) < 1 || Number(rawLimit) > 50 ||
+          Number(rawOffset) > 100000 ||
+          cityIds.length > 30 || categoryIds.length > 100 ||
+          cityIds.some(id => id.length < 1 || id.length > 255) ||
+          categoryIds.some(id => id.length < 1 || id.length > 80) ||
+          (mine && suppliedAuthor !== null) ||
+          (params.has("mine") && !["0", "1"].includes(params.get("mine")!)) ||
+          (suppliedAuthor !== null && !uuid.test(suppliedAuthor)))
+          throw new Failure(400, "Invalid report browse filters.");
+        const authorId = mine ? (await actor()).id : suppliedAuthor;
+        const response = await upstream("/rest/v1/rpc/civic_public_report_page", {
+          method: "POST",
+          body: JSON.stringify({
+            p_cities: cityIds.length ? cityIds : null,
+            p_author: authorId || null,
+            p_section: section,
+            p_query: query.trim(),
+            p_categories: categoryIds.length ? categoryIds : null,
+            p_status: status,
+            p_sort: sort,
+            p_limit: Number(rawLimit),
+            p_offset: Number(rawOffset),
+          }),
+        });
+        outputHeaders.set("Cache-Control", "private, no-store");
+        return reply(await response.json());
+      }
+
       if (path === "/admin/queue") {
         const user = await actor();
         if (!await privilege(user.id))
