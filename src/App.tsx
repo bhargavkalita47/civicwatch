@@ -757,7 +757,12 @@ useEffect(() => {
         ) : tab === "mine" ? (
           <Profile key={auth.session?.user.id ?? "guest"} data={data} categories={categories} loading={loading} error={error}
             onRetry={() => void load()} onSignIn={() => setSignIn(true)} onOpenIssue={openIssue} onViewMap={viewIssueOnMap} onReport={() => startReport()}
-            onIssueUpdated={(issue) => setData((current) => current ? { ...current, issues: current.issues.map((entry) => entry.id === issue.id ? issue : entry) } : current)}
+            onIssueUpdated={(issue) => {
+              setData(current => current ? {
+                ...current, issues: current.issues.map(entry => entry.id === issue.id ? issue : entry),
+              } : current);
+              setReportRevision(value => value + 1);
+            }}
             onIssueDeleted={(id) => { setData((current) => current ? { ...current, issues: current.issues.filter((entry) => entry.id !== id), comments: current.comments.filter((entry) => entry.issueId !== id) } : current); void refresh().catch(() => notify("Report deleted. Refresh to update totals.")); }}
             onProfileSaved={() => { void auth.refreshSession().catch(() => notify("Profile saved. Refresh to update your account name.")); void refresh().catch(() => notify("Profile saved. Refresh to update report authors.")); }} notify={notify}/>
         ) : tab === "admin" ? (
