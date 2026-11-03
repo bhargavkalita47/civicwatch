@@ -399,7 +399,7 @@ export function ThreadPanel({
               </div>
             )}
             </section>
-            <button type="button" className="button secondary full view-report-map" onClick={() => onViewMap(issue)}>
+            <button type="button" className="button secondary full view-report-map" aria-label="View on map" aria-describedby="report-map-location" onClick={() => onViewMap(issue)}>
               <MapPin size={19} />
               <span className="view-report-map-copy">
                 <strong>View on map</strong>
