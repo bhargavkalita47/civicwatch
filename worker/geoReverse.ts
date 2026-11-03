@@ -21,6 +21,7 @@ export interface ReversePayload {
 const CACHE_SUCCESS_SECONDS = 12 * 60 * 60;
 const CACHE_FAILURE_SECONDS = 60;
 let lastFallbackRequest = 0;
+let fallbackQueue: Promise<void> = Promise.resolve();
 const timestamp = () => Date.now();
 
 async function jsonWithin(url: string, timeoutMs: number, headers: HeadersInit): Promise<unknown> {
@@ -41,12 +42,14 @@ const administrativeCity = (p: Record<string, unknown>) =>
   value(p.city) || value(p.town) || value(p.municipality) ||
   (value(p.osm_key) === "place" && ["city", "town", "village", "hamlet"].includes(value(p.osm_value))
     ? value(p.name) : "") || value(p.village) || value(p.hamlet);
-const locality = (p: Record<string, unknown>) =>
+const locality = (p: Record<string, unknown>, city: string) =>
   value(p.suburb) || value(p.neighbourhood) || value(p.quarter) ||
-  value(p.locality) || value(p.city_district) || value(p.street) || value(p.name);
-const isComplete = (features: PhotonFeature[]) =>
-  features.some(feature => administrativeCity(feature.properties ?? {})) &&
-  features.some(feature => locality(feature.properties ?? {}));
+  value(p.locality) || value(p.city_district) || value(p.street) ||
+  (value(p.name).toLocaleLowerCase() !== city.toLocaleLowerCase() ? value(p.name) : "");
+const isComplete = (features: PhotonFeature[]) => {
+  const city = features.map(feature => administrativeCity(feature.properties ?? {})).find(Boolean) || "";
+  return Boolean(city && features.some(feature => locality(feature.properties ?? {}, city)));
+};
 
 export async function reverseGeocodeResponse(req: Request): Promise<Response> {
   const url = new URL(req.url);
@@ -84,9 +87,15 @@ export async function reverseGeocodeResponse(req: Request): Promise<Response> {
     // Shared public Nominatim cannot serve unrestricted traffic; throttle
     // requests per instance and cache successful responses at the edge.
     // A contracted provider and global limiter are required for a public launch.
-    const now = timestamp();
-    if (now - lastFallbackRequest >= 1100) {
-      lastFallbackRequest = now;
+    let release!: () => void;
+    const next = new Promise<void>(resolve => { release = resolve; });
+    const prior = fallbackQueue;
+    fallbackQueue = next;
+    await prior;
+    try {
+      const gap = 1100 - (timestamp() - lastFallbackRequest);
+      if (gap > 0) await new Promise(resolve => setTimeout(resolve, gap));
+      lastFallbackRequest = timestamp();
       const nominatimUrl = "https://nominatim.openstreetmap.org/reverse?" +
         new URLSearchParams({
           ...point, format: "jsonv2", zoom: "18", addressdetails: "1",
@@ -98,6 +107,8 @@ export async function reverseGeocodeResponse(req: Request): Promise<Response> {
         Referer: "https://civicwatch.bhargavkalita1327.workers.dev/",
       }) as NominatimResult | null;
       fallback = raw?.address && !raw.error ? raw : null;
+    } finally {
+      release();
     }
   }
 
