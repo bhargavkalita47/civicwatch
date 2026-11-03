@@ -99,8 +99,8 @@ export function SignInModal({
           <button className="button full" type="button" onClick={() => { setRegister(!register); setError(""); }}>
             {register ? "Already have an account? Sign in" : "Create an account"}
           </button>
-          <a className="button full" href={config.apiBaseUrl + "/auth/oauth/google"}>Continue with Google</a>
-          <a className="button full" href={config.apiBaseUrl + "/auth/oauth/facebook"}>Continue with Facebook</a>
+          {config.googleOAuthEnabled && <a className="button full" href={config.apiBaseUrl + "/auth/oauth/google"}>Continue with Google</a>}
+          {config.facebookOAuthEnabled && <a className="button full" href={config.apiBaseUrl + "/auth/oauth/facebook"}>Continue with Facebook</a>}
         </>}
         <p className="fine-print">
           Be kind. Be factual. Keep personal information out of public posts.
