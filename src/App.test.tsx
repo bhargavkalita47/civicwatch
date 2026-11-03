@@ -21,7 +21,7 @@ vi.mock("./services",()=>({civicService:{
 vi.mock("./components/CivicMap",()=>({CivicMap:(props:MapProps)=>{mapProps.current=props;return <div data-testid="test-map"/>;}}));
 vi.mock("./components/Overview",()=>({Overview:()=> <div/>}));
 let container:HTMLDivElement,root:Root;
-const click=async(text:string)=>{await act(async()=>{const button=[...container.querySelectorAll("button")].find(button=>button.textContent?.trim()===text);if(!button)throw Error("Missing button "+text);button.click();});};
+const click=async(text:string)=>{await act(async()=>{const button=[...container.querySelectorAll("button")].find(button=>button.textContent?.trim()===text||button.getAttribute("aria-label")===text);if(!button)throw Error("Missing button "+text);button.click();});};
 const fill=async(input:HTMLInputElement,value:string)=>{await act(async()=>{Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,"value")!.set!.call(input,value);input.dispatchEvent(new Event("input",{bubbles:true}));});};
 
 beforeEach(async()=>{
