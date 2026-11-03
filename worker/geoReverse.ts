@@ -22,6 +22,7 @@ export interface ReversePayload {
   fallback: NominatimResult | null;
   cityFallback: NominatimResult | null;
   boundaryCity: string | null;
+  nearbyCity: string | null;
 }
 const CACHE_SUCCESS_SECONDS = 12 * 60 * 60;
 const CACHE_FAILURE_SECONDS = 60;
@@ -88,28 +89,71 @@ async function nominatimReverse(point: { lat: string; lon: string }, zoom: 18 | 
   return raw?.address && !raw.error ? raw : null;
 }
 
-/** A last-resort, coordinate-only lookup for a settlement boundary that
- * actually contains the selected pin. Unlike nearest-city searches this never
- * selects a neighbouring city just because its centroid is closer.
- * Public Overpass is best-effort; replace with a contracted provider at scale.
+/** Last-resort OSM settlement lookup when Nominatim returns only a county.
+ * A city can be mapped as a place=city NODE rather than a containing area.
+ * Search areas and nearby settlement nodes in ONE Overpass request.
+ * Never treat a state/county as a city, and never infer from a distant node.
+ *
+ * The point-distance fallback is a CONSERVATIVE SUGGESTION, not a guarantee
+ * of municipal containment; callers keep their existing edit/check UX.
+ * This public service has no SLA and must be replaced before public scale.
  */
-async function containingCity(point: { lat: string; lon: string }): Promise<string | null> {
-  const query = `[out:json][timeout:8];is_in(${point.lat},${point.lon})->.containing;area.containing["name"]["place"~"^(city|town|municipality)$"];out tags;`;
+async function osmSettlement(point: { lat: string; lon: string }): Promise<{
+  boundaryCity: string | null;
+  nearbyCity: string | null;
+}> {
+  const empty = { boundaryCity: null, nearbyCity: null };
+  const query = `[out:json][timeout:8];
+is_in(${point.lat},${point.lon})->.containing;
+area.containing["name"]["place"~"^(city|town|municipality)$"]->.settlementAreas;
+node(around:6000,${point.lat},${point.lon})["name"]["place"~"^(city|town)$"]->.settlementNodes;
+(.settlementAreas;.settlementNodes;);
+out body;`;
   const url = "https://overpass.private.coffee/api/interpreter?data=" + encodeURIComponent(query);
   const payload = await jsonWithin(url, 6500, { Accept: "application/json" }) as {
-    elements?: Array<{ tags?: Record<string, unknown> }>;
+    elements?: Array<{
+      type?: string; lat?: number; lon?: number; tags?: Record<string, unknown>;
+    }>;
     remark?: string;
   } | null;
-  if (!payload || payload.remark || !Array.isArray(payload.elements)) return null;
-  const candidates = payload.elements.map(item => item.tags ?? {})
-    .filter(tags => ["city", "town", "municipality"].includes(value(tags.place)) && value(tags.name));
-  // Prefer the city over a small contained town; never infer a city from county/state.
-  candidates.sort((a, b) => {
-    const rank = (tags: Record<string, unknown>) =>
-      value(tags.place) === "city" ? 0 : value(tags.place) === "town" ? 1 : 2;
-    return rank(a) - rank(b);
-  });
-  return candidates.length ? value(candidates[0].name) : null;
+  if (!payload || payload.remark || !Array.isArray(payload.elements)) return empty;
+
+  const rank = (tags: Record<string, unknown>) =>
+    value(tags.place) === "city" ? 0 : value(tags.place) === "town" ? 1 : 2;
+  const areas = payload.elements.filter(element =>
+    element.type !== "node" && element.tags &&
+    ["city", "town", "municipality"].includes(value(element.tags.place)) &&
+    value(element.tags.name),
+  ).sort((a, b) => rank(a.tags!) - rank(b.tags!));
+  if (areas.length) return { boundaryCity: value(areas[0].tags!.name), nearbyCity: null };
+
+  const lat = Number(point.lat);
+  const lon = Number(point.lon);
+  const radians = (degrees: number) => degrees * Math.PI / 180;
+  const distanceKm = (lat2: number, lon2: number) => {
+    const dLat = radians(lat2 - lat);
+    const dLon = radians(lon2 - lon);
+    const a = Math.sin(dLat / 2) ** 2 +
+      Math.cos(radians(lat)) * Math.cos(radians(lat2)) * Math.sin(dLon / 2) ** 2;
+    return 6371 * 2 * Math.asin(Math.min(1, Math.sqrt(a)));
+  };
+
+  const nodes = payload.elements.filter(element =>
+    element.type === "node" && Number.isFinite(element.lat) &&
+    Number.isFinite(element.lon) && element.tags &&
+    ["city", "town"].includes(value(element.tags.place)) &&
+    value(element.tags.name),
+  ).map(element => ({
+    name: value(element.tags!.name),
+    distance: distanceKm(element.lat!, element.lon!),
+    kind: value(element.tags!.place),
+  })).filter(candidate => candidate.distance <= (candidate.kind === "city" ? 3.5 : 1.5))
+    .sort((a, b) => a.distance - b.distance);
+
+  // Avoid guessing when two different settlements are similarly close.
+  if (nodes.length > 1 && nodes[0].name.toLowerCase() !== nodes[1].name.toLowerCase() &&
+      nodes[1].distance - nodes[0].distance < 0.5) return empty;
+  return { boundaryCity: null, nearbyCity: nodes[0]?.name || null };
 }
 
 export async function reverseGeocodeResponse(req: Request): Promise<Response> {
@@ -128,7 +172,7 @@ export async function reverseGeocodeResponse(req: Request): Promise<Response> {
   const point = { lat: lat.toFixed(5), lon: lon.toFixed(5) };
   const key = new URL(req.url);
   // Invalidate cached partial lookups from the previous resolver revision.
-  key.search = new URLSearchParams({ ...point, resolver: "3" }).toString();
+  key.search = new URLSearchParams({ ...point, resolver: "4" }).toString();
   const cache = (globalThis as unknown as { caches?: { default?: Cache } }).caches?.default;
   if (cache) {
     try {
@@ -147,6 +191,7 @@ export async function reverseGeocodeResponse(req: Request): Promise<Response> {
   let fallback: NominatimResult | null = null;
   let cityFallback: NominatimResult | null = null;
   let boundaryCity: string | null = null;
+  let nearbyCity: string | null = null;
   const photonCity = features.map(feature => administrativeCity(feature.properties ?? {})).find(Boolean) || "";
   if (!isComplete(features)) {
     // An address-level lookup may identify a road/locality but omit its city.
@@ -169,11 +214,11 @@ export async function reverseGeocodeResponse(req: Request): Promise<Response> {
   // Both address and city-level reverse may omit the city. Look for the
   // enclosing mapped city/town polygon, not an arbitrary nearby place.
   if (!photonCity && !nominatimCity(fallback) && !nominatimCity(cityFallback))
-    boundaryCity = await containingCity(point);
-  const payload: ReversePayload = { features, fallback, cityFallback, boundaryCity };
+    ({ boundaryCity, nearbyCity } = await osmSettlement(point));
+  const payload: ReversePayload = { features, fallback, cityFallback, boundaryCity, nearbyCity };
   // A response containing only a road, suburb or arbitrary address is incomplete.
   // Do not keep it at the edge for 12 hours as though the city was resolved.
-  const hasCity = Boolean(photonCity || nominatimCity(fallback) || nominatimCity(cityFallback) || boundaryCity);
+  const hasCity = Boolean(photonCity || nominatimCity(fallback) || nominatimCity(cityFallback) || boundaryCity || nearbyCity);
   const ttl = hasCity ? CACHE_SUCCESS_SECONDS : CACHE_FAILURE_SECONDS;
   const response = Response.json(payload, {
     headers: {
