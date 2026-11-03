@@ -138,7 +138,9 @@ it("rejects county and state boundaries rather than guessing a city", async () =
   vi.stubGlobal("fetch", fetcher);
   const response = await liveApi(request("lat=25.00001&lon=90.00001"), env);
   expect(response.status).toBe(200);
-  expect((await response.json() as { boundaryCity: string | null }).boundaryCity).toBeNull();
+  const body = await response.json() as { boundaryCity: string | null; settlementLookup: string };
+  expect(body.boundaryCity).toBeNull();
+  expect(body.settlementLookup).toBe("no_eligible_settlement");
   expect(response.headers.get("cache-control")).toContain("max-age=60");
 });
 
@@ -184,6 +186,7 @@ it("resolves the exact Rajgarh Road failure from a nearby mapped city point with
   expect(body.cityFallback.addresstype).toBe("county");
   expect(body.boundaryCity).toBeNull();
   expect(body.nearbyCity).toBe("Guwahati");
+  expect((body as typeof body & { settlementLookup: string }).settlementLookup).toBe("resolved_nearby");
   expect(response.headers.get("cache-control")).toContain("max-age=43200");
 });
 
@@ -206,6 +209,27 @@ it("does not guess a distant city or choose between equally close cities", async
   ];
   const second = await liveApi(request("lat=25.00001&lon=90.00001"), env);
   expect((await second.json() as { nearbyCity: string | null }).nearbyCity).toBeNull();
+});
+
+it("distinguishes an upstream Overpass HTTP failure from a genuine no-city result", async () => {
+  const fetcher = vi.fn(async (input: RequestInfo | URL) => {
+    const url = String(input);
+    if (url.includes("photon.komoot.io")) return Response.json({ features: [] });
+    if (url.includes("nominatim.openstreetmap.org")) return Response.json({ error: "No settlement" });
+    if (url.includes("overpass.private.coffee"))
+      return Response.json({ message: "temporarily unavailable" }, { status: 503 });
+    throw Error("Unexpected request " + url);
+  });
+  vi.stubGlobal("fetch", fetcher);
+  const response = await liveApi(request("lat=26.17999&lon=91.77539"), env);
+  expect(response.status).toBe(200);
+  const body = await response.json() as {
+    nearbyCity: string | null; boundaryCity: string | null; settlementLookup: string;
+  };
+  expect(body).toMatchObject({
+    nearbyCity: null, boundaryCity: null, settlementLookup: "http_503",
+  });
+  expect(response.headers.get("cache-control")).toContain("max-age=60");
 });
 
 it.each([

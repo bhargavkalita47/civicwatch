@@ -23,6 +23,7 @@ export interface ReversePayload {
   cityFallback: NominatimResult | null;
   boundaryCity: string | null;
   nearbyCity: string | null;
+  settlementLookup: string;
 }
 const CACHE_SUCCESS_SECONDS = 12 * 60 * 60;
 const CACHE_FAILURE_SECONDS = 60;
@@ -101,6 +102,7 @@ async function nominatimReverse(point: { lat: string; lon: string }, zoom: 18 | 
 async function osmSettlement(point: { lat: string; lon: string }): Promise<{
   boundaryCity: string | null;
   nearbyCity: string | null;
+  status: string;
 }> {
   const empty = { boundaryCity: null, nearbyCity: null };
   const query = `[out:json][timeout:8];
@@ -110,13 +112,30 @@ node(around:6000,${point.lat},${point.lon})["name"]["place"~"^(city|town)$"]->.s
 (.settlementAreas;.settlementNodes;);
 out body;`;
   const url = "https://overpass.private.coffee/api/interpreter?data=" + encodeURIComponent(query);
-  const payload = await jsonWithin(url, 6500, { Accept: "application/json" }) as {
+  // Unlike normal address lookups, expose a sanitized status so a missing
+  // city can be distinguished from a failed public Overpass request.
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 6500);
+  let payload: {
     elements?: Array<{
       type?: string; lat?: number; lon?: number; tags?: Record<string, unknown>;
     }>;
     remark?: string;
-  } | null;
-  if (!payload || payload.remark || !Array.isArray(payload.elements)) return empty;
+  } | null = null;
+  try {
+    const response = await fetch(url, {
+      signal: controller.signal, headers: { Accept: "application/json" },
+    });
+    if (!response.ok) return { ...empty, status: `http_${response.status}` };
+    payload = await response.json();
+  } catch {
+    return { ...empty, status: controller.signal.aborted ? "timeout" : "network_error" };
+  } finally {
+    clearTimeout(timer);
+  }
+  if (payload?.remark) return { ...empty, status: "provider_error" };
+  if (!payload || !Array.isArray(payload.elements))
+    return { ...empty, status: "invalid_response" };
 
   const rank = (tags: Record<string, unknown>) =>
     value(tags.place) === "city" ? 0 : value(tags.place) === "town" ? 1 : 2;
@@ -125,7 +144,7 @@ out body;`;
     ["city", "town", "municipality"].includes(value(element.tags.place)) &&
     value(element.tags.name),
   ).sort((a, b) => rank(a.tags!) - rank(b.tags!));
-  if (areas.length) return { boundaryCity: value(areas[0].tags!.name), nearbyCity: null };
+  if (areas.length) return { boundaryCity: value(areas[0].tags!.name), nearbyCity: null, status: "resolved_boundary" };
 
   const lat = Number(point.lat);
   const lon = Number(point.lon);
@@ -152,8 +171,10 @@ out body;`;
 
   // Avoid guessing when two different settlements are similarly close.
   if (nodes.length > 1 && nodes[0].name.toLowerCase() !== nodes[1].name.toLowerCase() &&
-      nodes[1].distance - nodes[0].distance < 0.5) return empty;
-  return { boundaryCity: null, nearbyCity: nodes[0]?.name || null };
+      nodes[1].distance - nodes[0].distance < 0.5)
+    return { ...empty, status: "ambiguous_settlements" };
+  return { boundaryCity: null, nearbyCity: nodes[0]?.name || null,
+    status: nodes.length ? "resolved_nearby" : "no_eligible_settlement" };
 }
 
 export async function reverseGeocodeResponse(req: Request): Promise<Response> {
@@ -172,7 +193,7 @@ export async function reverseGeocodeResponse(req: Request): Promise<Response> {
   const point = { lat: lat.toFixed(5), lon: lon.toFixed(5) };
   const key = new URL(req.url);
   // Invalidate cached partial lookups from the previous resolver revision.
-  key.search = new URLSearchParams({ ...point, resolver: "4" }).toString();
+  key.search = new URLSearchParams({ ...point, resolver: "5" }).toString();
   const cache = (globalThis as unknown as { caches?: { default?: Cache } }).caches?.default;
   if (cache) {
     try {
@@ -192,6 +213,7 @@ export async function reverseGeocodeResponse(req: Request): Promise<Response> {
   let cityFallback: NominatimResult | null = null;
   let boundaryCity: string | null = null;
   let nearbyCity: string | null = null;
+  let settlementLookup = "not_needed";
   const photonCity = features.map(feature => administrativeCity(feature.properties ?? {})).find(Boolean) || "";
   if (!isComplete(features)) {
     // An address-level lookup may identify a road/locality but omit its city.
@@ -213,9 +235,14 @@ export async function reverseGeocodeResponse(req: Request): Promise<Response> {
 
   // Both address and city-level reverse may omit the city. Look for the
   // enclosing mapped city/town polygon, not an arbitrary nearby place.
-  if (!photonCity && !nominatimCity(fallback) && !nominatimCity(cityFallback))
-    ({ boundaryCity, nearbyCity } = await osmSettlement(point));
-  const payload: ReversePayload = { features, fallback, cityFallback, boundaryCity, nearbyCity };
+  if (!photonCity && !nominatimCity(fallback) && !nominatimCity(cityFallback)) {
+    const settlement = await osmSettlement(point);
+    ({ boundaryCity, nearbyCity } = settlement);
+    settlementLookup = settlement.status;
+  }
+  const payload: ReversePayload = {
+    features, fallback, cityFallback, boundaryCity, nearbyCity, settlementLookup,
+  };
   // A response containing only a road, suburb or arbitrary address is incomplete.
   // Do not keep it at the edge for 12 hours as though the city was resolved.
   const hasCity = Boolean(photonCity || nominatimCity(fallback) || nominatimCity(cityFallback) || boundaryCity || nearbyCity);
