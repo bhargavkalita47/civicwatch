@@ -22,8 +22,37 @@ export interface AdministrationSummary {
   }[];
 }
 
+export type AdminReport = AdministrationSummary["reports"][number];
+export type AdminComment = AdministrationSummary["comments"][number];
+export type AdminAuditEvent = AdministrationSummary["history"][number];
+export interface AdminQueuePage<T> {
+  items: T[];
+  page: number;
+  pageSize: number;
+  total: number;
+}
+export interface AdminQueueFilters {
+  page: number;
+  q: string;
+  visibility?: "all" | "visible" | "hidden";
+}
+function queue<T>(section: "reports" | "comments" | "activity", opts: AdminQueueFilters) {
+  const params = new URLSearchParams({
+    section,
+    page: String(opts.page),
+    q: opts.q.trim(),
+    visibility: opts.visibility || "all",
+  });
+  return request<AdminQueuePage<T>>("/admin/queue?" + params.toString());
+}
+
 export const administrationService = {
   summary: () => request<AdministrationSummary>("/admin/summary"),
+  reports: (opts: AdminQueueFilters) => queue<AdminReport>("reports", opts),
+  comments: (opts: AdminQueueFilters) => queue<AdminComment>("comments", opts),
+  history: (opts: AdminQueueFilters) => queue<AdminAuditEvent>("activity", {
+    ...opts, visibility: "all",
+  }),
   grant: (userId: string) => request<{ success: boolean }>("/admin/administrators", {
     method: "POST", body: JSON.stringify({ userId }),
   }),
