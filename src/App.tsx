@@ -689,7 +689,7 @@ useEffect(() => {
             onOpenIssue={openIssue} onViewMap={viewIssueOnMap}
             onOpenOwnProfile={() => { setMemberId(null); setSelection(null); setTab("mine"); history.replaceState(null, "", location.pathname + location.search); }} />
         ) : tab === "mine" ? (
-          <Profile key={auth.session?.user.id ?? "guest" data={data} categories={categories} loading={loading} error={error}
+          <Profile key={auth.session?.user.id ?? "guest"} data={data} categories={categories} loading={loading} error={error}
             onRetry={() => void load()} onSignIn={() => setSignIn(true)} onOpenIssue={openIssue} onViewMap={viewIssueOnMap} onReport={() => startReport()}
             onIssueUpdated={(issue) => setData((current) => current ? { ...current, issues: current.issues.map((entry) => entry.id === issue.id ? issue : entry) } : current)}
             onIssueDeleted={(id) => { setData((current) => current ? { ...current, issues: current.issues.filter((entry) => entry.id !== id), comments: current.comments.filter((entry) => entry.issueId !== id) } : current); void refresh().catch(() => notify("Report deleted. Refresh to update totals.")); }}
