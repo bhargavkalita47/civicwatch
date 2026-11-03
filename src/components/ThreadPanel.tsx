@@ -334,7 +334,7 @@ export function ThreadPanel({
               </button>
             </div>
             <h1 className="thread-title">{issue.title}</h1>
-            <p className="issue-description">{issue.description}</p>
+            {issue.description.trim() && <p className="issue-description">{issue.description}</p>}
             <AttachmentGallery photos={issue.attachments} />
             <section className="report-participation" aria-label="People confirming this issue">
             <div className="support-box">
