@@ -46,92 +46,72 @@ it("prefers the fallback city if Photon provides only an unnamed landmark", asyn
   expect(address).toMatchObject({ city: "Guwahati", locality: "Dispur", country: "India" });
 });
 
-it("autofills Guwahati from a city-level coordinate lookup without losing Zoo Rd Tiniali", async () => {
+it("fills county into City at Zoo Rd Tiniali when the response has no city", async () => {
   vi.mocked(request).mockResolvedValueOnce({
     features: [{
-      geometry: { coordinates: [91.77556, 26.18020] },
-      properties: { name: "Zoo Rd Tiniali", suburb: "Zoo Rd Tiniali",
-        state: "Assam", country: "India" },
+      type: "Feature",
+      geometry: { coordinates: [91.7752992, 26.1800203] },
+      properties: { osm_key: "amenity", name: "D Corner", district: "Zoo Rd Tiniali",
+        county: "Dispur", state: "Assam", country: "India" },
     }],
     fallback: {
-      place_id: 81, address: {
-        neighbourhood: "Zoo Rd Tiniali", road: "Rajgarh Road", state: "Assam", country: "India",
+      place_id: 242049513, name: "Radha Gobinda Baruah Road",
+      address: {
+        road: "Radha Gobinda Baruah Road", suburb: "Zoo Rd Tiniali",
+        county: "Dispur", state_district: "Kamrup Metropolitan",
+        state: "Assam", country: "India",
       },
     },
-    cityFallback: {
-      place_id: 82, name: "Guwahati", addresstype: "city",
-      address: { state: "Assam", country: "India" },
-    },
   });
-  const address = await geoService.reverse({ lat: 26.18020, lng: 91.77556 });
-  expect(address).toMatchObject({
-    city: "Guwahati", locality: "Zoo Rd Tiniali", region: "Assam", country: "India",
-  });
-  expect(address?.point).toEqual({ lat: 26.18020, lng: 91.77556 });
-  expect(fetcher).not.toHaveBeenCalled();
-});
-
-it("uses settlement types globally rather than assuming Indian city metadata", async () => {
-  vi.mocked(request).mockResolvedValueOnce({
-    features: [], fallback: null,
-    cityFallback: {
-      place_id: 83, name: "Cambridge", addresstype: "city",
-      address: { state: "England", country: "United Kingdom" },
-    },
-  });
-  const address = await geoService.reverse({ lat: 52.20534, lng: 0.12182 });
-  expect(address).toMatchObject({ city: "Cambridge", locality: "",
-    region: "England", country: "United Kingdom" });
-});
-
-it("fills the city from a containing administrative boundary while retaining the original locality", async () => {
-  vi.mocked(request).mockResolvedValueOnce({
-    features: [{
-      geometry: { coordinates: [91.77541, 26.17973] },
-      properties: { name: "Zoo Rd Tiniali", suburb: "Zoo Rd Tiniali",
-        state: "Assam", country: "India" },
-    }],
-    fallback: { place_id: 91, address: {
-      neighbourhood: "Zoo Rd Tiniali", state: "Assam", country: "India",
-    } },
-    cityFallback: { place_id: 92, address: {
-      state: "Assam", country: "India",
-    } },
-    boundaryCity: "Guwahati",
-  });
-  const result = await geoService.reverse({ lat: 26.17973, lng: 91.77541 });
+  const result = await geoService.reverse({ lat: 26.17999, lng: 91.77539 });
   expect(result).toMatchObject({
-    city: "Guwahati", locality: "Zoo Rd Tiniali",
-    region: "Assam", country: "India",
-    point: { lat: 26.17973, lng: 91.77541 },
-  });
-});
-
-it("fills Guwahati and retains Zoo Rd Tiniali from the exact reported reverse-geocoding response", async () => {
-  vi.mocked(request).mockResolvedValueOnce({
-    features: [],
-    fallback: {
-      place_id: 242049513, addresstype: "secondary",
-      name: "Radha Gobinda Baruah Road",
-      address: { road: "Radha Gobinda Baruah Road", suburb: "Zoo Rd Tiniali",
-        county: "Dispur", state_district: "Kamrup Metropolitan",
-        state: "Assam", country: "India" },
-    },
-    cityFallback: {
-      place_id: 242300571, name: "Dispur", addresstype: "county",
-      address: { county: "Dispur", state_district: "Kamrup Metropolitan",
-        state: "Assam", country: "India" },
-    },
-    boundaryCity: null,
-    nearbyCity: "Guwahati",
-  });
-  const address = await geoService.reverse({ lat: 26.17999, lng: 91.77539 });
-  expect(address).toMatchObject({
-    city: "Guwahati", locality: "Zoo Rd Tiniali",
+    city: "Dispur", locality: "Zoo Rd Tiniali",
     region: "Assam", country: "India",
     point: { lat: 26.17999, lng: 91.77539 },
   });
-  expect(fetcher).not.toHaveBeenCalled();
+});
+
+it("uses a real Photon city instead of Nominatim's county fallback", async () => {
+  vi.mocked(request).mockResolvedValueOnce({
+    features: [{
+      geometry: { coordinates: [91.77, 26.18] },
+      properties: { name: "Bus stop", city: "Guwahati", county: "Dispur",
+        state: "Assam", country: "India" },
+    }],
+    fallback: {
+      address: { county: "Dispur", suburb: "Zoo Rd Tiniali",
+        state: "Assam", country: "India" },
+    },
+  });
+  const result = await geoService.reverse({ lat: 26.18, lng: 91.77 });
+  expect(result).toMatchObject({ city: "Guwahati", locality: "Zoo Rd Tiniali" });
+});
+
+it("uses a real Nominatim city instead of Photon's county fallback", async () => {
+  vi.mocked(request).mockResolvedValueOnce({
+    features: [{
+      geometry: { coordinates: [91.77, 26.18] },
+      properties: { name: "Street", county: "Dispur", district: "Zoo Rd Tiniali",
+        state: "Assam", country: "India" },
+    }],
+    fallback: { address: { city: "Guwahati", county: "Dispur",
+      suburb: "Zoo Rd Tiniali", state: "Assam", country: "India" } },
+  });
+  const result = await geoService.reverse({ lat: 26.18, lng: 91.77 });
+  expect(result).toMatchObject({ city: "Guwahati", locality: "Zoo Rd Tiniali" });
+});
+
+it("falls back to county when only Photon supplies it and Nominatim is unavailable", async () => {
+  vi.mocked(request).mockResolvedValueOnce({
+    features: [{
+      geometry: { coordinates: [91.77, 26.18] },
+      properties: { name: "Street", county: "Dispur", district: "Zoo Rd Tiniali",
+        state: "Assam", country: "India" },
+    }],
+    fallback: null,
+  });
+  const result = await geoService.reverse({ lat: 26.18, lng: 91.77 });
+  expect(result).toMatchObject({ city: "Dispur", locality: "Zoo Rd Tiniali" });
 });
 
 it("does not invent missing city metadata when no provider knows the location", async () => {
