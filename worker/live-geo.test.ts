@@ -50,6 +50,55 @@ it("tries an independent reverse-address source when Photon does not identify a 
   expect(fetcher.mock.calls.some(call => String(call[0]).includes("nominatim.openstreetmap.org/reverse"))).toBe(true);
 });
 
+it("recovers the enclosing city from coordinates when the detailed address identifies only a locality", async () => {
+  const fetcher = vi.fn(async (input: RequestInfo | URL) => {
+    const url = String(input);
+    if (url.includes("photon.komoot.io")) return Response.json({ features: [{
+      geometry: { coordinates: [91.77556, 26.18020] },
+      properties: { name: "Zoo Rd Tiniali", suburb: "Zoo Rd Tiniali",
+        state: "Assam", country: "India" },
+    }] });
+    if (url.includes("zoom=18")) return Response.json({
+      place_id: 81, address: {
+        neighbourhood: "Zoo Rd Tiniali", road: "Rajgarh Road", state: "Assam", country: "India",
+      },
+    });
+    if (url.includes("zoom=10")) return Response.json({
+      place_id: 82, name: "Guwahati", addresstype: "city",
+      address: { state: "Assam", country: "India" },
+    });
+    throw new Error("Unexpected upstream query " + url);
+  });
+  vi.stubGlobal("fetch", fetcher);
+  const response = await liveApi(request("lat=26.18020&lon=91.77556"), env);
+  expect(response.status).toBe(200);
+  const body = await response.json() as {
+    fallback: { address: { neighbourhood: string } };
+    cityFallback: { name: string; addresstype: string };
+  };
+  expect(body.fallback.address.neighbourhood).toBe("Zoo Rd Tiniali");
+  expect(body.cityFallback).toMatchObject({ name: "Guwahati", addresstype: "city" });
+  expect(fetcher.mock.calls.map(call => String(call[0]))).toEqual([
+    expect.stringContaining("photon.komoot.io/reverse"),
+    expect.stringContaining("zoom=18"),
+    expect.stringContaining("zoom=10"),
+  ]);
+  expect(response.headers.get("cache-control")).toContain("max-age=43200");
+});
+
+it("short-caches unresolved coordinates instead of preserving an incomplete city for 12 hours", async () => {
+  const fetcher = vi.fn(async (input: RequestInfo | URL) =>
+    String(input).includes("photon.komoot.io")
+      ? Response.json({ features: [{ properties: { name: "Unknown Road", state: "Unknown" } }] })
+      : Response.json({ error: "No address information" }));
+  vi.stubGlobal("fetch", fetcher);
+  const response = await liveApi(request("lat=-25.90000&lon=22.70000"), env);
+  expect(response.status).toBe(200);
+  const body = await response.json() as { cityFallback: null };
+  expect(body.cityFallback).toBeNull();
+  expect(response.headers.get("cache-control")).toContain("max-age=60");
+});
+
 it.each([
   "lat=not-a-number&lon=91.78713", "lat=100&lon=12",
   "lat=26.14226&lon=190", "lat=&lon=14",
