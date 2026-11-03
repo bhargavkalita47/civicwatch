@@ -12,6 +12,7 @@ import { config } from "../config";
 import { copy } from "../copy";
 import { CivicMap } from "./CivicMap";
 import { Modal, ErrorNotice, PhotoPicker, Spinner } from "./ui";
+import { PasswordRecoveryModal } from "./PasswordRecoveryModal";
 export function SignInModal({
   onClose,
   onDone,
@@ -24,6 +25,7 @@ export function SignInModal({
     [email, setEmail] = useState(""),
     [password, setPassword] = useState(""),
     [register, setRegister] = useState(false),
+    [recover, setRecover] = useState(false),
     [busy, setBusy] = useState(false),
     [error, setError] = useState("");
   async function submit(event: FormEvent) {
@@ -39,6 +41,7 @@ export function SignInModal({
       setBusy(false);
     }
   }
+  if (recover) return <PasswordRecoveryModal onClose={onClose} onBack={() => { setRecover(false); setError(""); }} />;
   return (
     <Modal title="Welcome to the complaint desk" onClose={onClose}>
       <form onSubmit={(event) => void submit(event)} className="form-body">
@@ -96,11 +99,14 @@ export function SignInModal({
           )}
         </button>
         {config.serviceMode === "api" && <>
+          {!register && <button className="button full" type="button" onClick={() => setRecover(true)}>
+            Forgot your password?
+          </button>}
           <button className="button full" type="button" onClick={() => { setRegister(!register); setError(""); }}>
             {register ? "Already have an account? Sign in" : "Create an account"}
           </button>
-          <a className="button full" href={config.apiBaseUrl + "/auth/oauth/google"}>Continue with Google</a>
-          <a className="button full" href={config.apiBaseUrl + "/auth/oauth/facebook"}>Continue with Facebook</a>
+          {config.googleOAuthEnabled && <a className="button full" href={config.apiBaseUrl + "/auth/oauth/google"}>Continue with Google</a>}
+          {config.facebookOAuthEnabled && <a className="button full" href={config.apiBaseUrl + "/auth/oauth/facebook"}>Continue with Facebook</a>}
         </>}
         <p className="fine-print">
           Be kind. Be factual. Keep personal information out of public posts.
