@@ -24,6 +24,16 @@ assert.deepEqual(lock.packages[''].devDependencies, pkg.devDependencies);
 assert.ok(existsSync('dist/index.html'), 'Build must create dist before validation');
 assert.ok(existsSync('dist/_headers'), 'Vite must copy security headers to dist');
 const mapConfig = readFileSync('src/config.ts', 'utf8');
+assert.match(mapConfig, /serviceMode: import\.meta\.env\.PROD \? "api"/,
+  'Production builds must never authorize local mock identities');
+assert.ok(wrangler.vars?.SUPABASE_URL?.includes('caacglqvyfwatnazhjie.supabase.co'),
+  'Production must target only the dedicated CivicWatch Supabase project');
+assert.equal(wrangler.vars?.SUPABASE_URL, wrangler.previews?.vars?.SUPABASE_URL,
+  'Production and preview must use the same dedicated CivicWatch project');
+assert.equal(wrangler.vars?.SUPABASE_PUBLISHABLE_KEY, wrangler.previews?.vars?.SUPABASE_PUBLISHABLE_KEY,
+  'Production requires its public Supabase publishable key');
+assert.ok(!('SUPABASE_SERVICE_ROLE_KEY' in (wrangler.vars || {})),
+  'Private service-role credentials must only be Cloudflare secrets');
 const mapSource = readFileSync('src/components/CivicMap.tsx', 'utf8');
 assert.ok(mapConfig.includes('https://tile.openstreetmap.org/{z}/{x}/{y}.png'), 'OSM keyless tile URL must be the default');
 assert.ok(mapConfig.includes('VITE_TILE_URL'), 'Raster tiles must remain configurable');
