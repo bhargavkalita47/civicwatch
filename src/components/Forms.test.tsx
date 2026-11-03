@@ -24,7 +24,7 @@ const createIssue = vi.mocked(civicService.createIssue);
 const city = () => container.querySelector<HTMLInputElement>('input[placeholder="e.g. Guwahati"]')!;
 const locality = () => container.querySelector<HTMLInputElement>('input[placeholder="e.g. Ulubari or GS Road"]')!;
 async function click(text: string) {
-  await act(async () => { [...container.querySelectorAll("button")].find((button) => button.textContent === text)!.click(); });
+  await act(async () => { [...container.querySelectorAll("button")].find((button) => button.textContent?.trim() === text)!.click(); });
 }
 async function fill(input: HTMLInputElement | HTMLTextAreaElement, value: string) {
   await act(async () => {
