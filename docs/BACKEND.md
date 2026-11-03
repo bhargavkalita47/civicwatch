@@ -14,3 +14,7 @@ Email and password registration creates a Supabase account immediately. An email
 To enable Google and Facebook, configure the provider credentials in Supabase Auth, register the Supabase OAuth callback with each provider, and add the Worker origin's `/api/v1/auth/callback` to the Supabase redirect allowlist. The Worker uses PKCE and HttpOnly cookies. Consider the consequences of linking social identities to self-asserted email addresses before enabling these providers.
 
 Reports and comments accept three JPEG, PNG or WebP attachments of up to 15 MB each. Uploads go to a private Supabase bucket. The Worker serves linked photos publicly and unlinked uploads to their owner. The pilot dataset API loads all report rows and threads to preserve the current map and frontend behavior.
+
+## Authentication readiness
+
+See [Email recovery and OAuth setup](./AUTH_RECOVERY_OAUTH.md) for the recovery-code template, SMTP setup and gated social-login configuration. The preview implementation adds email OTP password recovery but it is **not live-testable until the Supabase Recovery template includes `{{ .Token }}` and email delivery is configured**. Google/Facebook sign-in remains deliberately disabled until provider credentials and pre-account takeover risk are addressed. The main branch is not changed by these preview additions.

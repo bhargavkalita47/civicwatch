@@ -1,7 +1,14 @@
 import { categories } from "../src/data/categories";
 import type { Attachment, City, Comment, Dataset, Issue, OverviewSnapshot, Profile, Role, Session } from "../src/domain/types";
 
-export interface LiveConfig { SUPABASE_URL: string; SUPABASE_PUBLISHABLE_KEY: string; SUPABASE_SERVICE_ROLE_KEY: string }
+export interface LiveConfig {
+  SUPABASE_URL: string;
+  SUPABASE_PUBLISHABLE_KEY: string;
+  SUPABASE_SERVICE_ROLE_KEY: string;
+  /** OAuth is explicitly gated until provider setup and account-linking review pass. */
+  GOOGLE_OAUTH_ENABLED?: string;
+  FACEBOOK_OAUTH_ENABLED?: string;
+}
 type Row = Record<string, any>;
 class Failure extends Error {
   constructor(readonly status: number, message: string) { super(message); }
@@ -46,6 +53,8 @@ export async function liveApi(req: Request, env: LiveConfig): Promise<Response> 
         throw new Failure(404, "This account does not exist. Check the account UUID.");
       if (endpoint === "/auth/v1/admin/users" && [400, 409, 422].includes(response.status))
         throw new Failure(400, "Could not create an account with those credentials.");
+      if (endpoint.startsWith("/auth/") && response.status >= 500)
+        throw new Failure(503, "Authentication is temporarily unavailable. Please try again later.");
       if (endpoint.startsWith("/auth/")) throw new Failure(401, "Authentication failed. Check your credentials and try again.");
       if ([400, 409].includes(response.status)) throw new Failure(400, "The supplied data could not be saved.");
       throw new Failure(503, "CivicWatch storage is temporarily unavailable.");
@@ -159,6 +168,9 @@ export async function liveApi(req: Request, env: LiveConfig): Promise<Response> 
       }
       const provider = /^\/auth\/oauth\/(google|facebook)$/.exec(path)?.[1];
       if (provider) {
+        const enabled = provider === "google" ? env.GOOGLE_OAUTH_ENABLED === "true"
+          : env.FACEBOOK_OAUTH_ENABLED === "true";
+        if (!enabled) throw new Failure(503, "This sign-in method is not available yet.");
         const encode = (bytes: Uint8Array) => btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
         const verifier = encode(crypto.getRandomValues(new Uint8Array(48)));
         const challenge = encode(new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(verifier))));
@@ -265,6 +277,58 @@ export async function liveApi(req: Request, env: LiveConfig): Promise<Response> 
             : comment(row)),
           users: profiles.filter(p => publicAuthors.has(p.user_id)).map(p => ({ id: p.user_id, displayName: p.display_name, role: "resident" })) } satisfies Dataset);
       }
+    }
+
+    if (path === "/auth/recovery/request" && method === "POST") {
+      const input = await req.json() as Row;
+      const email = field(input.email, 254, 3).toLowerCase();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+        throw new Failure(400, "Enter a valid email address.");
+      // Supabase performs its own per-email recovery cooldown. Do not leak
+      // whether the address belongs to a CivicWatch account.
+      try {
+        await upstream("/auth/v1/recover",
+          { method: "POST", body: JSON.stringify({ email }) }, "");
+      } catch (cause) {
+        if (!(cause instanceof Failure) || cause.status !== 401) throw cause;
+        // Supabase may reject unknown addresses or unconfirmed identities;
+        // the response must remain indistinguishable from a successful request.
+      }
+      return reply({ requested: true });
+    }
+
+    if (path === "/auth/recovery/complete" && method === "POST") {
+      const input = await req.json() as Row;
+      const email = field(input.email, 254, 3).toLowerCase();
+      const token = field(input.code, 8, 6);
+      const password = input.password;
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+        || !/^\d{6,8}$/.test(token))
+        throw new Failure(400, "Enter the email address and code from your recovery message.");
+      if (typeof password !== "string" || password.length < 8 || password.length > 72)
+        throw new Failure(400, "Choose a new password between 8 and 72 characters.");
+      let verified: Row;
+      try {
+        verified = await auth("verify", { email, token, type: "recovery" }, "");
+      } catch (cause) {
+        if (cause instanceof Failure && cause.status === 401)
+          throw new Failure(400, "That recovery code is invalid or expired. Request another code.");
+        throw cause;
+      }
+      if (typeof verified.access_token !== "string" || !verified.access_token)
+        throw new Failure(400, "That recovery code could not be verified.");
+      // Recovery tokens are exchanged exclusively on the Worker: they never
+      // enter localStorage, a URL fragment, or the browser's JavaScript state.
+      await upstream("/auth/v1/user", {
+        method: "PUT", body: JSON.stringify({ password }),
+      }, verified.access_token);
+      // Do not silently switch the signed-in identity if a different account
+      // was open in this browser when recovery began.
+      cookie("access", "", 0);
+      cookie("refresh", "", 0);
+      await upstream("/auth/v1/logout?scope=global", { method: "POST" }, verified.access_token)
+        .catch(() => undefined);
+      return reply({ changed: true });
     }
 
     if (path === "/auth/sign-in" && method === "POST") {
