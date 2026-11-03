@@ -156,9 +156,11 @@ export const mockService: CivicService = {
     if (!canEditReport(issue, user.id)) throw new ServiceError("Only your own reports that are still Reported can be edited.", "FORBIDDEN");
     const area = data.areas?.find((a) => a.id === issue.cityId) ?? cities.find((a) => a.id === issue.cityId);
     validateIssue({ ...issue, ...input, area: area ?? reportingArea("Locality", "Region", "Country", issue.location) }, categories);
+    if (input.attachments !== undefined) checkAttachments(input.attachments);
     issue.title = input.title.trim();
     issue.description = input.description.trim();
     issue.address = input.address.trim();
+    if (input.attachments !== undefined) issue.attachments = [...input.attachments];
     issue.updatedAt = now();
     save(data);
     return structuredClone(issue);
