@@ -44,6 +44,13 @@ export function ResidentProfile({
   const [reportStatus, setReportStatus] = useState<IssueFilters["status"]>("all");
   const [categoryIds, setCategoryIds] = useState<string[]>([]);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [reportLimit, setReportLimit] = useState(10);
+
+  // Keep public profiles consistent with My Reports: ten at a time.
+  // Changing the resident or any search/filter/sort starts a fresh batch.
+  useEffect(() => setReportLimit(10), [
+    userId, section, reportQuery, reportSort, reportStatus, categoryIds,
+  ]);
 
   const clearFilters = () => {
     setReportQuery("");
@@ -188,7 +195,7 @@ export function ResidentProfile({
           {hasFilters && <button type="button" className="text-button"
             onClick={clearFilters}>Clear report filters</button>}
           {visible.length ? <div className="profile-report-list">
-            {visible.map(issue => {
+            {visible.slice(0, reportLimit).map(issue => {
               const category = categories.find(item => item.id === issue.categoryId);
               return <article className="profile-report-card" key={issue.id}>
                 <div className="profile-report-meta">
@@ -207,6 +214,13 @@ export function ResidentProfile({
                 </div>
               </article>;
             })}
+            {visible.length > 10 && <div className="profile-report-pagination" aria-label="Report list pagination">
+              <p aria-live="polite">Showing {Math.min(reportLimit, visible.length)} of {visible.length} reports</p>
+              {visible.length > reportLimit && (
+                <button type="button" className="button secondary"
+                  onClick={() => setReportLimit(count => count + 10)}>Load more reports</button>
+              )}
+            </div>}
           </div> : <div className="empty-state">
             <h3>{hasFilters ? "No matching reports." :
               section === "resolved" ? "No resolved reports yet." :

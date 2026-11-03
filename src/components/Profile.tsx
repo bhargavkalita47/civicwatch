@@ -408,6 +408,12 @@ export function Profile({
   const [reportStatus, setReportStatus] =
     useState<IssueFilters["status"]>("all");
   const [categoryIds, setCategoryIds] = useState<string[]>([]);
+  const [reportLimit, setReportLimit] = useState(10);
+  // A new report section, search, filter, or sort restarts at the first ten.
+  // Results are filtered and sorted BEFORE they are sliced for display.
+  useEffect(() => setReportLimit(10), [
+    user?.id, section, reportQuery, reportSort, reportStatus, categoryIds,
+  ]);
   const clearFilters = () => {
     setReportQuery("");
     setReportStatus("all");
@@ -668,7 +674,7 @@ export function Profile({
             )}
             {visible.length ? (
               <div className="profile-report-list">
-                {visible.map((issue) => {
+                {visible.slice(0, reportLimit).map((issue) => {
                   const category = categories.find(
                     (c) => c.id === issue.categoryId,
                   );
@@ -742,6 +748,19 @@ export function Profile({
                     </article>
                   );
                 })}
+                {visible.length > 10 && (
+                  <div className="profile-report-pagination" aria-label="Report list pagination">
+                    <p aria-live="polite">
+                      Showing {Math.min(reportLimit, visible.length)} of {visible.length} reports
+                    </p>
+                    {visible.length > reportLimit && (
+                      <button type="button" className="button secondary"
+                        onClick={() => setReportLimit((count) => count + 10)}>
+                        Load more reports
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
             ) : (
               <div className="empty-state">
