@@ -282,6 +282,17 @@ export async function liveApi(req: Request, env: LiveConfig): Promise<Response> 
         });
       }
       if (path === "/profile") return reply(await profile((await actor()).id));
+      if (path === "/overview" || path === "/cities") {
+        // These read-only aggregates are computed in PostgreSQL. In
+        // particular, Overview no longer transfers every report and
+        // confirmation to the Worker just to count them.
+        const functionName = path === "/overview"
+          ? "civic_public_overview" : "civic_public_cities";
+        const result = await upstream("/rest/v1/rpc/" + functionName, {
+          method: "POST", body: "{}",
+        });
+        return reply(await result.json());
+      }
       if (path === "/reports/page") {
         // Page report lists on the server. Public profiles may request any
         // resident's *visible* reports; the 'mine' option derives its author
