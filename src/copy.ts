@@ -26,9 +26,6 @@ export const copy = {
   actions: { report: "Report an issue", clearFilters: "Clear filters", signIn: "Sign in", search: "Search", about: "About CivicWatch" },
   nav: { overview: "Overview", snapshots: "Town watchlist", explore: "Explore map", reports: "Reports", mine: "Profile", help: "How it works" },
   overview: {
-    mapHeading: "A scenic view of neglect.", mapAction: "Explore map",
-    mapInstruction: "Open a pin to view the report and discussion.",
-    totalsHeading: "Managed expectations, in numbers.",
     captions: { reports: "The list grows. Naturally.", open: "Still part of the scenery.", resolved: "We also document plot twists.", people: "So it wasn’t just you." },
     statsError: "The numbers could not be loaded.",
   },
