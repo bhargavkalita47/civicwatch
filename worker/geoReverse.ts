@@ -95,7 +95,7 @@ async function nominatimReverse(point: { lat: string; lon: string }, zoom: 18 | 
  */
 async function containingCity(point: { lat: string; lon: string }): Promise<string | null> {
   const query = `[out:json][timeout:8];is_in(${point.lat},${point.lon})->.containing;area.containing["name"]["place"~"^(city|town|municipality)$"];out tags;`;
-  const url = "https://overpass.kumi.systems/api/interpreter?data=" + encodeURIComponent(query);
+  const url = "https://overpass.private.coffee/api/interpreter?data=" + encodeURIComponent(query);
   const payload = await jsonWithin(url, 6500, { Accept: "application/json" }) as {
     elements?: Array<{ tags?: Record<string, unknown> }>;
     remark?: string;
