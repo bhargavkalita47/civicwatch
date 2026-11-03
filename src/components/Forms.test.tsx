@@ -149,3 +149,26 @@ it("still requires an exact map pin before continuing", async () => {
   await submit();
   expect(container.textContent).toContain("Click the map to confirm the exact location.");
 });
+
+
+it("places the only first-step Continue button above the map, preserving validation", async () => {
+  const continueArea = container.querySelector(".report-location-next")!;
+  const continueButtons = [...container.querySelectorAll<HTMLButtonElement>("button")]
+    .filter(item => item.textContent?.trim() === "Continue");
+  expect(continueButtons).toHaveLength(1);
+  expect(continueArea.contains(continueButtons[0])).toBe(true);
+  const mapButton = [...container.querySelectorAll<HTMLButtonElement>("button")]
+    .find(item => item.textContent === "Use my location")!;
+  expect(continueArea.compareDocumentPosition(mapButton) & Node.DOCUMENT_POSITION_FOLLOWING)
+    .toBeTruthy();
+  await click("Continue");
+  expect(continueArea.nextElementSibling?.textContent)
+    .toContain("Click the map to confirm the exact location.");
+  await click("Use my location");
+  await click("Continue");
+  expect(container.querySelector(".report-location-next")).toBeNull();
+  expect([...container.querySelectorAll("button")].some(item => item.textContent?.trim() === "Back"))
+    .toBe(true);
+  // Page two still has its own final submit button at the bottom.
+  expect(container.querySelector(".form-actions button[type=submit]")).not.toBeNull();
+});
