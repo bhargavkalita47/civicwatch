@@ -318,31 +318,7 @@ export function ThreadPanel({
             <button type="button" className="button secondary full view-report-map" onClick={() => onViewMap(issue)}>
               <MapPin size={17} /> View on map <ArrowUpRight size={16} />
             </button>
-            <div className="author-line">
-              <button type="button" className="avatar profile-avatar-link"
-                aria-label={`View ${author?.displayName || "reporter"}'s profile`}
-                onClick={() => onOpenProfile(issue.authorId)}>
-                {author?.displayName
-                  .split(" ")
-                  .map((n) => n[0])
-                  .slice(0, 2)
-                  .join("") || "N"}
-              </button>
-              <div>
-                <button type="button" className="profile-name-link"
-                  onClick={() => onOpenProfile(issue.authorId)}>{author?.displayName || "Neighbour"}</button>
-                <small>Reported {relativeTime(issue.createdAt)}</small>
-              </div>
-              <button
-                className="icon-button"
-                onClick={() => void share()}
-                aria-label="Share report"
-              >
-                <Share2 size={17} />
-              </button>
-            </div>
-            <p className="issue-description">{issue.description}</p>
-            <AttachmentGallery photos={issue.attachments} />
+            <section className="report-participation" aria-label="People confirming this issue">
             <div className="support-box">
               <div>
                 <span className="support-number">{peopleCount(issue)}</span>
@@ -404,6 +380,32 @@ export function ThreadPanel({
                 ))}
               </div>
             )}
+            </section>
+            <div className="author-line">
+              <button type="button" className="avatar profile-avatar-link"
+                aria-label={`View ${author?.displayName || "reporter"}'s profile`}
+                onClick={() => onOpenProfile(issue.authorId)}>
+                {author?.displayName
+                  .split(" ")
+                  .map((n) => n[0])
+                  .slice(0, 2)
+                  .join("") || "N"}
+              </button>
+              <div>
+                <button type="button" className="profile-name-link"
+                  onClick={() => onOpenProfile(issue.authorId)}>{author?.displayName || "Neighbour"}</button>
+                <small>Reported {relativeTime(issue.createdAt)}</small>
+              </div>
+              <button
+                className="icon-button"
+                onClick={() => void share()}
+                aria-label="Share report"
+              >
+                <Share2 size={17} />
+              </button>
+            </div>
+            <p className="issue-description">{issue.description}</p>
+            <AttachmentGallery photos={issue.attachments} />
             {issue.authorId === auth.session?.user.id &&
               issue.status !== "resolved" && (
                 <button

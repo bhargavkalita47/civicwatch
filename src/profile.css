@@ -516,3 +516,28 @@
   #root .profile-reports .board-toolbar label { gap: 4px; font-size: 11px; }
   #root .profile-reports .board-toolbar select { min-width: 102px; max-width: 116px; }
 }
+
+/* Profile headings and clickable report headlines retain their intended
+   ink color during hover, focus, and keyboard navigation in both themes. */
+#root .profile-page .profile-details h2,
+#root .profile-page .profile-reports > h2,
+#root .profile-page .profile-report-card h3,
+#root .profile-page .profile-report-card h3 .text-button,
+#root .profile-page .profile-report-card h3 .text-button:hover,
+#root .profile-page .profile-report-card h3 .text-button:focus-visible {
+  color: var(--cw-heading);
+}
+#root .profile-page .profile-report-card h3 .text-button {
+  display: inline;
+  padding: 0;
+  background: transparent;
+  font-weight: 700;
+  line-height: 1.45;
+  text-align: left;
+}
+#root .profile-page .profile-report-card h3 .text-button:hover,
+#root .profile-page .profile-report-card h3 .text-button:focus-visible {
+  background: transparent;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
