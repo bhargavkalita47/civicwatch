@@ -115,6 +115,8 @@ export interface Comment {
   body: string;
   attachments: Attachment[];
   createdAt: ISODate;
+  editedAt?: ISODate | null;
+  deletedAt?: ISODate | null;
 }
 export interface AreaStats {
   reports: number;
@@ -148,6 +150,10 @@ export interface CreateIssueInput {
 export interface CreateCommentInput {
   issueId: ID;
   parentId?: ID | null;
+  body: string;
+  attachments: Attachment[];
+}
+export interface EditCommentInput {
   body: string;
   attachments: Attachment[];
 }
@@ -185,6 +191,8 @@ export interface CivicService {
   createIssue(input: CreateIssueInput): Promise<Issue>;
   confirmIssue(id: ID): Promise<Issue>;
   createComment(input: CreateCommentInput): Promise<Comment>;
+  updateComment(id: ID, input: EditCommentInput): Promise<Comment>;
+  deleteComment(id: ID): Promise<Comment>;
   uploadPhoto(file: File): Promise<Attachment>;
   updateStatus(id: ID, status: IssueStatus): Promise<Issue>;
   deleteIssue(id: ID): Promise<void>;
