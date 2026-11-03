@@ -142,6 +142,72 @@ it("rejects county and state boundaries rather than guessing a city", async () =
   expect(response.headers.get("cache-control")).toContain("max-age=60");
 });
 
+it("resolves the exact Rajgarh Road failure from a nearby mapped city point without confusing Dispur county", async () => {
+  const fetcher = vi.fn(async (input: RequestInfo | URL) => {
+    const url = String(input);
+    if (url.includes("photon.komoot.io")) return Response.json({ features: [] });
+    if (url.includes("nominatim.openstreetmap.org") && url.includes("zoom=18"))
+      return Response.json({
+        place_id: 242049513, addresstype: "secondary", name: "Radha Gobinda Baruah Road",
+        address: { road: "Radha Gobinda Baruah Road", suburb: "Zoo Rd Tiniali",
+          county: "Dispur", state_district: "Kamrup Metropolitan", state: "Assam", country: "India" },
+      });
+    if (url.includes("nominatim.openstreetmap.org") && url.includes("zoom=10"))
+      return Response.json({
+        place_id: 242300571, name: "Dispur", addresstype: "county",
+        address: { county: "Dispur", state_district: "Kamrup Metropolitan", state: "Assam", country: "India" },
+      });
+    if (url.includes("overpass.private.coffee")) {
+      const query = new URL(url).searchParams.get("data") || "";
+      expect(query).toContain("is_in(26.17999,91.77539)");
+      expect(query).toContain("node(around:6000,26.17999,91.77539)");
+      return Response.json({ elements: [
+        { type: "area", tags: { name: "Dispur", boundary: "administrative", admin_level: "6" } },
+        { type: "node", lat: 26.1806, lon: 91.7539,
+          tags: { name: "Guwahati", place: "city" } },
+        { type: "node", lat: 26.14094, lon: 91.79103,
+          tags: { name: "Dispur", place: "town" } },
+      ] });
+    }
+    throw Error("Unexpected upstream URL " + url);
+  });
+  vi.stubGlobal("fetch", fetcher);
+  const response = await liveApi(request("lat=26.17999&lon=91.77539"), env);
+  expect(response.status).toBe(200);
+  const body = await response.json() as {
+    features: unknown[]; fallback: { address: { suburb: string; county: string } };
+    cityFallback: { addresstype: string };
+    boundaryCity: string | null; nearbyCity: string | null;
+  };
+  expect(body.features).toEqual([]);
+  expect(body.fallback.address).toMatchObject({ suburb: "Zoo Rd Tiniali", county: "Dispur" });
+  expect(body.cityFallback.addresstype).toBe("county");
+  expect(body.boundaryCity).toBeNull();
+  expect(body.nearbyCity).toBe("Guwahati");
+  expect(response.headers.get("cache-control")).toContain("max-age=43200");
+});
+
+it("does not guess a distant city or choose between equally close cities", async () => {
+  let nearbyNodes = [
+    { type: "node", lat: 25.1, lon: 90.1, tags: { place: "city", name: "Distant city" } },
+  ];
+  const fetcher = vi.fn(async (input: RequestInfo | URL) => {
+    const url = String(input);
+    if (url.includes("photon.komoot.io")) return Response.json({ features: [] });
+    if (url.includes("nominatim.openstreetmap.org")) return Response.json({ error: "No result" });
+    return Response.json({ elements: nearbyNodes });
+  });
+  vi.stubGlobal("fetch", fetcher);
+  const first = await liveApi(request("lat=25.00000&lon=90.00000"), env);
+  expect((await first.json() as { nearbyCity: string | null }).nearbyCity).toBeNull();
+  nearbyNodes = [
+    { type: "node", lat: 25.010, lon: 90.000, tags: { place: "city", name: "City A" } },
+    { type: "node", lat: 25.012, lon: 90.000, tags: { place: "city", name: "City B" } },
+  ];
+  const second = await liveApi(request("lat=25.00001&lon=90.00001"), env);
+  expect((await second.json() as { nearbyCity: string | null }).nearbyCity).toBeNull();
+});
+
 it.each([
   "lat=not-a-number&lon=91.78713", "lat=100&lon=12",
   "lat=26.14226&lon=190", "lat=&lon=14",
