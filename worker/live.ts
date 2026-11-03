@@ -42,6 +42,8 @@ export async function liveApi(req: Request, env: LiveConfig): Promise<Response> 
     const response = await fetch(base + endpoint, { ...init, headers: requestHeaders });
     if (!response.ok) {
       if (response.status === 429) throw new Failure(429, "Please wait before trying again.");
+      if (endpoint.startsWith("/auth/v1/admin/users/") && response.status === 404)
+        throw new Failure(404, "This account does not exist. Check the account UUID.");
       if (endpoint === "/auth/v1/admin/users" && [400, 409, 422].includes(response.status))
         throw new Failure(400, "Could not create an account with those credentials.");
       if (endpoint.startsWith("/auth/")) throw new Failure(401, "Authentication failed. Check your credentials and try again.");
@@ -409,6 +411,11 @@ export async function liveApi(req: Request, env: LiveConfig): Promise<Response> 
       const [, id, action] = match;
       const [row] = await db("reports", lookup(id));
       if (!row) throw new Failure(404, "Report not found.");
+      // Hidden reports cannot be confirmed, edited or discussed by ordinary users.
+      // The reporter may still permanently delete their own hidden report.
+      const deletingOwn = row.author_id === user.id && method === "DELETE" && !action;
+      if (row.moderation_state === "hidden" && !deletingOwn && !(await privilege(user.id)))
+        throw new Failure(404, "Report not found.");
       const owner = row.author_id === user.id;
       const scoped = { ...lookup(id), author_id: "eq." + user.id };
       if (!action && method === "DELETE") {
