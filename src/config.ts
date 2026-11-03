@@ -4,7 +4,9 @@ function number(value: string | undefined, fallback: number) {
   return value && Number.isFinite(n) ? n : fallback;
 }
 export const config = {
-  serviceMode: env.VITE_SERVICE_MODE === "api" ? "api" : "mock",
+  // Production must never silently fall back to a browser-local identity.
+  // Only the Vite development server can run the deliberately isolated mock.
+  serviceMode: import.meta.env.PROD ? "api" : env.VITE_SERVICE_MODE === "api" ? "api" : "mock",
   googleOAuthEnabled: env.VITE_GOOGLE_OAUTH_ENABLED === "true",
   facebookOAuthEnabled: env.VITE_FACEBOOK_OAUTH_ENABLED === "true",
   apiBaseUrl: (env.VITE_API_BASE_URL || "/api/v1").replace(/\/$/, ""),
