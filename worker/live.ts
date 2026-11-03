@@ -498,8 +498,18 @@ export async function liveApi(req: Request, env: LiveConfig): Promise<Response> 
       if (!action && method === "PATCH") {
         if (!owner) throw new Failure(403, "Only the reporter can edit this report.");
         const input = await jsonObject(req);
-        [updated] = await db("reports", scoped, "PATCH", { title: field(input.title, 160, 1),
-          description: field(input.description, 5000), address: field(input.address, 500), updated_at: new Date().toISOString() });
+        const changes: Row = {
+          title: field(input.title, 160, 1),
+          description: field(input.description, 5000),
+          address: field(input.address, 500),
+          updated_at: new Date().toISOString(),
+        };
+        // An omitted list leaves existing photos untouched. A supplied list
+        // replaces them, after verifying every referenced upload belongs to
+        // the reporter and respecting the existing three-image limit.
+        if (input.attachments !== undefined)
+          changes.attachments = await attachments(input.attachments, user.id);
+        [updated] = await db("reports", scoped, "PATCH", changes);
       } else if (action === "status" && method === "PATCH") {
         const input = await jsonObject(req);
         if (!["reported", "acknowledged", "in_progress", "resolved"].includes(input.status)) throw new Failure(400, "Invalid status.");

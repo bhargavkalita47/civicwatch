@@ -55,6 +55,8 @@ export interface EditIssueInput {
   title: string;
   description: string;
   address: string;
+  /** Absent preserves attachments for older clients; an explicit list replaces them. */
+  attachments?: Attachment[];
 }
 export interface PublicUser {
   id: ID;

@@ -12,6 +12,7 @@ import type {
   Category,
   Dataset,
   Issue,
+  Attachment,
   Profile as ProfileModel,
   ProfileChanges,
   IssueFilters,
@@ -20,7 +21,7 @@ import { canEditReport, profileName } from "../domain/profile";
 import { relativeTime, filterIssues, statusLabels } from "../domain/logic";
 import { civicService } from "../services";
 import { useAuth } from "../services/auth";
-import { CategoryBadge, ErrorNotice, Modal, Spinner, StatusBadge } from "./ui";
+import { CategoryBadge, ErrorNotice, Modal, PhotoPicker, Spinner, StatusBadge } from "./ui";
 import { categoryMarkerColor } from "../domain/markerPalette";
 import { config } from "../config";
 
@@ -244,7 +245,7 @@ export function EditProfile({
   );
 }
 
-function EditReport({
+export function EditReport({
   issue,
   onClose,
   onSaved,
@@ -258,15 +259,21 @@ function EditReport({
       description: issue.description,
       address: issue.address,
     }),
+    [photos, setPhotos] = useState<Attachment[]>(() => [...issue.attachments]),
+    [uploading, setUploading] = useState(false),
     [busy, setBusy] = useState(false),
     [error, setError] = useState("");
+  const photosChanged =
+    photos.length !== issue.attachments.length ||
+    photos.some((photo, index) => photo.id !== issue.attachments[index]?.id);
   const dirty =
     draft.title !== issue.title ||
     draft.description !== issue.description ||
-    draft.address !== issue.address;
-  useUnsavedChanges(dirty || busy);
+    draft.address !== issue.address ||
+    photosChanged;
+  useUnsavedChanges(dirty || busy || uploading);
   const close = () => {
-    if (!busy && (!dirty || confirm("Discard your unsaved report changes?")))
+    if (!busy && !uploading && (!dirty || confirm("Discard your unsaved report changes?")))
       onClose();
   };
   return (
@@ -275,11 +282,11 @@ function EditReport({
         className="form-body profile-edit"
         onSubmit={async (event) => {
           event.preventDefault();
-          if (busy || !dirty) return;
+          if (busy || uploading || !dirty) return;
           setBusy(true);
           setError("");
           try {
-            onSaved(await civicService.updateIssue(issue.id, draft));
+            onSaved(await civicService.updateIssue(issue.id, { ...draft, attachments: photos }));
           } catch (cause) {
             setError((cause as Error).message);
           } finally {
@@ -325,18 +332,26 @@ function EditReport({
               }
             />
           </label>
+          <div className="report-photos profile-edit-photos">
+            <span className="profile-edit-photos-title">Report photos — optional</span>
+            <p className="field-help">
+              Add photos or remove existing ones. Up to 3 JPG, PNG, or WebP photos, 15 MB each.
+              Changes appear on your report after you save.
+            </p>
+            <PhotoPicker value={photos} onChange={setPhotos} onBusy={setUploading} />
+          </div>
         </fieldset>
         <div className="form-actions">
           <button
             type="button"
             className="button secondary"
-            disabled={busy}
+            disabled={busy || uploading}
             onClick={close}
           >
             Cancel
           </button>
-          <button className="button primary" disabled={busy || !dirty}>
-            {busy ? "Saving…" : "Save report"}
+          <button type="submit" className="button primary" disabled={busy || uploading || !dirty}>
+            {busy ? "Saving…" : uploading ? "Preparing photos…" : "Save report"}
           </button>
         </div>
       </form>
