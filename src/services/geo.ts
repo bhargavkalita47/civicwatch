@@ -21,6 +21,9 @@ interface NominatimReverse {
   address?: Record<string, unknown>;
   display_name?: string;
   place_id?: number | string;
+  name?: string;
+  type?: string;
+  addresstype?: string;
   error?: string;
 }
 const cache = new Map<string, PlaceResult[]>();
@@ -137,7 +140,10 @@ function mergeNearbyResults(results: PlaceResult[], point: Coordinate): PlaceRes
 function parseNominatim(data: NominatimReverse | null, point: Coordinate): PlaceResult | null {
   if (!data?.address || data.error) return null;
   const a = data.address;
-  const city = first(a.city, a.town, a.municipality, a.village, a.hamlet);
+  const kind = first(data.addresstype, data.type);
+  const settlementName = ["city", "town", "municipality", "village", "hamlet"].includes(kind)
+    ? text(data.name) : "";
+  const city = first(a.city, a.town, a.municipality, a.village, a.hamlet, settlementName);
   const locality = first(a.suburb, a.neighbourhood, a.quarter,
     a.city_district, a.residential, a.borough, a.road, a.pedestrian);
   const region = first(a.state, a.region, a.county);
@@ -149,28 +155,34 @@ function parseNominatim(data: NominatimReverse | null, point: Coordinate): Place
     area: city && region && country ? reportingArea(city, region, country, point) : null,
   };
 }
-function mergeLookup(photon: PlaceResult | null, fallback: PlaceResult | null, point: Coordinate): PlaceResult | null {
-  if (!fallback) return photon;
-  const city = fallback.city || photon?.city || "";
-  const locality = fallback.locality || photon?.locality || "";
-  const region = fallback.region || photon?.region || "";
-  const country = fallback.country || photon?.country || "";
+function mergeLookup(
+  photon: PlaceResult | null, fallback: PlaceResult | null, point: Coordinate,
+  cityFallback: PlaceResult | null = null,
+): PlaceResult | null {
+  if (!photon && !fallback && !cityFallback) return null;
+  // City-level reverse lookup describes the enclosing settlement, not the
+  // nearby street. Preserve the finer-grained locality from detailed results.
+  const city = first(cityFallback?.city, fallback?.city, photon?.city);
+  const locality = first(fallback?.locality, photon?.locality);
+  const region = first(fallback?.region, cityFallback?.region, photon?.region);
+  const country = first(fallback?.country, cityFallback?.country, photon?.country);
   return {
-    ...(photon ?? fallback), point, city, locality, region, country,
+    ...(photon ?? fallback ?? cityFallback!), point, city, locality, region, country,
     area: city && region && country ? reportingArea(city, region, country, point) : null,
   };
 }
 interface ProxyReverseResult {
   features: PhotonFeature[];
   fallback: NominatimReverse | null;
+  cityFallback?: NominatimReverse | null;
 }
-async function nominatimReverse(point: Coordinate): Promise<PlaceResult | null> {
-  const key = `${point.lat.toFixed(5)},${point.lng.toFixed(5)}`;
+async function nominatimReverse(point: Coordinate, zoom: 18 | 10 = 18): Promise<PlaceResult | null> {
+  const key = `${zoom}:${point.lat.toFixed(5)},${point.lng.toFixed(5)}`;
   if (reverseCache.has(key)) return reverseCache.get(key) ?? null;
   const url = "https://nominatim.openstreetmap.org/reverse?" +
     new URLSearchParams({
       format: "jsonv2", lat: point.lat.toFixed(5), lon: point.lng.toFixed(5),
-      zoom: "18", addressdetails: "1", "accept-language": "en",
+      zoom: String(zoom), addressdetails: "1", layer: "address", "accept-language": "en",
     });
   const data = await scheduled(() => fetchJson(url, 6500)) as NominatimReverse;
   const result = parseNominatim(data, point);
@@ -203,7 +215,8 @@ export const geoService = {
         .map(feature => parseFeature(feature, false))
         .filter((place): place is PlaceResult => place !== null), point);
       const fallback = parseNominatim(payload.fallback, point);
-      return mergeLookup(photon, fallback, point);
+      const cityFallback = parseNominatim(payload.cityFallback ?? null, point);
+      return mergeLookup(photon, fallback, point, cityFallback);
     }
     let photon: PlaceResult | null = null;
     try {
@@ -215,10 +228,16 @@ export const geoService = {
       // Direct provider lookup remains for the static browser-only preview.
     }
     if (photon?.city && photon?.locality) return photon;
+    let detailed: PlaceResult | null = null;
     try {
-      return mergeLookup(photon, await nominatimReverse(point), point);
+      detailed = await nominatimReverse(point);
+    } catch { /* The pin remains valid even if the provider is unavailable. */ }
+    const partial = mergeLookup(photon, detailed, point);
+    if (partial?.city) return partial;
+    try {
+      return mergeLookup(photon, detailed, point, await nominatimReverse(point, 10));
     } catch {
-      return photon;
+      return partial;
     }
   },
 };
