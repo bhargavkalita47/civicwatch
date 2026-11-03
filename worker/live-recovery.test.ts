@@ -116,7 +116,7 @@ describe("password recovery and OAuth security", () => {
     });
     expect(response.status).toBe(302);
     expect(response.headers.get("Location")).toContain("provider=google");
-    expect(response.headers.get("Location")).toContain("code_challenge_method=S256");
+    expect(response.headers.get("Location")).toContain("code_challenge_method=s256");
     expect(response.headers.get("Set-Cookie")).toContain("__Host-civic-pkce=");
     expect(response.headers.get("Set-Cookie")).toContain("HttpOnly");
   });
