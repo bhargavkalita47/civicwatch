@@ -248,6 +248,13 @@ export function ReportModal({
               </p>
             </div>
             <PlaceSearch compact onSelect={(place) => void choosePoint(place.point, place)} />
+            <div className="report-location-next">
+              <button className="button primary" type="submit" disabled={busy || saved || uploading}>
+                Continue <ArrowRight size={16} />
+              </button>
+              <p>Choose a pin on the map below before continuing.</p>
+            </div>
+            <ErrorNotice message={error} />
             <CivicMap
               categories={categories}
               center={initial}
@@ -379,42 +386,33 @@ export function ReportModal({
             </p>
           </>
         )}
-        <ErrorNotice message={error} />
-        <div className="form-actions">
-          {step === 2 && (
-            <button
-              className="button secondary"
-              type="button"
-              onClick={() => {
-                setStep(1);
-                setError("");
-              }}
-            >
-              <ChevronLeft size={16} />
-              Back
-            </button>
-          )}
-          <button
-            className="button primary"
-            disabled={
-              busy ||
-              saved ||
-              uploading ||
-              (step === 2 && nearby.length > 0 && !separate)
-            }
-          >
-            {busy ? (
-              <Spinner />
-            ) : saved ? (
-              "Saved"
-            ) : (
-              <>
-                {step === 1 ? "Continue" : copy.reporting.submit}
-                <ArrowRight size={16} />
-              </>
-            )}
-          </button>
-        </div>
+        {step === 2 && (
+          <>
+            <ErrorNotice message={error} />
+            <div className="form-actions">
+              <button
+                className="button secondary"
+                type="button"
+                onClick={() => {
+                  setStep(1);
+                  setError("");
+                }}
+              >
+                <ChevronLeft size={16} />
+                Back
+              </button>
+              <button
+                className="button primary"
+                type="submit"
+                disabled={busy || saved || uploading || (nearby.length > 0 && !separate)}
+              >
+                {busy ? <Spinner /> : saved ? "Saved" : (
+                  <>{copy.reporting.submit}<ArrowRight size={16} /></>
+                )}
+              </button>
+            </div>
+          </>
+        )}
       </form>
     </Modal>
   );
