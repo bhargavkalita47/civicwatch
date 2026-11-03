@@ -29,7 +29,7 @@ let lastRequest = 0;
 const text = (value: unknown) => typeof value === "string" ? value.trim() : "";
 const first = (...values: unknown[]) => values.map(text).find(Boolean) || "";
 
-function parseFeature(feature: PhotonFeature): PlaceResult | null {
+function parseFeature(feature: PhotonFeature, preferSelectedSettlement = true): PlaceResult | null {
   const p = feature.properties ?? {};
   const [lng, lat] = feature.geometry?.coordinates ?? [];
   if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) return null;
@@ -39,7 +39,9 @@ function parseFeature(feature: PhotonFeature): PlaceResult | null {
     ["city", "town", "village", "hamlet"].includes(text(p.osm_value)) ? name : "";
   // The administrative city wins over a nearby named place (e.g. a suburb).
   // Never use a hardcoded city catalogue to compensate for an incomplete lookup.
-  const cityName = first(p.city, p.town, p.municipality, settlement, p.village, p.hamlet);
+  const cityName = preferSelectedSettlement
+    ? first(settlement, p.city, p.town, p.municipality, p.village, p.hamlet)
+    : first(p.city, p.town, p.municipality, settlement, p.village, p.hamlet);
   const region = first(p.state, p.county);
   const country = text(p.country);
   const area = cityName && region && country ? reportingArea(cityName, region, country, point) : null;
@@ -98,7 +100,7 @@ async function query(path: string, params: URLSearchParams): Promise<PlaceResult
     const results = await scheduled(async () => {
       const data = await fetchJson(url) as { features?: PhotonFeature[] };
       return (Array.isArray(data.features) ? data.features : [])
-        .map(parseFeature)
+        .map(feature => parseFeature(feature, path !== "/reverse"))
         .filter((v): v is PlaceResult => v !== null)
         .slice(0, 8);
     });
@@ -141,7 +143,6 @@ async function nominatimReverse(point: Coordinate): Promise<PlaceResult | null> 
     });
   const data = await scheduled(() => fetchJson(url, 6500)) as NominatimReverse;
   if (!data || data.error || !data.address) {
-    reverseCache.set(key, null);
     return null;
   }
   const a = data.address;
