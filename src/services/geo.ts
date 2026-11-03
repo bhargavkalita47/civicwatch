@@ -157,12 +157,12 @@ function parseNominatim(data: NominatimReverse | null, point: Coordinate): Place
 }
 function mergeLookup(
   photon: PlaceResult | null, fallback: PlaceResult | null, point: Coordinate,
-  cityFallback: PlaceResult | null = null,
+  cityFallback: PlaceResult | null = null, boundaryCity = "",
 ): PlaceResult | null {
   if (!photon && !fallback && !cityFallback) return null;
   // City-level reverse lookup describes the enclosing settlement, not the
   // nearby street. Preserve the finer-grained locality from detailed results.
-  const city = first(cityFallback?.city, fallback?.city, photon?.city);
+  const city = first(cityFallback?.city, fallback?.city, photon?.city, boundaryCity);
   const locality = first(fallback?.locality, photon?.locality);
   const region = first(fallback?.region, cityFallback?.region, photon?.region);
   const country = first(fallback?.country, cityFallback?.country, photon?.country);
@@ -175,6 +175,7 @@ interface ProxyReverseResult {
   features: PhotonFeature[];
   fallback: NominatimReverse | null;
   cityFallback?: NominatimReverse | null;
+  boundaryCity?: string | null;
 }
 async function nominatimReverse(point: Coordinate, zoom: 18 | 10 = 18): Promise<PlaceResult | null> {
   const key = `${zoom}:${point.lat.toFixed(5)},${point.lng.toFixed(5)}`;
@@ -216,7 +217,7 @@ export const geoService = {
         .filter((place): place is PlaceResult => place !== null), point);
       const fallback = parseNominatim(payload.fallback, point);
       const cityFallback = parseNominatim(payload.cityFallback ?? null, point);
-      return mergeLookup(photon, fallback, point, cityFallback);
+      return mergeLookup(photon, fallback, point, cityFallback, payload.boundaryCity ?? "");
     }
     let photon: PlaceResult | null = null;
     try {
