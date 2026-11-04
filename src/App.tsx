@@ -180,13 +180,25 @@ export default function App() {
   const [isMobile, setIsMobile] = useState(() => window.matchMedia("(max-width: 790px)").matches);
   const [exploreSheet, setExploreSheet] = useState<ExploreSheetState>("collapsed");
   const [reportHerePoint, setReportHerePoint] = useState<Coordinate | null>(null);
+  // A fully expanded mobile reports sheet occupies the viewport; prevent the
+  // underlying page from scrolling until the visitor collapses it again.
+  useEffect(() => {
+    if (!isMobile || tab !== "explore" || exploreSheet !== "full") return;
+    const bodyOverflow = document.body.style.overflow;
+    const htmlOverflow = document.documentElement.style.overflow;
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = bodyOverflow;
+      document.documentElement.style.overflow = htmlOverflow;
+    };
+  }, [isMobile, tab, exploreSheet]);
   const [hoveredIssueId, setHoveredIssueId] = useState<string | null>(null);
   const sheetDrag = useRef<{ startY: number } | null>(null);
   const suppressSheetClick = useRef(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const drawerRef = useRef<HTMLElement>(null);
-  const drawerCloseRef = useRef<HTMLButtonElement>(null);
   const [filterOpen, setFilterOpen] = useState(false),
     [help, setHelp] = useState(false),
     [signIn, setSignIn] = useState(false),
@@ -240,7 +252,7 @@ useEffect(() => {
     const originalRootOverflow = document.documentElement.style.overflow;
     document.body.style.overflow = "hidden";
     document.documentElement.style.overflow = "hidden";
-    drawerCloseRef.current?.focus();
+    drawerRef.current?.querySelector<HTMLButtonElement>(".main-nav button")?.focus();
     const handleKeys = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         event.preventDefault();
@@ -663,7 +675,6 @@ useEffect(() => {
       <header ref={drawerRef} id="civicwatch-navigation" className={`site-header${menuOpen ? " mobile-drawer-open" : ""}`}
         role={isMobile ? "dialog" : undefined} aria-modal={isMobile && menuOpen ? true : undefined}
         aria-label={isMobile ? "Navigation menu" : undefined} inert={isMobile && !menuOpen}>
-        <button type="button" className="mobile-drawer-close" ref={drawerCloseRef} aria-label="Close menu" onClick={closeMenu}><X size={21} /></button>
         <a
           href="#"
           className="brand"
@@ -942,7 +953,7 @@ useEffect(() => {
               <button className="button primary" onClick={() => setTab("snapshots")}>{copy.watchlist.addTown} <ArrowRight size={16}/></button>
             </div>
           ) : tab === "explore" ? (
-            <div className="map-workspace" ref={mapWorkspaceRef} tabIndex={-1} aria-label="Explore report map">
+            <div className={`map-workspace ${isMobile && exploreSheet === "full" ? "sheet-viewport-full" : ""}`} ref={mapWorkspaceRef} tabIndex={-1} aria-label="Explore report map">
               {mapIssue && <div className="map-report-focus" role="status">
                 <MapPin size={18} aria-hidden="true" />
                 <div><strong>{mapIssue.title}</strong><span>{mapIssue.status === "resolved" ? "Resolved report — location only" : "Highlighted on the map"}</span></div>
