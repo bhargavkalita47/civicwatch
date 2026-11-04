@@ -24,8 +24,13 @@ assert.deepEqual(lock.packages[''].devDependencies, pkg.devDependencies);
 assert.ok(existsSync('dist/index.html'), 'Build must create dist before validation');
 assert.ok(existsSync('dist/_headers'), 'Vite must copy security headers to dist');
 const mapConfig = readFileSync('src/config.ts', 'utf8');
-assert.match(mapConfig, /serviceMode: import\.meta\.env\.PROD \? "api"/,
-  'Production builds must never authorize local mock identities');
+// This validator belongs only to the unmergeable Design Lab branch.
+assert.match(mapConfig, /serviceMode: \("mock" as "mock" \| "api"\)/,
+  'Design Lab previews must use browser-only mock data, never the live API');
+assert.match(mapConfig, /seedDemo: true/,
+  'Design Lab must ship with fictional seed data');
+assert.match(mapConfig, /civicwatch\.design-lab\.dataset\.v2/,
+  'Design Lab data must use isolated storage, not CivicWatch production storage');
 assert.ok(wrangler.vars?.SUPABASE_URL?.includes('caacglqvyfwatnazhjie.supabase.co'),
   'Production must target only the dedicated CivicWatch Supabase project');
 assert.equal(wrangler.vars?.SUPABASE_URL, wrangler.previews?.vars?.SUPABASE_URL,
