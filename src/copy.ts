@@ -23,7 +23,7 @@ export const copy = {
   actions: { report: "Report an issue", clearFilters: "Clear filters", signIn: "Sign in", search: "Search", about: "About CivicWatch" },
   nav: { overview: "Overview", snapshots: "Town watchlist", explore: "Explore map", reports: "Reports", mine: "Profile", help: "How it works" },
   overview: {
-    captions: { reports: "The list grows. Naturally.", open: "Still part of the scenery.", resolved: "We also document plot twists.", people: "So it wasn’t just you." },
+    captions: { reports: "The list grows. Naturally.", open: "Still part of the scenery.", resolved: "We also document plot twists.", people: "Reported or confirmed. Still waiting." },
     statsError: "The numbers could not be loaded.",
   },
   watchlist: {
