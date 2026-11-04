@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import type { PointerEvent as ReactPointerEvent, KeyboardEvent as ReactKeyboardEvent } from "react";
-import { ArrowDown, ArrowRight, ArrowUp, CheckCircle2, ClipboardList, GripVertical, MapPin, Plus, Trash2, Users } from "lucide-react";
+import { ArrowRight, GripVertical, MapPin, MoreHorizontal, Plus } from "lucide-react";
 import type { Category, City, Issue, LocationCluster, OverviewSnapshot } from "../domain/types";
 import { activeIssues, clusterIssues, relativeTime, summarizeIssues } from "../domain/logic";
 import { PlaceSearch } from "./PlaceSearch";
@@ -35,6 +35,8 @@ export function LocalSnapshots({ cities, watchlist, setWatchlist, stats, issues,
   });
   const [adding, setAdding] = useState(false);
   const [note, setNote] = useState("");
+  const [openActionsId, setOpenActionsId] = useState<string | null>(null);
+  const [removedTown, setRemovedTown] = useState<{ city: City; index: number; wasSelected: boolean } | null>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dragTargetId, setDragTargetId] = useState<string | null>(null);
   const drag = useRef<{ id: string; x: number; y: number; moved: boolean } | null>(null);
@@ -60,20 +62,41 @@ export function LocalSnapshots({ cities, watchlist, setWatchlist, stats, issues,
     }
     if (watchlist.length >= MAX_PLACES) { setNote(`Maximum ${MAX_PLACES} towns per watchlist. Even disappointment needs a limit.`); return; }
     setWatchlist((items) => [...items, city]);
+    setRemovedTown(null);
+    setOpenActionsId(null);
     setSelectedId(city.id);
     setAdding(false);
     setNote("Added to your watchlist.");
   }
   function remove(id: string) {
-    const next = watchlist.filter((city) => city.id !== id);
+    const index = watchlist.findIndex((city) => city.id === id);
+    if (index < 0) return;
+    const city = watchlist[index];
+    const next = watchlist.filter((item) => item.id !== id);
+    setRemovedTown({ city, index, wasSelected: selectedKey === id });
     setWatchlist(next);
     if (selectedKey === id) setSelectedId(next[0]?.id || "");
+    setOpenActionsId(null);
+    setNote("");
+  }
+  function undoRemove() {
+    if (!removedTown) return;
+    const { city, index, wasSelected } = removedTown;
+    setWatchlist((items) => {
+      if (items.some((item) => item.id === city.id)) return items;
+      const next = [...items];
+      next.splice(Math.min(index, next.length), 0, city);
+      return next;
+    });
+    if (wasSelected) setSelectedId(city.id);
+    setRemovedTown(null);
     setNote("");
   }
   function move(index: number, direction: -1 | 1) {
     const destination = index + direction;
     if (destination < 0 || destination >= watchlist.length) return;
     setWatchlist((items) => reorderWatchlist(items, items[index].id, items[destination].id));
+    setOpenActionsId(null);
   }
 
   // One pointer interaction works with mouse, touch and stylus. Only the grip
@@ -81,6 +104,7 @@ export function LocalSnapshots({ cities, watchlist, setWatchlist, stats, issues,
   function startDrag(event: ReactPointerEvent<HTMLButtonElement>, id: string) {
     if (event.button !== 0 || watchlist.length < 2) return;
     drag.current = { id, x: event.clientX, y: event.clientY, moved: false };
+    setOpenActionsId(null);
     event.currentTarget.setPointerCapture(event.pointerId);
   }
   function updateDrag(event: ReactPointerEvent<HTMLButtonElement>) {
@@ -130,10 +154,10 @@ export function LocalSnapshots({ cities, watchlist, setWatchlist, stats, issues,
   if (error || !stats) return <section className="overview-loading"><h2>The numbers have disappeared.</h2><p>{error || "Local reporting data is unavailable."}</p><button className="button primary" onClick={onReload}>Try again</button></section>;
 
   const watchMetrics = [
-    { label: "Total reports", value: watchTotals.reports, icon: MapPin, description: copy.overview.captions.reports },
-    { label: "Open", value: watchTotals.open, icon: ClipboardList, description: copy.overview.captions.open },
-    { label: "Resolved", value: watchTotals.resolved, icon: CheckCircle2, description: copy.overview.captions.resolved },
-    { label: "People involved", value: watchTotals.people, icon: Users, description: "Unique residents across your watchlist." },
+    { label: "Total reports", value: watchTotals.reports },
+    { label: "Open", value: watchTotals.open },
+    { label: "Resolved", value: watchTotals.resolved },
+    { label: "People involved", value: watchTotals.people },
   ];
 
   // The same search flow is used for both first-time setup and adding more
@@ -164,33 +188,42 @@ export function LocalSnapshots({ cities, watchlist, setWatchlist, stats, issues,
       </div>
       <div className="snapshot-onboarding-search">{townSearch()}</div>
       {note && <p className="snapshot-note" role="status">{note}</p>}
+      {removedTown && <div className="snapshot-undo" role="status">
+        <span>{removedTown.city.name} removed from your watchlist.</span>
+        <button type="button" onClick={undoRemove}>Undo</button>
+      </div>}
     </div>
   </section>;
 
   return <section className="local-snapshots-page" aria-label="Local reporting watchlist">
-    <section className="snapshot-watch-summary" aria-labelledby="watchlist-numbers-heading">
-      <div className="snapshot-summary-heading">
-        <div>
-          <span className="section-kicker">YOUR WATCHLIST / COMBINED TOTALS</span>
-          <h2 id="watchlist-numbers-heading">{copy.watchlist.totalsHeading}</h2>
-        </div>
-        <span className="snapshot-summary-count">{countNoun(watchlist.length, "town")} watched</span>
-      </div>
-      <div className="snapshot-summary-metrics" aria-label="Combined totals across towns in your watchlist" aria-live="polite">
-        {watchMetrics.map(({ label, value, icon: Icon, description }) => <article className="snapshot-summary-metric" key={label}>
-          <div className="snapshot-summary-metric-top"><span>{label}</span><Icon size={19} aria-hidden="true"/></div>
-          <strong>{value.toLocaleString()}</strong><small>{description}</small>
+    <section className="snapshot-watch-summary snapshot-watch-summary-compact" aria-label="Combined totals across watched towns">
+      <div className="snapshot-summary-metrics" aria-live="polite">
+        {watchMetrics.map(({ label, value }) => <article className="snapshot-summary-metric" key={label}>
+          <div className="snapshot-summary-metric-top"><span>{label}</span></div>
+          <strong>{value.toLocaleString()}</strong>
         </article>)}
       </div>
     </section>
     <div className="local-snapshots">
     <div className="snapshot-watchlist">
-      <div className="snapshot-side-head"><div><span className="section-kicker">WATCHLIST</span><h3>{copy.watchlist.placesHeading}</h3></div><button type="button" className="snapshot-add-button" onClick={() => setAdding((v) => !v)} aria-label={adding ? "Close add town" : copy.watchlist.addTown} aria-expanded={adding}><Plus size={16}/><span>{adding ? "Close" : "Add town"}</span></button></div>
+      <div className="snapshot-side-head">
+        <div className="snapshot-side-title">
+          <h2>{copy.watchlist.placesHeading}</h2>
+          <span className="snapshot-side-count">{countNoun(watchlist.length, "town")} watched</span>
+        </div>
+        <button type="button" className="snapshot-add-button" onClick={() => setAdding((v) => !v)} aria-label={adding ? "Close add town" : copy.watchlist.addTown} aria-expanded={adding}>
+          <Plus size={16} aria-hidden="true"/><span>{adding ? "Close" : "Add town"}</span>
+        </button>
+      </div>
       {adding && <div className="snapshot-add-panel">
         <span className="snapshot-field-label">Search for a city or town</span>
         {townSearch()}
       </div>}
       {note && <p className="snapshot-note" role="status">{note}</p>}
+      {removedTown && <div className="snapshot-undo" role="status">
+        <span>{removedTown.city.name} removed from your watchlist.</span>
+        <button type="button" onClick={undoRemove}>Undo</button>
+      </div>}
       <div className="snapshot-watch-rows">
         {watchlist.map((city, index) => {
             const cityStats = stats.cities[city.id] ?? summarizeIssues(issues.filter((issue) => issue.cityId === city.id));
