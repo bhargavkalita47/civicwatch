@@ -1070,7 +1070,7 @@ useEffect(() => {
         </section>}
       </main>
       <footer className="site-footer">
-        <span className="footer-copyright">© {new Date().getFullYear()} CivicWatch</span>
+        <span className="footer-copyright">© {new Date().getFullYear()} CivicWatch{config.uiCleanupDemo && <span className="footer-demo-label" title="Fictional reports; changes are saved in this browser only"> · Demo preview</span>}</span>
         <button type="button" className="footer-about" onClick={() => setAbout(true)} aria-label="About CivicWatch">About</button>
       </footer>
       {filterOpen && (
