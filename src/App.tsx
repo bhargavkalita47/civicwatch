@@ -8,6 +8,7 @@ import {
   ArrowUpRight,
   CheckCircle2,
   ChevronDown,
+  ChevronUp,
   ClipboardList,
   Compass,
   BarChart3,
@@ -73,6 +74,7 @@ import { restoreWatchlist, WATCHLIST_KEY, watchlistReportGroups } from "./domain
 type Tab = "explore" | "overview" | "snapshots" | "reports" | "mine" | "member" | "admin";
 type ThreadSelection = { cluster: LocationCluster; issueId?: string };
 type ReportSection = "active" | "inactive";
+type ExploreSheetState = "collapsed" | "half" | "full";
 type Theme = "light" | "dark";
 const THEME_STORAGE_KEY = "civicwatch.theme.v1";
 const GROUP_COLORS: Record<CategoryGroup, string> = {
@@ -177,6 +179,11 @@ export default function App() {
     [status, setStatus] = useState<IssueFilters["status"]>("all"),
     [sort, setSort] = useState<IssueFilters["sort"]>("recent");
   const [isMobile, setIsMobile] = useState(() => window.matchMedia("(max-width: 790px)").matches);
+  const [exploreSheet, setExploreSheet] = useState<ExploreSheetState>("collapsed");
+  const [reportHerePoint, setReportHerePoint] = useState<Coordinate | null>(null);
+  const [hoveredIssueId, setHoveredIssueId] = useState<string | null>(null);
+  const sheetDrag = useRef<{ startY: number } | null>(null);
+  const suppressSheetClick = useRef(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const drawerRef = useRef<HTMLElement>(null);
@@ -201,6 +208,13 @@ useEffect(() => {
   });
 }, [tab, reportSection]);
 
+  useEffect(() => {
+    if (tab !== "explore") {
+      setExploreSheet("collapsed");
+      setReportHerePoint(null);
+      setHoveredIssueId(null);
+    }
+  }, [tab]);
   const mapWorkspaceRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (tab !== "explore" || !mapIssueId) return;
@@ -338,6 +352,7 @@ useEffect(() => {
     setSignIn(true);
   }
   function startReport(point: Coordinate = center.current) {
+    setReportHerePoint(null);
     ensureSession(() => {
       setSelection(null);
       if (config.serviceMode === "api" && !data) {
@@ -450,6 +465,8 @@ useEffect(() => {
       : location.pathname + location.search);
   }
   function viewIssueOnMap(issue: Issue) {
+    setReportHerePoint(null);
+    setExploreSheet("collapsed");
     setSelection(null);
     setMapIssueId(issue.id);
     setQuery("");
@@ -463,6 +480,8 @@ useEffect(() => {
     history.replaceState(null, "", location.pathname + location.search);
   }
   function exploreWatchCity(next: City) {
+    setReportHerePoint(null);
+    setExploreSheet("collapsed");
     setMapIssueId(null);
     const id = next.id;
     setCityId(cities.some((city) => city.id === id) ? id : "");
@@ -573,6 +592,11 @@ useEffect(() => {
       notify("Report saved. Latest totals could not be loaded; refresh to update them.");
     }
   }
+  function shiftExploreSheet(direction: "up" | "down") {
+    setExploreSheet((current) => direction === "up"
+      ? current === "collapsed" ? "half" : "full"
+      : current === "full" ? "half" : "collapsed");
+  }
   function issueCard(issue: Issue, large = false) {
     const c = categories.find((c) => c.id === issue.categoryId);
     if (!c) return null;
@@ -581,9 +605,21 @@ useEffect(() => {
       : data?.comments.filter((comment) => comment.issueId === issue.id).length || 0;
     return (
       <button
-        className={`issue-card ${large ? "large-card" : ""}`}
+        className={`issue-card ${large ? "large-card" : ""} ${tab === "explore" && mapIssueId === issue.id ? "on-map" : ""}`}
         key={issue.id}
-        onClick={() => openIssue(issue)}
+        onPointerEnter={() => { if (tab === "explore") setHoveredIssueId(issue.id); }}
+        onPointerLeave={() => { if (tab === "explore") setHoveredIssueId(null); }}
+        onFocus={() => { if (tab === "explore") setHoveredIssueId(issue.id); }}
+        onBlur={() => { if (tab === "explore") setHoveredIssueId(null); }}
+        onClick={() => {
+          if (tab === "explore") {
+            setMapIssueId(issue.id);
+            setFocus({ ...issue.location });
+            setReportHerePoint(null);
+            if (isMobile) setExploreSheet("collapsed");
+          }
+          openIssue(issue);
+        }
       >
         <div className="issue-card-top">
           <CategoryBadge category={c} />
@@ -723,7 +759,7 @@ useEffect(() => {
         </div>
       </header>
       <main id="main" inert={isMobile && menuOpen}>
-        <section className={tab === "overview" ? "intro intro-overview" : tab === "snapshots" ? "intro intro-watchlist" : "intro"}>
+        <section className={tab === "overview" ? "intro intro-overview" : tab === "snapshots" ? "intro intro-watchlist" : tab === "explore" ? "intro intro-explore" : "intro"}>
           <div>
             <h1>
               {copy.pages[tab].title}
@@ -815,6 +851,8 @@ useEffect(() => {
                 setFocus({ ...place.point });
                 setMapBounds(null);
                 setQuery("");
+                setReportHerePoint(null);
+                setExploreSheet("collapsed");
               }}
             /> : <label className="search-field">
               <Search size={17} />
