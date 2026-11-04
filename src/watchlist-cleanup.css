@@ -64,11 +64,6 @@
   letter-spacing: -.015em;
   color: var(--cw-heading);
 }
-#root .snapshot-side-count {
-  color: var(--cw-muted);
-  font-size: 12px;
-  line-height: 1.35;
-}
 #root .local-snapshots-page .snapshot-add-button {
   flex: 0 0 auto;
   min-height: 44px;
@@ -416,7 +411,6 @@
     padding-inline: 12px;
   }
   #root .snapshot-side-title h2 { font-size: 16px; }
-  #root .snapshot-side-count { font-size: 11px; }
   #root .local-snapshots-page .snapshot-add-button { min-width: 87px; padding: 0 8px; }
   #root .snapshot-watch-entry .snapshot-drag-handle { flex-basis: 44px; width: 44px; }
   #root .snapshot-watch-entry .snapshot-watch-select { gap: 5px; padding-inline: 3px; }
