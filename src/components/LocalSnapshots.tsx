@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import type { PointerEvent as ReactPointerEvent, KeyboardEvent as ReactKeyboardEvent } from "react";
-import { ArrowRight, GripVertical, MoreHorizontal, Plus } from "lucide-react";
+import { ArrowRight, GripVertical, MoreHorizontal, Plus, X } from "lucide-react";
 import type { Category, City, Issue, LocationCluster, OverviewSnapshot } from "../domain/types";
 import { activeIssues, clusterIssues, relativeTime, summarizeIssues } from "../domain/logic";
 import { PlaceSearch } from "./PlaceSearch";
@@ -193,8 +193,10 @@ export function LocalSnapshots({ cities, watchlist, setWatchlist, stats, issues,
         <div className="snapshot-side-title">
           <h2>{copy.watchlist.placesHeading}</h2>
         </div>
-        <button type="button" className="snapshot-add-button" onClick={() => setAdding((v) => !v)} aria-label={adding ? "Close add town" : copy.watchlist.addTown} aria-expanded={adding}>
-          <Plus size={16} aria-hidden="true"/><span>{adding ? "Close" : "Add town"}</span>
+        <button type="button" className="snapshot-add-button" onClick={() => setAdding((v) => !v)}
+          aria-label={adding ? "Close add town" : copy.watchlist.addTown}
+          title={adding ? "Close add town" : copy.watchlist.addTown} aria-expanded={adding}>
+          {adding ? <X size={19} aria-hidden="true"/> : <Plus size={19} aria-hidden="true"/>}
         </button>
       </div>
       <div className="snapshot-inline-summary" role="group" aria-label="Combined totals across watched towns">
