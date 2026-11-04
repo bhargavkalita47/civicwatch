@@ -66,9 +66,33 @@ it("integrates subtle, icon-free totals into the town list without another dashb
   expect(container.textContent).not.toContain("The usual problems. Your chosen places.");
   expect(container.querySelectorAll(".snapshot-watch-entry")).toHaveLength(2);
   expect(container.textContent).toContain("7open");
+  expect(container.querySelector(".snapshot-watch-foot")).toBeNull();
+  expect(container.querySelector(".snapshot-side-count")).toBeNull();
+  const town = container.querySelector(".snapshot-detail-heading")!;
+  expect(town.querySelectorAll(".snapshot-town-inline-metrics > span")).toHaveLength(4);
+  expect(town.textContent).toContain("9 reports");
+  expect(town.textContent).toContain("7 open");
+  expect(town.textContent).toContain("2 resolved");
+  expect(town.textContent).toContain("14 people");
+  expect(town.textContent).toContain("22% resolved");
+  expect(container.querySelector(".snapshot-town-metrics")).toBeNull();
+  expect(container.querySelector(".snapshot-resolution-track")).toBeNull();
+  expect(container.querySelector(".snapshot-town-section")).toBeNull();
+  expect(town.compareDocumentPosition(container.querySelector(".snapshot-detail-map")!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   expect(container.querySelector('[data-testid="town-map-preview"]')).not.toBeNull();
   await act(async () => button("View full map").click());
   expect(onExplore).toHaveBeenCalledWith(towns[0]);
+});
+
+it("shows selected town metrics even for a single watched place", async () => {
+  await mount([towns[1]]);
+  const metrics = container.querySelector(".snapshot-detail-heading .snapshot-town-inline-metrics");
+  expect(metrics?.querySelectorAll("span")).toHaveLength(4);
+  expect(metrics?.textContent).toContain("4 reports");
+  expect(metrics?.textContent).toContain("3 open");
+  expect(metrics?.textContent).toContain("1 resolved");
+  expect(container.querySelector(".snapshot-town-resolution")?.textContent).toBe("25% resolved");
+  expect(container.querySelector(".snapshot-resolution-track")).toBeNull();
 });
 
 it("moves and removes a town through its actions, with a working Undo", async () => {
