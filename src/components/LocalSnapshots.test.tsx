@@ -62,7 +62,7 @@ it("integrates subtle, icon-free totals into the town list without another dashb
   expect(container.querySelector(".snapshot-watch-summary-compact")).toBeNull();
   expect(list?.querySelectorAll(".snapshot-inline-stat")).toHaveLength(4);
   expect(list?.querySelectorAll(".snapshot-inline-summary svg")).toHaveLength(0);
-  expect(list?.textContent).toContain("Across your towns. The backlog gets around.");
+  expect(container.querySelector(".snapshot-inline-kicker")).toBeNull();
   expect(container.textContent).not.toContain("The usual problems. Your chosen places.");
   expect(container.querySelectorAll(".snapshot-watch-entry")).toHaveLength(2);
   expect(container.textContent).toContain("7open");
@@ -83,12 +83,14 @@ it("integrates subtle, icon-free totals into the town list without another dashb
   const topline = container.querySelector(".snapshot-detail-topline");
   expect(topline?.querySelector("h2")?.textContent).toBe("Guwahati");
   const mapAction = topline?.querySelector("button");
-  expect(mapAction?.textContent).toContain("View full map");
+  expect(mapAction?.textContent?.trim()).toBe("");
+  expect(mapAction?.getAttribute("aria-label")).toBe("View Guwahati on full map");
+  expect(mapAction?.getAttribute("title")).toBe("View full map");
   expect(mapAction?.classList.contains("snapshot-full-map-link")).toBe(true);
   expect(mapAction?.classList.contains("secondary")).toBe(false);
   expect(mapAction?.querySelector("svg")).not.toBeNull();
   expect((topline?.compareDocumentPosition(town) ?? 0) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-  await act(async () => button("View full map").click());
+  await act(async () => button("View Guwahati on full map").click());
   expect(onExplore).toHaveBeenCalledWith(towns[0]);
 });
 
