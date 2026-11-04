@@ -88,6 +88,24 @@ it("integrates subtle, icon-free totals into the town list without another dashb
   expect(onExplore).toHaveBeenCalledWith(towns[0]);
 });
 
+it("opens and closes town search with the icon-only Add town control", async () => {
+  await mount();
+  const add = button("Add a town");
+  expect(add.textContent?.trim()).toBe("");
+  expect(add.querySelector("svg")).not.toBeNull();
+  expect(add.getAttribute("title")).toBe("Add a town");
+  expect(add.getAttribute("aria-expanded")).toBe("false");
+  await act(async () => add.click());
+  const close = button("Close add town");
+  expect(close.textContent?.trim()).toBe("");
+  expect(close.querySelector("svg")).not.toBeNull();
+  expect(close.getAttribute("aria-expanded")).toBe("true");
+  expect(container.querySelector(".snapshot-add-panel")).not.toBeNull();
+  await act(async () => close.click());
+  expect(container.querySelector(".snapshot-add-panel")).toBeNull();
+  expect(button("Add a town").getAttribute("aria-expanded")).toBe("false");
+});
+
 it("shows selected town metrics even for a single watched place", async () => {
   await mount([towns[1]]);
   const metrics = container.querySelector(".snapshot-detail-heading .snapshot-town-inline-metrics");
