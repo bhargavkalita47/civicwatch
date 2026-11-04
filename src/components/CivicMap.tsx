@@ -258,42 +258,27 @@ export function CivicMap({
 
         </div>
       )}
-      <div className="map-controls">
-        <button type="button" onClick={() => map.current?.zoomIn()} aria-label="Zoom in">
-          <Plus size={19} />
-        </button>
-        <button type="button" onClick={() => map.current?.zoomOut()} aria-label="Zoom out">
-          <Minus size={19} />
-        </button>
-        <span />
-        <button type="button" onClick={() => void locate()} aria-label={copy.map.locate} disabled={locating} aria-busy={locating}>
-          {locating ? (
-            <span className="locating-dot" />
-          ) : (
-            <LocateFixed size={18} />
-          )}
-        </button>
-        {!compact && (
-          <>
-            <button
-              type="button"
-              onClick={() =>
-                map.current?.flyTo([center.lat, center.lng], 13)
-              }
-              aria-label={`${copy.map.reset} to ${cityName}`}
-            >
-              <RotateCcw size={17} />
-            </button>
-            <button
-              type="button"
-              onClick={() => setLegend((v) => !v)}
-              aria-label="Show issue types"
-              aria-expanded={legend}
-            >
-              <Layers size={18} />
-            </button>
-          </>
-        )}
+      <div className={`map-controls ${compact ? "" : "explore-map-controls"}`}>
+        <div className="map-control-group map-control-zoom">
+          <button type="button" onClick={() => map.current?.zoomIn()} aria-label="Zoom in">
+            <Plus size={19} />
+          </button>
+          <button type="button" onClick={() => map.current?.zoomOut()} aria-label="Zoom out">
+            <Minus size={19} />
+          </button>
+        </div>
+        {compact && <span aria-hidden="true"/>}
+        <div className="map-control-group map-control-actions">
+          <button type="button" onClick={() => void locate()} aria-label={copy.map.locate} disabled={locating} aria-busy={locating}>
+            {locating ? <span className="locating-dot" /> : <LocateFixed size={18} />}
+          </button>
+          {!compact && <>
+            <button type="button" onClick={() => map.current?.flyTo([center.lat, center.lng], 13)}
+              aria-label={`${copy.map.reset} to ${cityName}`}><RotateCcw size={17} /></button>
+            <button type="button" onClick={() => setLegend((v) => !v)}
+              aria-label="Show issue types" aria-expanded={legend}><Layers size={18} /></button>
+          </>}
+        </div>
       </div>
       {!compact && legend && (
         <div className="map-key" role="region" aria-label="Issue types">
