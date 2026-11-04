@@ -1,0 +1,463 @@
+/*
+ * Town watchlist / approved cleanup.
+ * The user-owned list is the primary workspace. Statistics are supporting data;
+ * the map remains an embedded town preview, never this page's hero.
+ * This stylesheet deliberately follows the legacy CSS layers.
+ */
+#root .intro-watchlist {
+  padding-bottom: clamp(24px, 2.7vw, 36px);
+  gap: clamp(18px, 2vw, 27px);
+}
+#root .intro-watchlist h1 {
+  font-size: clamp(52px, 5.15vw, 76px);
+  line-height: 1.08;
+  margin-bottom: 12px;
+}
+#root .intro-watchlist p {
+  font-size: clamp(14px, 1.2vw, 16px);
+  line-height: 1.55;
+  color: var(--cw-muted);
+  max-width: 62ch;
+}
+
+/* Separate the hero from the monitoring workspace like Overview, without
+ * introducing another editorial heading. */
+#root .local-snapshots-page {
+  gap: 18px;
+  margin-top: 6px;
+  padding-top: clamp(22px, 2.2vw, 30px);
+  border-top: 1px solid var(--cw-border);
+}
+#root .snapshot-watch-summary-compact {
+  padding: 15px 18px;
+  min-width: 0;
+  background: var(--cw-panel);
+  box-shadow: none;
+  border-radius: 16px;
+}
+#root .snapshot-watch-summary-compact .snapshot-summary-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0;
+}
+#root .snapshot-watch-summary-compact .snapshot-summary-metric {
+  --snapshot-metric-accent: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  min-width: 0;
+  min-height: 0;
+  padding: 4px clamp(12px, 1.8vw, 23px);
+  border: none;
+  border-right: 1px solid var(--cw-border);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+#root .snapshot-watch-summary-compact .snapshot-summary-metric::before {
+  content: none;
+}
+#root .snapshot-watch-summary-compact .snapshot-summary-metric:first-child {
+  padding-left: 2px;
+}
+#root .snapshot-watch-summary-compact .snapshot-summary-metric:last-child {
+  border-right: none;
+  padding-right: 2px;
+}
+#root .snapshot-watch-summary-compact .snapshot-summary-metric-top {
+  color: var(--cw-muted);
+  font-family: "Public Sans", system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+#root .snapshot-watch-summary-compact .snapshot-summary-metric > strong {
+  margin: 0;
+  padding: 0;
+  color: var(--cw-heading);
+  font-family: "Public Sans", system-ui, sans-serif;
+  font-size: clamp(29px, 2.6vw, 38px);
+  font-weight: 750;
+  line-height: 1.15;
+  letter-spacing: -.035em;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+/* Give the editable list more room than the previous 310px rail, while the
+ * town map stays in its existing context panel, not a full-bleed hero. */
+#root .local-snapshots-page .local-snapshots {
+  grid-template-columns: minmax(310px, .88fr) minmax(0, 1.12fr);
+  gap: 18px;
+  align-items: start;
+}
+#root .local-snapshots-page .snapshot-watchlist {
+  position: sticky;
+  top: 18px;
+  min-height: 0;
+}
+#root .local-snapshots-page .snapshot-side-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px;
+}
+#root .snapshot-side-title {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+#root .snapshot-side-title h2 {
+  margin: 0;
+  font-family: "Public Sans", system-ui, sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: -.015em;
+  color: var(--cw-heading);
+}
+#root .snapshot-side-count {
+  color: var(--cw-muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+#root .local-snapshots-page .snapshot-add-button {
+  flex: 0 0 auto;
+  min-height: 40px;
+  height: 40px;
+  padding: 0 12px;
+  font-size: 12px;
+  gap: 6px;
+}
+
+/* All management actions live behind one clearly labelled, comfortably
+ * tappable control. The actual reorder handle remains keyboard accessible. */
+#root .local-snapshots-page .snapshot-watch-rows {
+  padding: 9px;
+}
+#root .snapshot-watch-entry {
+  min-width: 0;
+  margin-bottom: 5px;
+}
+#root .snapshot-watch-entry:last-child { margin-bottom: 0; }
+#root .snapshot-watch-entry .snapshot-watch-row {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  min-height: 69px;
+  margin: 0;
+  border-radius: 10px;
+}
+#root .snapshot-watch-entry .snapshot-watch-row.selected {
+  border-color: var(--cw-border);
+  background: var(--cw-atmosphere-selected);
+}
+#root .snapshot-watch-entry .snapshot-drag-handle {
+  display: grid;
+  flex: 0 0 34px;
+  place-items: center;
+  width: 34px;
+  height: 44px;
+  min-width: 0;
+  padding: 0;
+  margin-left: 1px;
+}
+#root .snapshot-watch-entry .snapshot-watch-select {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  min-width: 0;
+  min-height: 68px;
+  padding: 10px 7px;
+  text-align: left;
+  gap: 9px;
+}
+#root .snapshot-watch-select > .snapshot-watch-place {
+  flex: 1 1 auto;
+  align-items: flex-start;
+  justify-content: center;
+  min-width: 0;
+  gap: 3px;
+}
+#root .snapshot-watch-place strong {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--cw-heading);
+}
+#root .snapshot-watch-place small {
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--cw-muted);
+}
+#root .snapshot-watch-select > .snapshot-watch-open {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: baseline;
+  justify-content: flex-end;
+  flex-direction: row;
+  gap: 4px;
+  min-width: 0;
+  padding-left: 3px;
+  white-space: nowrap;
+}
+#root .snapshot-watch-open b {
+  color: var(--cw-heading);
+  font-size: 14px;
+  font-weight: 700;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+#root .snapshot-watch-open small {
+  color: var(--cw-muted);
+  font-size: 11px;
+}
+#root .snapshot-watch-menu-trigger {
+  display: grid;
+  flex: 0 0 40px;
+  place-items: center;
+  width: 40px;
+  height: 44px;
+  padding: 0;
+  border-radius: 8px;
+  color: var(--cw-muted);
+}
+#root .snapshot-watch-menu-trigger:hover,
+#root .snapshot-watch-menu-trigger[aria-expanded="true"] {
+  background: var(--cw-soft);
+  color: var(--cw-heading);
+}
+#root .snapshot-watch-menu {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 11px 10px;
+  margin-top: 3px;
+  background: var(--cw-soft);
+  border: 1px solid var(--cw-border);
+  border-radius: 9px;
+}
+#root .snapshot-watch-menu button {
+  min-height: 36px;
+  padding: 7px 10px;
+  border: 1px solid var(--cw-border);
+  border-radius: 8px;
+  background: var(--cw-elevated);
+  color: var(--cw-heading);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+#root .snapshot-watch-menu button:disabled {
+  opacity: .4;
+  cursor: not-allowed;
+}
+#root .snapshot-watch-menu .snapshot-watch-remove { color: var(--cw-heading); }
+#root .snapshot-watch-menu button:not(:disabled):hover {
+  background: var(--cw-panel);
+  border-color: var(--cw-border-strong);
+}
+#root .snapshot-watch-menu-trigger:focus-visible,
+#root .snapshot-watch-menu button:focus-visible,
+#root .snapshot-undo button:focus-visible {
+  outline: 2px solid var(--cw-accent);
+  outline-offset: 2px;
+}
+#root .snapshot-watch-foot {
+  margin: 3px 16px 0;
+  padding: 11px 0 14px;
+  font-size: 11px;
+  line-height: 1.5;
+}
+#root .snapshot-undo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  padding: 10px 16px;
+  background: var(--cw-soft);
+  border-bottom: 1px solid var(--cw-border);
+  color: var(--cw-heading);
+  font-size: 12px;
+  line-height: 1.5;
+}
+#root .snapshot-undo button {
+  min-height: 36px;
+  padding: 5px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--cw-border);
+  background: var(--cw-panel);
+  color: var(--cw-heading);
+  font-size: 12px;
+  font-weight: 700;
+}
+#root .snapshot-onboarding .snapshot-undo {
+  width: min(590px, 100%);
+  margin-top: 16px;
+  border: 1px solid var(--cw-border);
+  border-radius: 10px;
+}
+
+/* A town's heading is a functional label, not another Instrument Serif hero. */
+#root .local-snapshots-page .snapshot-detail {
+  min-width: 0;
+  min-height: 0;
+}
+#root .local-snapshots-page .snapshot-detail-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 19px 20px 16px;
+}
+#root .snapshot-detail-heading { min-width: 0; }
+#root .snapshot-detail-heading h2 {
+  margin: 0;
+  font-family: "Public Sans", system-ui, sans-serif;
+  font-size: clamp(19px, 1.8vw, 24px);
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -.015em;
+  color: var(--cw-heading);
+}
+#root .snapshot-detail-heading p {
+  margin: 5px 0 0;
+  color: var(--cw-muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+#root .snapshot-detail-header .button {
+  min-height: 40px;
+  font-size: 12px;
+}
+#root .snapshot-town-section { padding-top: 17px; }
+#root .snapshot-town-metrics {
+  padding-block: 12px;
+  row-gap: 10px;
+}
+#root .snapshot-town-metrics > div { padding-block: 4px; }
+#root .snapshot-town-metrics dt { font-size: 11px; }
+#root .snapshot-town-metrics dd {
+  margin-top: 5px;
+  font-size: clamp(19px, 1.8vw, 25px);
+}
+#root .snapshot-town-section .snapshot-resolution {
+  padding-block: 15px 10px;
+}
+#root .snapshot-activity-heading h3 {
+  margin: 0;
+  color: var(--cw-heading);
+  font-family: "Public Sans", system-ui, sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+#root .snapshot-activity { padding: 19px 20px 24px; }
+
+/* New users get a functional start form, not another oversized hero. */
+#root .snapshot-onboarding-copy h2 {
+  margin: 0 0 7px;
+  font-family: "Public Sans", system-ui, sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.35;
+  letter-spacing: -.01em;
+}
+#root .snapshot-onboarding { min-height: 0; }
+#root .snapshot-onboarding-search { margin-top: 19px; }
+
+@media (max-width: 1100px) {
+  #root .local-snapshots-page .local-snapshots {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  #root .local-snapshots-page .snapshot-watchlist {
+    position: static;
+  }
+  #root .local-snapshots-page .snapshot-watch-rows {
+    max-height: none;
+    overflow: visible;
+  }
+}
+@media (max-width: 790px) {
+  #root .intro-watchlist {
+    gap: 15px;
+    padding-top: 25px;
+    padding-bottom: 23px;
+  }
+  #root .intro-watchlist h1 {
+    font-size: clamp(40px, 9.6vw, 56px);
+    line-height: 1.08;
+  }
+  #root .intro-watchlist p {
+    font-size: 14px;
+    line-height: 1.55;
+    max-width: 45ch;
+  }
+  #root .intro-watchlist > .report-button { align-self: center; }
+  #root .local-snapshots-page {
+    margin-top: 3px;
+    padding-top: 20px;
+    gap: 14px;
+  }
+  #root .snapshot-watch-summary-compact { padding: 12px 13px; }
+  #root .snapshot-watch-summary-compact .snapshot-summary-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  #root .snapshot-watch-summary-compact .snapshot-summary-metric {
+    padding: 11px 13px;
+    gap: 4px;
+    min-height: 0;
+    border-bottom: 1px solid var(--cw-border);
+  }
+  #root .snapshot-watch-summary-compact .snapshot-summary-metric:nth-child(2) {
+    border-right: 0;
+    padding-right: 3px;
+  }
+  #root .snapshot-watch-summary-compact .snapshot-summary-metric:nth-child(3) {
+    border-bottom: 0;
+    padding-left: 3px;
+  }
+  #root .snapshot-watch-summary-compact .snapshot-summary-metric:nth-child(4) {
+    border-bottom: 0;
+  }
+  #root .snapshot-watch-summary-compact .snapshot-summary-metric > strong {
+    font-size: clamp(28px, 7vw, 34px);
+  }
+  #root .snapshot-watch-summary-compact .snapshot-summary-metric-top {
+    font-size: 12px;
+  }
+  #root .snapshot-watch-entry .snapshot-drag-handle {
+    flex-basis: 40px;
+    width: 40px;
+    height: 44px;
+  }
+  #root .snapshot-watch-entry .snapshot-watch-select { min-height: 64px; }
+  #root .snapshot-watch-place strong { font-size: 14px; }
+  #root .local-snapshots-page .snapshot-detail-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding: 18px 16px 15px;
+  }
+  #root .snapshot-detail-header .button { align-self: center; }
+  #root .snapshot-activity { padding: 17px 16px 21px; }
+}
+@media (max-width: 390px) {
+  #root .snapshot-watch-summary-compact .snapshot-summary-metric > strong { font-size: 29px; }
+  #root .snapshot-watch-summary-compact .snapshot-summary-metric-top { font-size: 11px; }
+  #root .local-snapshots-page .snapshot-side-head {
+    gap: 7px;
+    padding-inline: 12px;
+  }
+  #root .snapshot-side-title h2 { font-size: 16px; }
+  #root .snapshot-side-count { font-size: 11px; }
+  #root .local-snapshots-page .snapshot-add-button { min-width: 87px; padding: 0 8px; }
+  #root .snapshot-watch-entry .snapshot-drag-handle { flex-basis: 32px; width: 32px; }
+  #root .snapshot-watch-entry .snapshot-watch-select { gap: 5px; padding-inline: 3px; }
+  #root .snapshot-watch-menu-trigger { flex-basis: 38px; width: 38px; }
+  #root .snapshot-watch-open small { font-size: 10px; }
+}
