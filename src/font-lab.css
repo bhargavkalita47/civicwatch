@@ -1,0 +1,198 @@
+/*
+ * Font Lab is a debug-only feature for the dev/fonts branch.
+ * Never cherry-pick or merge this stylesheet into main.
+ */
+.cw-font-lab,
+.cw-font-lab * {
+  box-sizing: border-box;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif !important;
+  letter-spacing: normal;
+}
+.cw-font-lab {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 2147483000;
+  pointer-events: none;
+  color: #241d35;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.cw-font-lab button,
+.cw-font-lab select,
+.cw-font-lab input { font: inherit; }
+.cw-font-lab button { cursor: pointer; }
+.cw-font-lab-trigger {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-left: auto;
+  padding: 10px 15px;
+  min-height: 44px;
+  border-radius: 999px;
+  border: 1px solid #332641;
+  background: #231a33;
+  color: #fff;
+  font-weight: 700;
+  box-shadow: 0 7px 22px #110f2040;
+}
+.cw-font-lab-trigger-icon {
+  width: 25px;
+  height: 25px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  background: #f0d7ff;
+  color: #2a1a3c;
+  font-weight: 850;
+  font-size: 12px;
+}
+.cw-font-lab-panel {
+  pointer-events: auto;
+  overflow: auto;
+  width: min(374px, calc(100vw - 24px));
+  max-height: min(690px, calc(100dvh - 94px));
+  margin-bottom: 12px;
+  background: #ffffff;
+  border: 1px solid #d8d0e6;
+  box-shadow: 0 18px 64px #1711274d;
+  border-radius: 19px;
+  padding: 17px;
+  overscroll-behavior: contain;
+}
+.cw-font-lab-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.cw-font-lab-eyebrow {
+  font-size: 10px;
+  font-weight: 800;
+  color: #7e5ba5;
+  letter-spacing: .09em !important;
+}
+.cw-font-lab-header h2 {
+  margin: 2px 0 0;
+  color: #261d36;
+  font-size: 23px;
+  line-height: 1.2;
+  font-weight: 760;
+}
+.cw-font-lab-close {
+  display: grid;
+  place-items: center;
+  flex: 0 0 32px;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid #e3dceb;
+  border-radius: 9px;
+  background: #f8f6fb;
+  font-size: 25px !important;
+  line-height: 1 !important;
+  color: #4b3e63;
+}
+.cw-font-lab-help {
+  margin: 10px 0 13px;
+  font-size: 12px;
+  color: #6e627c;
+}
+.cw-font-lab-current {
+  padding: 11px 13px;
+  border: 1px solid #ede5f4;
+  border-radius: 12px;
+  background: #f9f6fc;
+  display: grid;
+  gap: 2px;
+}
+.cw-font-lab-current span,
+.cw-font-lab-presets > span,
+.cw-font-lab-field > label,
+.cw-font-lab-custom > label {
+  font-size: 11px;
+  color: #57466a;
+  font-weight: 750;
+}
+.cw-font-lab-current strong {
+  color: #291c3b;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.cw-font-lab-field { display: grid; gap: 5px; margin-top: 13px; }
+.cw-font-lab-field select,
+.cw-font-lab-custom input {
+  width: 100%;
+  min-width: 0;
+  min-height: 41px;
+  border: 1px solid #dcd3e9;
+  border-radius: 9px;
+  background: #fff;
+  color: #251a34;
+  padding: 8px 11px;
+  font-size: 13px;
+}
+.cw-font-lab-field small,
+.cw-font-lab-custom small {
+  font-size: 10px;
+  color: #756981;
+}
+.cw-font-lab-custom {
+  padding: 10px;
+  border-radius: 10px;
+  background: #f8f6fb;
+  margin-top: 12px;
+}
+.cw-font-lab-custom > div { display: flex; gap: 6px; margin: 7px 0 4px; }
+.cw-font-lab-custom button {
+  flex: 0 0 auto;
+  border-radius: 8px;
+  background: #5c3b84;
+  color: #fff;
+  padding: 0 12px;
+  font-weight: 700;
+}
+.cw-font-lab-error { color: #ae2445; font-size: 11px; margin: 5px 0 0; }
+.cw-font-lab-presets { display: grid; gap: 9px; margin-top: 15px; }
+.cw-font-lab-chip-grid { display: flex; flex-wrap: wrap; gap: 7px; }
+.cw-font-lab-chip-grid button {
+  border-radius: 999px;
+  border: 1px solid #dfd5eb;
+  background: #fff;
+  color: #534368;
+  padding: 6px 11px;
+  font-size: 11px;
+  font-weight: 680;
+}
+.cw-font-lab-chip-grid button.is-selected {
+  background: #eadff6;
+  border-color: #a988cf;
+  color: #35204f;
+}
+.cw-font-lab-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border-top: 1px solid #eee8f2;
+  padding-top: 12px;
+  margin-top: 16px;
+}
+.cw-font-lab-footer button {
+  background: transparent;
+  color: #5f3c82;
+  text-decoration: underline;
+  padding: 3px;
+  font-size: 11px;
+  font-weight: 750;
+}
+.cw-font-lab-footer span { color: #887b93; font-size: 10px; text-align: right; }
+.cw-font-lab :is(button, select, input):focus-visible {
+  outline: 3px solid #a876d1;
+  outline-offset: 3px;
+}
+@media (max-width: 600px) {
+  .cw-font-lab { right: 12px; bottom: 12px; }
+  .cw-font-lab-panel { max-height: calc(100dvh - 82px); padding: 14px; }
+}
