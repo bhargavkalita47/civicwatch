@@ -13,14 +13,14 @@ function number(value: string | undefined, fallback: number) {
   return value && Number.isFinite(n) ? n : fallback;
 }
 export const config = {
-  // Production must never silently fall back to a browser-local identity.
-  // Only the Vite development server can run the deliberately isolated mock.
+  // Live production defaults to the API. An explicit UI demo/branch preview
+  // is isolated to local mock state and cannot authenticate with the live API.
   serviceMode: uiCleanupDemo ? "mock" : import.meta.env.PROD ? "api" : env.VITE_SERVICE_MODE === "api" ? "api" : "mock",
   uiCleanupDemo,
   googleOAuthEnabled: env.VITE_GOOGLE_OAUTH_ENABLED === "true",
   facebookOAuthEnabled: env.VITE_FACEBOOK_OAUTH_ENABLED === "true",
   apiBaseUrl: (env.VITE_API_BASE_URL || "/api/v1").replace(/\/$/, ""),
-  // Empty by default: fictional reports must be enabled explicitly for local testing.
+  // Fictional reports exist only in a deliberate preview or local test configuration.
   seedDemo: uiCleanupDemo || env.VITE_SEED_DEMO === "true",
   city: env.VITE_DEFAULT_CITY || "Guwahati",
   center: {
