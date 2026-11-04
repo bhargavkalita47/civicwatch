@@ -9,7 +9,7 @@ import { ColorLab, applyStoredPalette } from "./ColorLab";
 
 type FontRole = "ui" | "display";
 type Pairing = { ui: string; display: string };
-const STORAGE_KEY = "civicwatch.debug.font-lab.v1";
+const STORAGE_KEY = "civicwatch.debug.design-lab.fonts.v1";
 const DEFAULT_PAIR: Pairing = { ui: "Public Sans", display: "Instrument Serif" };
 const CUSTOM = "__custom__";
 
@@ -29,7 +29,7 @@ const DISPLAY_FONTS = [
 const QUICK_PAIRS: Array<{ name: string; pair: Pairing }> = [
   { name: "Original", pair: DEFAULT_PAIR },
   { name: "Geist", pair: { ui: "Geist", display: "Instrument Serif" } },
-  { name: "Public Sans", pair: { ui: "Public Sans", display: "Instrument Serif" } },
+  { name: "Inter", pair: { ui: "Inter", display: "Instrument Serif" } },
   { name: "DM Sans", pair: { ui: "DM Sans", display: "Instrument Serif" } },
   { name: "Raleway", pair: { ui: "Raleway", display: "Instrument Serif" } },
   { name: "Newsreader", pair: { ui: "Inter", display: "Newsreader" } },
@@ -40,7 +40,7 @@ const QUICK_PAIRS: Array<{ name: string; pair: Pairing }> = [
 const FONT_WEIGHTS: Record<string, string> = {
   Inter: "400;500;600;700;800",
   Geist: "400;500;600;700;800",
-  "Public Sans": "400;500;600;700;800",
+  "Public Sans": "100..900",
   "DM Sans": "400;500;600;700;800",
   "IBM Plex Sans": "400;500;600;700",
   "Plus Jakarta Sans": "400;500;600;700;800",
@@ -241,7 +241,7 @@ export function FontLab() {
         aria-label={open ? "Hide design lab" : "Open design lab"}
         onClick={() => setOpen(previous => !previous)}>
         <span className="cw-font-lab-trigger-icon" aria-hidden="true">Aa</span>
-        <span>{open ? "Hide design lab" : "Font lab"}</span>
+        <span>{open ? "Hide design lab" : "Design lab"}</span>
       </button>
     </aside>
   );
