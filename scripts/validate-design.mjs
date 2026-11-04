@@ -125,6 +125,11 @@ assert.match(map, /map-control-group map-control-zoom/, 'Map controls separate z
 assert.match(map, /categoryMarkerColor\(category\)/, 'Existing category marker palette is preserved');
 assert.match(searchCode, /aria-describedby="explore-search-instructions"/, 'One search explains both filtering and place lookup');
 assert.match(app, /className="button report-button"/, 'Page-level reporting entry point remains visible');
+assert.doesNotMatch(app, /Community-submitted · Not officially verified|className="workspace-footnote"/, 'Do not show the redundant community notice below the map or reports');
+assert.doesNotMatch(app, /className="panel-footer"|\{reportCount\(visible\.length\)\} in view/, 'Do not duplicate counts beneath the Explore report list');
+assert.doesNotMatch(app, /setAbout\(|aria-label="About CivicWatch"/, 'Remove redundant About entry points from the page bottom');
+assert.match(app, /footer-copyright/, 'Keep the site footer and legal attribution');
+assert.match(app, /setHelp\(true\)/, 'Keep the Help action and its disclosure accessible');
 
 assert.doesNotMatch(watchlist, /snapshot-summary-heading|THE USUAL PROBLEMS/, "No duplicate watchlist headline");
 assert.match(watchlistLogic, /summarizeWatchlist/);
