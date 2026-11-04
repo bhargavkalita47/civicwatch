@@ -76,6 +76,9 @@ assert.match(watchlist, /cityStats\.open\.toLocaleString/, "Town counts should b
 assert.match(watchlist, /CivicMap key=\{selected\.id\} compact/, "Map stays as a preview");
 assert.match(watchlist, /snapshot-town-inline-metrics/, "Selected town figures belong beneath town identity");
 assert.match(watchlist, /snapshot-detail-topline/, "Selected town name and map action must share a top row");
+assert.match(watchlist, /className="snapshot-full-map-link"/, "Map action must be visually subordinate to the city");
+assert.doesNotMatch(watchlist, /className="button secondary" onClick=\{\(\) => onExplore\(selected\)\}/, "Map action should not be a bordered secondary button");
+assert.match(watchlistCleanupCSS, /\.snapshot-full-map-link\s*\{[^}]*min-height:\s*44px;/, "Map text action must preserve mobile tap target");
 assert.match(watchlistCleanupCSS, /\.snapshot-detail-topline\s*\{[^}]*display:\s*flex;/, "Map action row must remain flex");
 assert.match(watchlistCleanupCSS, /\.snapshot-detail-topline\s*\{[^}]*flex-direction:\s*row;/, "Map action must not drop below town on mobile");
 assert.match(watchlist, /snapshot-town-resolution/, "Resolution should be muted metadata");
