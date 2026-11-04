@@ -200,7 +200,6 @@ export function LocalSnapshots({ cities, watchlist, setWatchlist, stats, issues,
         </button>
       </div>
       <div className="snapshot-inline-summary" role="group" aria-label="Combined totals across watched towns">
-        <p className="snapshot-inline-kicker">Across your towns. The backlog gets around.</p>
         <div className="snapshot-inline-metrics" aria-live="polite">
           <span className="snapshot-inline-stat"><strong>{watchTotals.reports.toLocaleString()}</strong> reports</span>
           <span className="snapshot-inline-stat"><strong>{watchTotals.open.toLocaleString()}</strong> open</span>
@@ -253,7 +252,7 @@ export function LocalSnapshots({ cities, watchlist, setWatchlist, stats, issues,
         <div className="snapshot-detail-header">
           <div className="snapshot-detail-topline">
             <h2>{selected.name}</h2>
-            <button type="button" className="snapshot-full-map-link" onClick={() => onExplore(selected)}>{copy.watchlist.mapAction} <ArrowUpRight size={13} aria-hidden="true"/></button>
+            <button type="button" className="snapshot-full-map-link" aria-label={`View ${selected.name} on full map`} title="View full map" onClick={() => onExplore(selected)}><ArrowUpRight size={18} aria-hidden="true"/></button>
           </div>
           <div className="snapshot-detail-heading">
             <p>{selected.region}, {selected.country}</p>
