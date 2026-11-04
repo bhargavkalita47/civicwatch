@@ -97,17 +97,6 @@
   border-bottom: 1px solid var(--cw-border);
   min-width: 0;
 }
-#root .snapshot-inline-kicker {
-  /* Close the gap below "Your towns" without shifting the totals below. */
-  position: relative;
-  top: -12px;
-  margin: 0 0 8px;
-  color: var(--cw-muted);
-  font-family: "Public Sans", system-ui, sans-serif;
-  font-size: 11px;
-  font-weight: 400;
-  line-height: 1.4;
-}
 #root .snapshot-inline-metrics {
   display: flex;
   align-items: baseline;
@@ -313,8 +302,8 @@
 #root .snapshot-detail-topline {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  justify-content: flex-start;
+  gap: 2px;
   min-width: 0;
 }
 #root .snapshot-detail-heading { min-width: 0; }
@@ -333,38 +322,35 @@
   font-size: 12px;
   line-height: 1.4;
 }
-/* Secondary navigation should never compete with the selected town name.
- * Render as a text action, while retaining an easy touch and focus target. */
+/* Icon-only map navigation sits directly beside the town name,
+ * with an invisible 44px touch target and no competing button chrome. */
 #root .snapshot-detail-topline > .snapshot-full-map-link {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  flex: 0 0 auto;
+  flex: 0 0 44px;
   align-self: center;
-  gap: 4px;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
   min-height: 44px;
-  margin: 0;
-  padding: 0 3px;
+  margin: 0 0 0 -5px;
+  padding: 0;
   border: 0;
-  border-radius: 5px;
+  border-radius: 8px;
   background: transparent;
   box-shadow: none;
   color: var(--cw-muted);
-  font: 500 12px/1.4 "Public Sans", system-ui, sans-serif;
-  letter-spacing: 0;
-  text-decoration: none;
-  white-space: nowrap;
   cursor: pointer;
 }
 #root .snapshot-detail-topline > .snapshot-full-map-link svg {
-  width: 13px;
-  height: 13px;
+  display: block;
+  width: 18px;
+  height: 18px;
   flex: 0 0 auto;
 }
 #root .snapshot-detail-topline > .snapshot-full-map-link:hover {
   color: var(--cw-heading);
-  text-decoration: underline;
-  text-underline-offset: 3px;
 }
 #root .snapshot-detail-topline > .snapshot-full-map-link:focus-visible {
   outline: 2px solid var(--cw-accent);
@@ -483,7 +469,7 @@
   #root .snapshot-detail-topline {
     flex-direction: row;
     align-items: center;
-    gap: 8px;
+    gap: 2px;
   }
   #root .snapshot-town-inline-metrics { gap: 5px 13px; margin-top: 10px; }
   #root .snapshot-town-inline-metrics > span { font-size: 12px; }
@@ -503,6 +489,6 @@
   #root .snapshot-watch-menu-trigger { flex-basis: 44px; width: 44px; }
   #root .snapshot-watch-open small { font-size: 10px; }
   #root .snapshot-town-inline-metrics { column-gap: 11px; }
-  #root .snapshot-detail-topline { gap: 6px; }
+  #root .snapshot-detail-topline { gap: 2px; }
 
 }
