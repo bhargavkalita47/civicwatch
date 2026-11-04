@@ -18,7 +18,7 @@ assert.match(root, /import "\.\/themes\.css";\s*import "\.\/hierarchy\.css";/, '
 assert.match(themeCSS, /:root\[data-theme="light"\]/);
 assert.match(themeCSS, /:root\[data-theme="dark"\]/);
 assert.match(themeCSS, /Instrument Serif/);
-assert.match(themeCSS, /Inter/);
+assert.match(themeCSS, /Public Sans/);
 assert.match(hierarchyCSS, /font-synthesis: none;/);
 assert.doesNotMatch(hierarchyCSS, /font-synthesis:\s*weight\s*;/);
 assert.match(hierarchyCSS, /--cw-atmosphere-page/);
