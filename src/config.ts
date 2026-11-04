@@ -4,14 +4,14 @@ function number(value: string | undefined, fallback: number) {
   return value && Number.isFinite(n) ? n : fallback;
 }
 export const config = {
-  // Production must never silently fall back to a browser-local identity.
-  // Only the Vite development server can run the deliberately isolated mock.
-  serviceMode: import.meta.env.PROD ? "api" : env.VITE_SERVICE_MODE === "api" ? "api" : "mock",
+  // DESIGN LAB ONLY. This branch uses a fully browser-local demo even in deployed previews.
+  // Do not merge this configuration into main. API credentials and real records are untouched.
+  serviceMode: ("mock" as "mock" | "api"),
   googleOAuthEnabled: env.VITE_GOOGLE_OAUTH_ENABLED === "true",
   facebookOAuthEnabled: env.VITE_FACEBOOK_OAUTH_ENABLED === "true",
   apiBaseUrl: (env.VITE_API_BASE_URL || "/api/v1").replace(/\/$/, ""),
-  // Empty by default: fictional reports must be enabled explicitly for local testing.
-  seedDemo: env.VITE_SEED_DEMO === "true",
+  // Design Lab always starts with fictional reports. Main retains opt-in seeding.
+  seedDemo: true,
   city: env.VITE_DEFAULT_CITY || "Guwahati",
   center: {
     lat: number(env.VITE_DEFAULT_LAT, 26.1716),
@@ -24,8 +24,8 @@ export const config = {
     '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap contributors</a>',
   geocoderBaseUrl: env.VITE_GEOCODER_BASE_URL?.trim() || "https://photon.komoot.io",
   tileMaxZoom: Math.max(1, Math.min(19, number(env.VITE_TILE_MAX_ZOOM, 19))),
-  storageKey: "civicwatch.dataset.v1",
-  sessionKey: "civicwatch.session.v1",
+  storageKey: "civicwatch.design-lab.dataset.v2",
+  sessionKey: "civicwatch.design-lab.session.v2",
   maxPhotoBytes: 15 * 1024 * 1024,
   maxAttachments: 3,
 } as const;
