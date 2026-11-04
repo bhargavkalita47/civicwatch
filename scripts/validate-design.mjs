@@ -38,7 +38,7 @@ assert.match(overview, /cw-overview-total/, 'Total reports must be the visual le
 assert.match(overview, /cw-overview-stat-grid/, 'Show open, resolved and people metrics');
 assert.ok(overview.indexOf('cw-overview-figures') < overview.indexOf('cw-overview-explore'), 'Numbers must precede Explore navigation');
 assert.match(overview, /onClick=\{onOpenMap\}/, 'Explore map CTA must be actionable');
-assert.match(app, /className=\{tab === "overview" \? "intro intro-overview" : tab === "snapshots" \? "intro intro-watchlist" : "intro"\}/, 'Overview and Watchlist receive scoped hero styling');
+assert.match(app, /className=\{tab === "overview" \? "intro intro-overview" : tab === "snapshots" \? "intro intro-watchlist" : tab === "explore" \? "intro intro-explore" : "intro"\}/, 'Overview, Watchlist and Explore retain independent hero styles');
 assert.match(app, /<Plus size=\{18\} \/><span>Report<\/span>/, 'Mobile header keeps the report shortcut');
 assert.match(app, /className="button report-button"[\s\S]{0,160}\{copy\.actions\.report\}/, 'Hero reporting CTA remains present on all tabs');
 assert.match(overviewNumbersCSS, /\.cw-overview-stat-people\s*\{\s*grid-column:\s*1\s*\/\s*-1;/, 'People metric spans the mobile grid');
