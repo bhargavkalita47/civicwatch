@@ -245,12 +245,21 @@ body { min-width: 0; }
   white-space: nowrap;
 }
 
-/* Match the mobile hamburger icon to the clock ink in each theme. */
+/* Match the mobile hamburger to the clock ink in each theme.
+   Use a neutral control surface; only the adjacent Report action has accent fill. */
 @media (max-width: 790px) {
-  #root .mobile-topbar .mobile-menu-trigger,
-  #root .mobile-topbar .mobile-menu-trigger svg {
+  #root .mobile-topbar .mobile-topbar-actions .mobile-menu-trigger {
     color: var(--cw-heading);
-    stroke: currentColor;
+    background: var(--cw-elevated);
+    border-color: var(--cw-border-strong);
+  }
+  #root .mobile-topbar .mobile-topbar-actions .mobile-menu-trigger svg {
+    color: var(--cw-heading);
+    stroke: var(--cw-heading);
+  }
+  #root .mobile-topbar .mobile-topbar-actions .mobile-menu-trigger:hover {
+    background: var(--cw-soft);
+    color: var(--cw-heading);
   }
 }
 
