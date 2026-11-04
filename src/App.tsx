@@ -624,7 +624,7 @@ useEffect(() => {
             <Plus size={18} /><span>Report</span>
           </button>
           <button type="button" ref={menuButtonRef} className="mobile-menu-trigger" aria-label="Open menu" aria-expanded={menuOpen} aria-controls="civicwatch-navigation" onClick={() => setMenuOpen(true)}>
-            <Menu size={22} style={{ color: "var(--cw-heading)", stroke: "var(--cw-heading)" }} />
+            <Menu size={22} />
           </button>
         </div>
       </header>
