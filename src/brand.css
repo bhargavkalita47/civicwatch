@@ -245,21 +245,13 @@ body { min-width: 0; }
   white-space: nowrap;
 }
 
-/* Match the mobile hamburger to the clock ink in each theme.
-   Use a neutral control surface; only the adjacent Report action has accent fill. */
+/* In the opened mobile navigation drawer, make the C-and-eye mark
+   use the same ink as the clock. The closed mobile topbar logo stays coral. */
 @media (max-width: 790px) {
-  #root .mobile-topbar .mobile-topbar-actions .mobile-menu-trigger {
+  #root #civicwatch-navigation.site-header .brand-mark,
+  #root #civicwatch-navigation.site-header .brand-mark > svg.civicwatch-logo-symbol {
     color: var(--cw-heading);
-    background: var(--cw-elevated);
-    border-color: var(--cw-border-strong);
-  }
-  #root .mobile-topbar .mobile-topbar-actions .mobile-menu-trigger svg {
-    color: var(--cw-heading);
-    stroke: var(--cw-heading);
-  }
-  #root .mobile-topbar .mobile-topbar-actions .mobile-menu-trigger:hover {
-    background: var(--cw-soft);
-    color: var(--cw-heading);
+    background: transparent;
   }
 }
 
