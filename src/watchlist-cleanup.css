@@ -65,12 +65,29 @@
   color: var(--cw-heading);
 }
 #root .local-snapshots-page .snapshot-add-button {
-  flex: 0 0 auto;
-  min-height: 44px;
+  display: grid;
+  flex: 0 0 44px;
+  place-items: center;
+  width: 44px;
+  min-width: 44px;
+  max-width: 44px;
   height: 44px;
-  padding: 0 12px;
-  font-size: 12px;
-  gap: 6px;
+  min-height: 44px;
+  padding: 0;
+  border: 1px solid var(--cw-border);
+  border-radius: 11px;
+  background: var(--cw-panel);
+  color: var(--cw-accent);
+  box-shadow: none;
+}
+#root .local-snapshots-page .snapshot-add-button:hover,
+#root .local-snapshots-page .snapshot-add-button[aria-expanded="true"] {
+  background: var(--cw-soft);
+  border-color: var(--cw-border-strong);
+}
+#root .local-snapshots-page .snapshot-add-button > svg {
+  display: block;
+  flex-shrink: 0;
 }
 
 /* Four contextual facts, not a second dashboard. The flex items keep
@@ -452,7 +469,7 @@
     padding-inline: 12px;
   }
   #root .snapshot-side-title h2 { font-size: 16px; }
-  #root .local-snapshots-page .snapshot-add-button { min-width: 87px; padding: 0 8px; }
+  #root .local-snapshots-page .snapshot-add-button { min-width: 44px; max-width: 44px; padding: 0; }
   #root .snapshot-watch-entry .snapshot-drag-handle { flex-basis: 44px; width: 44px; }
   #root .snapshot-watch-entry .snapshot-watch-select { gap: 5px; padding-inline: 3px; }
   #root .snapshot-watch-menu-trigger { flex-basis: 44px; width: 44px; }
