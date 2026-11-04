@@ -32,7 +32,7 @@
   }
   .mobile-topbar .mobile-brand > span:last-child {
     display: inline;
-    font-family: "Instrument Serif", Georgia, serif;
+    font-family: var(--cw-font-display, "Instrument Serif"), Georgia, serif;
     font-weight: 400;
     font-size: 27px;
     line-height: 1;
