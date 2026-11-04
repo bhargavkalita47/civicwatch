@@ -148,6 +148,15 @@ body { min-width: 0; }
   gap: 16px;
   border-top: 1px solid var(--cw-border);
 }
+#root > footer.site-footer .footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  column-gap: 18px;
+  row-gap: 5px;
+  min-width: 0;
+}
 #root > footer.site-footer .footer-copyright {
   font-family: "Public Sans", system-ui, sans-serif;
   font-size: 12px;
@@ -155,7 +164,7 @@ body { min-width: 0; }
   letter-spacing: 0;
   color: var(--cw-muted);
 }
-#root > footer.site-footer .footer-about {
+#root > footer.site-footer .footer-link {
   background: none;
   border: 0;
   border-radius: 3px;
@@ -166,10 +175,10 @@ body { min-width: 0; }
   font-weight: 500;
   cursor: pointer;
 }
-#root > footer.site-footer .footer-about:hover {
+#root > footer.site-footer .footer-link:hover {
   color: var(--cw-heading);
 }
-#root > footer.site-footer .footer-about:focus-visible {
+#root > footer.site-footer .footer-link:focus-visible {
   outline: 2px solid var(--cw-accent);
   outline-offset: 4px;
 }
@@ -539,5 +548,17 @@ dialog.modal[data-step-scroll] > .modal-header {
   #root .site-header .main-nav {
     margin-top: 27px;
     padding-top: 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  /* The links stay together while the footer is free to wrap on small screens. */
+  #root > footer.site-footer {
+    flex-wrap: wrap;
+    row-gap: 9px;
+  }
+  #root > footer.site-footer .footer-links {
+    justify-content: flex-start;
+    gap: 16px;
   }
 }
