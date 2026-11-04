@@ -97,6 +97,7 @@ it("integrates subtle, icon-free totals into the town list without another dashb
 it("opens and closes town search with the icon-only Add town control", async () => {
   await mount();
   const add = button("Add a town");
+  expect(add.closest(".snapshot-side-title")?.querySelector("h2")?.textContent).toBe("Your towns");
   expect(add.textContent?.trim()).toBe("");
   expect(add.querySelector("svg")).not.toBeNull();
   expect(add.getAttribute("title")).toBe("Add a town");
@@ -123,20 +124,43 @@ it("shows selected town metrics even for a single watched place", async () => {
   expect(container.querySelector(".snapshot-resolution-track")).toBeNull();
 });
 
-it("moves and removes a town through its actions, with a working Undo", async () => {
+it("reorders through the keyboard grip and offers only Remove in the compact menu, with Undo", async () => {
   await mount();
-  await act(async () => button("Manage Guwahati").click());
-  await act(async () => button("Move down").click());
+  const grip = button("Drag Guwahati to reorder, or press the up and down arrow keys");
+  await act(async () => {
+    grip.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true }));
+  });
   const reordered = Array.from(container.querySelectorAll(".snapshot-watch-place strong")).map((node) => node.textContent);
   expect(reordered).toEqual(["Jorhat", "Guwahati"]);
 
   await act(async () => button("Manage Guwahati").click());
+  const popup = container.querySelector(".snapshot-watch-menu");
+  expect(popup?.getAttribute("role")).toBe("menu");
+  expect(popup?.querySelectorAll("button")).toHaveLength(1);
+  expect(popup?.textContent?.trim()).toBe("Remove town");
+  expect(popup?.classList.contains("open-up")).toBe(true);
+  expect(container.querySelectorAll(".snapshot-watch-entry")).toHaveLength(2);
   await act(async () => button("Remove town").click());
   expect(container.querySelectorAll(".snapshot-watch-entry")).toHaveLength(1);
   expect(container.textContent).toContain("Guwahati removed from your watchlist.");
   await act(async () => button("Undo").click());
   const restored = Array.from(container.querySelectorAll(".snapshot-watch-place strong")).map((node) => node.textContent);
   expect(restored).toEqual(["Jorhat", "Guwahati"]);
+});
+
+it("closes the one-option town menu on outside click and Escape", async () => {
+  await mount();
+  await act(async () => button("Manage Guwahati").click());
+  expect(container.querySelector(".snapshot-watch-menu")).not.toBeNull();
+  await act(async () => {
+    document.body.dispatchEvent(new MouseEvent("pointerdown", { bubbles: true }));
+  });
+  expect(container.querySelector(".snapshot-watch-menu")).toBeNull();
+  await act(async () => button("Manage Guwahati").click());
+  await act(async () => {
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+  });
+  expect(container.querySelector(".snapshot-watch-menu")).toBeNull();
 });
 
 it("offers Undo even when removing the last watched town", async () => {
