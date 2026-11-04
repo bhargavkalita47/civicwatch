@@ -963,6 +963,7 @@ useEffect(() => {
                 pick={reportHerePoint ?? undefined}
                 onSelect={(cluster) => {
                   setReportHerePoint(null);
+                  setMapIssueId(null);
                   setSelection({ cluster });
                   if (isMobile) setExploreSheet("collapsed");
                   if (cluster.issues.length === 1)
