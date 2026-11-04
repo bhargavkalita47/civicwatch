@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import type { PointerEvent as ReactPointerEvent, KeyboardEvent as ReactKeyboardEvent } from "react";
-import { ArrowRight, GripVertical, MapPin, MoreHorizontal, Plus } from "lucide-react";
+import { ArrowRight, GripVertical, MoreHorizontal, Plus } from "lucide-react";
 import type { Category, City, Issue, LocationCluster, OverviewSnapshot } from "../domain/types";
 import { activeIssues, clusterIssues, relativeTime, summarizeIssues } from "../domain/logic";
 import { PlaceSearch } from "./PlaceSearch";
