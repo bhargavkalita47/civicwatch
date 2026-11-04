@@ -325,36 +325,6 @@
   #root .map-shell.explore-map.map-pan-enabled .leaflet-container {
     touch-action: none !important;
   }
-  #root .map-shell.explore-map .map-pan-toggle {
-    position: absolute;
-    z-index: 8;
-    right: 12px;
-    bottom: 78px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 7px;
-    min-height: 44px;
-    padding: 0 12px;
-    border: 1px solid #e5e1eb;
-    border-radius: 10px;
-    background: #fffdfb;
-    box-shadow: 0 4px 14px rgba(25, 22, 38, .12);
-    color: #34353e;
-    font-family: "Public Sans", system-ui, sans-serif;
-    font-size: 12px;
-    font-weight: 600;
-    line-height: 1.4;
-    cursor: pointer;
-  }
-  #root .map-shell.explore-map .map-pan-toggle[aria-pressed="true"] {
-    border-color: var(--cw-accent);
-    color: #34353e;
-  }
-  #root .map-shell.explore-map .map-pan-toggle:focus-visible {
-    outline: 2px solid var(--cw-accent);
-    outline-offset: 3px;
-  }
   #root .explore-toolbar {
     grid-template-columns: minmax(0, 1fr) auto;
     grid-template-areas: "search search" "chips filters";
@@ -389,6 +359,12 @@
     overflow: hidden;
     isolation: isolate;
   }
+  /* A fully expanded report sheet becomes a genuine viewport surface.
+   * Do not clip its fixed positioning inside the map stacking context. */
+  #root .map-workspace[aria-label="Explore report map"].sheet-viewport-full {
+    overflow: visible;
+    isolation: auto;
+  }
   #root .map-workspace .map-shell.explore-map {
     position: absolute;
     inset: 0;
@@ -417,7 +393,21 @@
   }
   #root .map-workspace .explore-reports-sheet.sheet-collapsed { height: 64px; }
   #root .map-workspace .explore-reports-sheet.sheet-half { height: 43%; }
-  #root .map-workspace .explore-reports-sheet.sheet-full { height: 92%; }
+  #root .map-workspace .explore-reports-sheet.sheet-full {
+    position: fixed;
+    inset: 0;
+    z-index: 5000;
+    width: 100vw;
+    max-width: none;
+    height: 100dvh;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+  #root .map-workspace .explore-reports-sheet.sheet-full .reports-panel-heading {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
   #root .map-workspace .reports-panel-heading {
     display: flex;
     flex-direction: column;
