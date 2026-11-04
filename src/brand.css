@@ -57,21 +57,43 @@ body { min-width: 0; }
   margin-inline: var(--cw-rail) 0; min-width: 0; width: auto; max-width: none; align-self: stretch;
 }
 #root > main { flex: 1 0 auto; margin-block: 0; }
-#root > footer {
+#root > footer.site-footer {
   flex-shrink: 0;
   margin-block: auto 0;
-  padding-block: 24px max(24px, env(safe-area-inset-bottom));
+  padding-block: 18px max(20px, env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-top: 1px solid var(--cw-border);
 }
-#root > footer .footer-brand {
-  display: flex; flex-direction: column; gap: 6px; align-items: flex-start; white-space: normal;
+#root > footer.site-footer .footer-copyright {
+  font-family: "Public Sans", system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: var(--cw-muted);
 }
-#root > footer .footer-brand > span { display: block; margin: 0; }
-
-#root > footer p {
-  max-width: 65ch;
-  margin: 0 0 0 auto;
-  text-align: right;
+#root > footer.site-footer .footer-about {
+  background: none;
+  border: 0;
+  border-radius: 3px;
+  padding: 4px 0;
+  color: var(--cw-muted);
+  font-family: "Public Sans", system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
 }
+#root > footer.site-footer .footer-about:hover {
+  color: var(--cw-heading);
+}
+#root > footer.site-footer .footer-about:focus-visible {
+  outline: 2px solid var(--cw-accent);
+  outline-offset: 4px;
+}
+#root .intro h1 { margin-top: 0; }
 
 
 /* Reserve the serif for the page hero and headline statistics. */
@@ -291,16 +313,15 @@ dialog.modal[data-step-scroll] > .modal-header {
 @media (max-width: 790px) {
   :root { --cw-rail: 0px; }
   #root > main { padding-inline: 16px; padding-bottom: 28px; }
-  #root > footer {
-    margin-inline: 0; padding-inline: 20px;
-    display: flex; flex-direction: column; align-items: center;
-    gap: 14px; text-align: center;
+  #root > footer.site-footer {
+    margin-inline: 0;
+    padding-inline: 20px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    text-align: left;
   }
-   #root > footer p {
-  margin: 0 auto;
-  text-align: center;
-}
-  #root > footer .footer-brand { align-items: center; }
   #root .intro { gap: 20px; padding-block: 28px 24px; }
   #root .intro h1 { font-size: clamp(38px, 9vw, 54px); }
   #root .intro > .button { align-self: center; justify-content: center; }
