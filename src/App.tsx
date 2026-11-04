@@ -645,7 +645,6 @@ useEffect(() => {
           </span>
           <HeaderClock />
         </a>
-        <span className="navigation-caption">{copy.brand.navCaption}</span>
         <nav className="main-nav" aria-label="Main navigation">
           <button
             className={tab === "overview" ? "active" : ""} aria-current={tab === "overview" ? "page" : undefined}
@@ -728,10 +727,6 @@ useEffect(() => {
       <main id="main" inert={isMobile && menuOpen}>
         <section className="intro">
           <div>
-            <span className="eyebrow">
-              <i />
-              {copy.brand.eyebrow}
-            </span>
             <h1>
               {copy.pages[tab].title}
             </h1>
@@ -1074,11 +1069,9 @@ useEffect(() => {
           </div>
         </section>}
       </main>
-      <footer>
-        <div className="footer-brand">
-          CivicWatch<span>{copy.brand.tagline}</span>
-        </div>
-        <p>{copy.brand.disclosure}</p>
+      <footer className="site-footer">
+        <span className="footer-copyright">© {new Date().getFullYear()} CivicWatch</span>
+        <button type="button" className="footer-about" onClick={() => setAbout(true)} aria-label="About CivicWatch">About</button>
       </footer>
       {filterOpen && (
         <Modal
