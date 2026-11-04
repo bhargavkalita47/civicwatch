@@ -87,7 +87,7 @@ it("integrates subtle, icon-free totals into the town list without another dashb
   expect(mapAction?.classList.contains("snapshot-full-map-link")).toBe(true);
   expect(mapAction?.classList.contains("secondary")).toBe(false);
   expect(mapAction?.querySelector("svg")).not.toBeNull();
-  expect(topline?.compareDocumentPosition(town) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  expect((topline?.compareDocumentPosition(town) ?? 0) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   await act(async () => button("View full map").click());
   expect(onExplore).toHaveBeenCalledWith(towns[0]);
 });
