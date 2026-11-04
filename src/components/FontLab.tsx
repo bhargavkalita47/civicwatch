@@ -170,6 +170,10 @@ export function FontLab() {
             <button type="button" role="tab" aria-selected={tab === "fonts"} onClick={() => setTab("fonts")}>Typography</button>
             <button type="button" role="tab" aria-selected={tab === "colors"} onClick={() => setTab("colors")}>Colors & themes</button>
           </nav>
+          <button type="button" className="cw-design-lab-map-link"
+            onClick={() => window.dispatchEvent(new Event("civicwatch:design-preview-map"))}>
+            View colors on Explore map
+          </button>
           <div hidden={tab !== "fonts"} className="cw-design-lab-tab" role="tabpanel">
             <p className="cw-font-lab-help">Try Google Font pairings directly on CivicWatch. Preferences save only in this browser.</p>
           <div className="cw-font-lab-current" aria-live="polite">
