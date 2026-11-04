@@ -1,4 +1,4 @@
-import { ArrowUpRight, CheckCircle2, ClipboardList, Users } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 import type { OverviewSnapshot } from "../domain/types";
 import { copy } from "../copy";
 
@@ -31,24 +31,20 @@ export function Overview({ stats, loading, error, onReload, onOpenMap }: Props) 
     : 0;
   const metrics = [
     {
-      label: "Still open", value: total.open, icon: ClipboardList,
+      label: "Still open", value: total.open,
       description: copy.overview.captions.open, tone: "open",
     },
     {
-      label: "Resolved", value: total.resolved, icon: CheckCircle2,
+      label: "Resolved", value: total.resolved,
       description: copy.overview.captions.resolved, tone: "resolved",
     },
     {
-      label: "People involved", value: total.people, icon: Users,
+      label: "People involved", value: total.people,
       description: copy.overview.captions.people, tone: "people",
     },
   ];
 
   return <section className="overview-page cw-overview-numbers" aria-label="Community reporting totals">
-    <div className="cw-overview-eyebrow">
-      <span className="section-kicker">PLATFORM TOTALS</span>
-    </div>
-
     <div className="cw-overview-figures" aria-label="CivicWatch platform statistics">
       <article className="cw-overview-total">
         <div className="cw-overview-total-label">Total reports</div>
@@ -56,9 +52,9 @@ export function Overview({ stats, loading, error, onReload, onOpenMap }: Props) 
         <p>{copy.overview.captions.reports}</p>
       </article>
       <div className="cw-overview-stat-grid">
-        {metrics.map(({ label, value, icon: Icon, description, tone }) =>
+        {metrics.map(({ label, value, description, tone }) =>
           <article className={`cw-overview-stat cw-overview-stat-${tone}`} key={label}>
-            <div className="cw-overview-stat-head"><span>{label}</span><Icon size={20} aria-hidden="true"/></div>
+            <div className="cw-overview-stat-head"><span>{label}</span></div>
             <strong>{value.toLocaleString()}</strong>
             <p>{description}</p>
           </article>)}
