@@ -249,8 +249,11 @@ export function LocalSnapshots({ cities, watchlist, setWatchlist, stats, issues,
     <div className="snapshot-detail">
       {selected ? <>
         <div className="snapshot-detail-header">
-          <div className="snapshot-detail-heading">
+          <div className="snapshot-detail-topline">
             <h2>{selected.name}</h2>
+            <button type="button" className="button secondary" onClick={() => onExplore(selected)}>{copy.watchlist.mapAction} <ArrowRight size={15} aria-hidden="true"/></button>
+          </div>
+          <div className="snapshot-detail-heading">
             <p>{selected.region}, {selected.country}</p>
             <div className="snapshot-town-inline-metrics" aria-label={`Report totals for ${selected.name}`}>
               <span><strong>{selectedStats.reports.toLocaleString()}</strong> reports</span>
@@ -260,7 +263,6 @@ export function LocalSnapshots({ cities, watchlist, setWatchlist, stats, issues,
             </div>
             {selectedStats.reports > 0 && <p className="snapshot-town-resolution">{resolution}% resolved</p>}
           </div>
-          <button type="button" className="button secondary" onClick={() => onExplore(selected)}>{copy.watchlist.mapAction} <ArrowRight size={15} aria-hidden="true"/></button>
         </div>
         <div className="snapshot-detail-map"><CivicMap key={selected.id} compact center={selected.center} categories={categories} clusters={clusters} onSelect={onSelectCluster}/></div>
         <div className="snapshot-activity">{recent.length ? <><div className="snapshot-activity-heading"><h3>{copy.watchlist.recent}</h3></div>{recent.map((issue) => <article key={issue.id} className="snapshot-activity-row"><span className="snapshot-status-dot"/><div><strong>{issue.title}</strong><p>{issue.status === "resolved" ? "Resolved" : "Open"} · {relativeTime(issue.createdAt)}</p></div></article>)}</> : <div className="snapshot-no-reports"><strong>{copy.watchlist.noReports}</strong><p>{copy.watchlist.noReportsText}</p><button className="button secondary" onClick={() => onReport(selected)}>{copy.actions.report}</button></div>}</div>
