@@ -431,8 +431,11 @@ useEffect(() => {
   const reportGroups = useMemo(() => watchlistReportGroups(watchlist, cityIssues), [watchlist, cityIssues]);
   const reportCounts = {total: reportGroups.all.length, active: reportGroups.active.length, inactive: reportGroups.inactive.length};
   function openResidentProfile(userId: string) {
-    // Only UUIDs produced by the issue/comment data may enter the profile route.
-    if (!/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(userId)) return;
+    // Live accounts require UUIDs; the isolated preview also supports its
+    // known fictional reporter IDs so sample profile links remain interactive.
+    const isLiveId = /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(userId);
+    const isDemoReporter = config.uiCleanupDemo && Boolean(data?.users.some(person => person.id === userId));
+    if (!isLiveId && !isDemoReporter) return;
     setMemberReturn({ tab, selection });
     setMemberId(userId);
     setSelection(null);
