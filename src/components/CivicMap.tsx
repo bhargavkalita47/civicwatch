@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { LocateFixed, Minus, Plus, Layers, RotateCcw, Hand } from "lucide-react";
+import { LocateFixed, Minus, Plus, Layers, RotateCcw } from "lucide-react";
 import type { Category, Coordinate, LocationCluster } from "../domain/types";
 import { normalizedPoint, type MapBounds } from "../domain/geography";
 import { markerColor, peopleCount } from "../domain/logic";
@@ -51,7 +51,7 @@ export interface MapProps {
   pick?: Coordinate;
   focus?: Coordinate;
   compact?: boolean;
-  /** When enabled, a one-finger swipe scrolls the page until Move map is selected. */
+  /** On mobile a map tap unlocks dragging; tapping outside restores page scrolling. */
   scrollFriendly?: boolean;
   onCenter?: (point: Coordinate) => void;
   onBounds?: (bounds: MapBounds) => void;
@@ -80,6 +80,8 @@ export function CivicMap({
   const callbacks = useRef({ onSelect, onPick, onCenter, onBounds, onError });
   callbacks.current = { onSelect, onPick, onCenter, onBounds, onError };
   const [panEnabled, setPanEnabled] = useState(false);
+  const panEnabledRef = useRef(false);
+  panEnabledRef.current = panEnabled;
   const [legend, setLegend] = useState(false),
     [tileError, setTileError] = useState(false),
     [locating, setLocating] = useState(false),
@@ -111,12 +113,18 @@ export function CivicMap({
       .on("load", () => setTileError(false))
       .addTo(instance);
     markers.current = L.layerGroup().addTo(instance);
-    instance.on("click", (event: L.LeafletMouseEvent) =>
+    instance.on("click", (event: L.LeafletMouseEvent) => {
+      // On mobile, the first empty-map tap activates browsing instead of
+      // unexpectedly placing a report pin; a subsequent tap picks a point.
+      if (scrollFriendly && !panEnabledRef.current) {
+        setPanEnabled(true);
+        return;
+      }
       callbacks.current.onPick?.(normalizedPoint({
         lat: event.latlng.lat,
         lng: event.latlng.lng,
-      })),
-    );
+      }));
+    });
     const updateViewport = () => {
       const c = instance.getCenter();
       const b = instance.getBounds();
@@ -135,8 +143,8 @@ export function CivicMap({
     };
   }, [compact]);
 
-  // Mobile map defaults to normal document scrolling. A deliberate toggle
-  // temporarily unlocks dragging; marker taps and zoom controls always work.
+  // Mobile map defaults to page scrolling, activates on the first empty-map
+  // tap and deactivates on a tap outside the map shell.
   useEffect(() => {
     const instance = map.current;
     if (!instance) return;
@@ -149,6 +157,17 @@ export function CivicMap({
   useEffect(() => {
     if (!scrollFriendly) setPanEnabled(false);
   }, [scrollFriendly]);
+
+  useEffect(() => {
+    if (!scrollFriendly || !panEnabled) return;
+    const onOutsideTap = (event: PointerEvent) => {
+      const target = event.target;
+      const shell = container.current?.parentElement;
+      if (target instanceof Node && shell && !shell.contains(target)) setPanEnabled(false);
+    };
+    document.addEventListener("pointerdown", onOutsideTap, true);
+    return () => document.removeEventListener("pointerdown", onOutsideTap, true);
+  }, [scrollFriendly, panEnabled]);
 
   useEffect(() => {
     const group = markers.current;
@@ -269,7 +288,9 @@ export function CivicMap({
         aria-label={
           compact && onPick
             ? "Choose the issue location on the map"
-            : "Interactive civic issue map"
+            : scrollFriendly
+              ? "Civic issue map. Tap to activate map dragging; tap outside the map to scroll the page."
+              : "Interactive civic issue map"
         }
       />
       {!compact && showLocationBadge && (
@@ -301,13 +322,6 @@ export function CivicMap({
           </>}
         </div>
       </div>
-      {scrollFriendly && !compact && <button type="button" className="map-pan-toggle"
-        aria-pressed={panEnabled}
-        title={panEnabled ? "Return to page scrolling" : "Allow one-finger map dragging"}
-        onClick={() => setPanEnabled(value => !value)}>
-        <Hand size={16} aria-hidden="true"/>
-        <span>{panEnabled ? "Scroll page" : "Move map"}</span>
-      </button>}
       {!compact && legend && (
         <div className="map-key" role="region" aria-label="Issue types">
           <div className="map-key-heading">
