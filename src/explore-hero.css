@@ -1,0 +1,52 @@
+/*
+ * CivicWatch / Explore Map page hero.
+ * Match the approved Overview and Town Watchlist headline / supporting copy
+ * exactly, while keeping the Explore map the only map-first workspace.
+ * Loaded after legacy styles to preserve consistent page hierarchy.
+ */
+#root .intro-explore {
+  padding-bottom: clamp(24px, 2.7vw, 36px);
+  gap: clamp(18px, 2vw, 27px);
+  border-bottom: 1px solid var(--cw-border);
+}
+#root .intro-explore h1 {
+  font-size: clamp(52px, 5.15vw, 76px);
+  line-height: 1.08;
+  margin-bottom: 12px;
+}
+#root .intro-explore p {
+  font-size: clamp(14px, 1.2vw, 16px);
+  line-height: 1.55;
+  max-width: 62ch;
+  color: var(--cw-muted);
+}
+/* The line separates the hero from the main map, like the overview
+ * statistics and the watchlist workspace. Keep the map panel itself intact. */
+#root .workspace-explore {
+  margin-top: clamp(22px, 2.2vw, 30px);
+}
+
+@media (max-width: 790px) {
+  #root .intro-explore {
+    gap: 15px;
+    padding-top: 25px;
+    padding-bottom: 23px;
+  }
+  #root .intro-explore h1 {
+    font-size: clamp(40px, 9.6vw, 56px);
+    line-height: 1.08;
+  }
+  #root .intro-explore p {
+    font-size: 14px;
+    line-height: 1.55;
+    max-width: 45ch;
+  }
+  /* Reuse the same shared report-button width, height and type as
+   * Overview / Watchlist; do not shrink it for Explore. */
+  #root .intro-explore > .report-button {
+    align-self: center;
+  }
+  #root .workspace-explore {
+    margin-top: 20px;
+  }
+}
