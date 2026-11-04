@@ -6,9 +6,6 @@
  */
 export const copy = {
   brand: {
-    eyebrow: "THE COMPLAINT DEPARTMENT",
-    navCaption: "THE COMPLAINT DESK",
-    tagline: "Infrastructure ages. The complaints stay fresh.",
     aboutTitle: "Some problems become landmarks. We’d rather they stayed complaints.",
     aboutBody: "CivicWatch maps potholes, broken lights, blocked drains, and other civic problems people are tired of navigating around. Report what you see, confirm what others have reported, and keep the record updated.",
     aboutEnding: "We provide the map and the paper trail. The repair crew remains conspicuously absent.",
