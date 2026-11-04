@@ -619,7 +619,7 @@ useEffect(() => {
             if (isMobile) setExploreSheet("collapsed");
           }
           openIssue(issue);
-        }
+        }}
       >
         <div className="issue-card-top">
           <CategoryBadge category={c} />
