@@ -102,7 +102,24 @@ assert.match(mobileWatchlistCSS, /\.snapshot-detail\s*\{[^}]*border-top:\s*1px s
 assert.match(mobileWatchlistCSS, /\.snapshot-detail-map\s*\{[^}]*border-radius:\s*12px;/, 'The embedded map retains its own rounded frame');
 assert.match(mobileWatchlistCSS, /\.snapshot-side-head,\s*#root \.local-snapshots-page \.snapshot-detail-header\s*\{[^}]*backdrop-filter:\s*none;/, 'Mobile headers must not float on glass surfaces');
 const exploreCSS = read('src/explore.css');
+const exploreHeroCSS = read('src/explore-hero.css');
 const searchCode = read('src/components/ExploreSearch.tsx');
+assert.match(root, /import "\.\/watchlist-cleanup\.css";\s*import "\.\/explore-hero\.css";/, 'Explore typography must load after Overview and Watchlist refinements');
+const headlineSizes = ['clamp(52px, 5.15vw, 76px)', 'clamp(40px, 9.6vw, 56px)'];
+for (const size of headlineSizes) {
+  assert.ok(overviewNumbersCSS.includes(`font-size: ${size};`), 'Overview retains the agreed headline size');
+  assert.ok(watchlistCleanupCSS.includes(`font-size: ${size};`), 'Watchlist retains the agreed headline size');
+  assert.ok(exploreHeroCSS.includes(`font-size: ${size};`), 'Explore must match the enlarged Overview / Watchlist headline size');
+}
+assert.match(exploreHeroCSS, /\.intro-explore\s*\{[^}]*padding-bottom:\s*clamp\(24px, 2\.7vw, 36px\);[^}]*border-bottom:\s*1px solid var\(--cw-border\);/, 'Explore hero needs matching whitespace and separator');
+assert.match(exploreHeroCSS, /\.workspace-explore\s*\{[^}]*margin-top:\s*clamp\(22px, 2\.2vw, 30px\);/, 'Map workspace must sit below the hero divider');
+assert.match(exploreHeroCSS, /\.intro-explore h1\s*\{[^}]*line-height:\s*1\.08;[^}]*margin-bottom:\s*12px;/, 'Explore heading matches Overview rhythm');
+assert.match(exploreHeroCSS, /\.intro-explore p\s*\{[^}]*line-height:\s*1\.55;[^}]*max-width:\s*62ch;/, 'Explore supporting sentence matches Overview size and width');
+assert.doesNotMatch(exploreCSS, /\.intro-explore > \.report-button/, 'Old smaller Explore report button must not override shared sizing');
+assert.doesNotMatch(exploreHeroCSS, /\.intro-explore > \.report-button\s*\{[^}]*(?:width|height|padding):/, 'Explore report button must inherit the same dimensions as other sections');
+assert.match(exploreHeroCSS, /@media \(max-width: 790px\)/, 'Explore needs matching mobile headline rhythm');
+assert.match(app, /className="button report-button"/, 'All sections retain the report action');
+
 assert.match(app, /intro-explore/, 'Explore has a scoped compact mobile hero');
 assert.match(exploreCSS, /grid-template-areas:\s*"search filters" "chips chips";/, 'Desktop toolbar uses search and filters above categories');
 assert.match(exploreCSS, /grid-template-areas:\s*"search search" "chips filters";/, 'Mobile toolbar preserves a scrolling category row');
