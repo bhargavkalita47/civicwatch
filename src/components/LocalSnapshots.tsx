@@ -226,30 +226,50 @@ export function LocalSnapshots({ cities, watchlist, setWatchlist, stats, issues,
       </div>}
       <div className="snapshot-watch-rows">
         {watchlist.map((city, index) => {
-            const cityStats = stats.cities[city.id] ?? summarizeIssues(issues.filter((issue) => issue.cityId === city.id));
-            return <div key={city.id} data-watch-id={city.id} className={`snapshot-watch-row ${selectedKey === city.id ? "selected" : ""} ${draggingId === city.id ? "dragging" : ""} ${dragTargetId === city.id ? "drag-target" : ""}`}>
+          const cityStats = stats.cities[city.id] ?? summarizeIssues(issues.filter((issue) => issue.cityId === city.id));
+          const actionsOpen = openActionsId === city.id;
+          return <div key={city.id} className="snapshot-watch-entry">
+            <div data-watch-id={city.id} className={`snapshot-watch-row ${selectedKey === city.id ? "selected" : ""} ${draggingId === city.id ? "dragging" : ""} ${dragTargetId === city.id ? "drag-target" : ""}`}>
               {watchlist.length > 1 && <button className="snapshot-drag-handle" type="button" aria-label={`Drag ${city.name} to reorder, or press the up and down arrow keys`} title="Drag to reorder · arrow keys also work"
                 onPointerDown={(event) => startDrag(event, city.id)} onPointerMove={updateDrag} onPointerUp={finishDrag} onPointerCancel={clearDrag}
-                onKeyDown={(event) => onGripKeyDown(event, index)}><GripVertical size={17}/></button>}
-              <button className="snapshot-watch-select" onClick={() => setSelectedId(city.id)} aria-current={selectedKey === city.id ? "true" : undefined}><MapPin size={15}/><span><strong>{city.name}</strong><small>{city.region}, {city.country}</small></span><b>{cityStats.open}</b></button>
-              <div className="snapshot-watch-actions">{watchlist.length > 1 && <><button aria-label={`Move ${city.name} up`} disabled={index === 0} onClick={() => move(index, -1)}><ArrowUp size={13}/></button><button aria-label={`Move ${city.name} down`} disabled={index === watchlist.length - 1} onClick={() => move(index, 1)}><ArrowDown size={13}/></button></>}<button aria-label={`Remove ${city.name}`} onClick={() => remove(city.id)}><Trash2 size={13}/></button></div>
-            </div>;
-          })}
+                onKeyDown={(event) => onGripKeyDown(event, index)}><GripVertical size={17} aria-hidden="true"/></button>}
+              <button className="snapshot-watch-select" type="button" onClick={() => { setSelectedId(city.id); setOpenActionsId(null); }}
+                aria-current={selectedKey === city.id ? "true" : undefined}
+                aria-label={`Select ${city.name}, ${cityStats.open} open reports`}>
+                <span className="snapshot-watch-place"><strong>{city.name}</strong><small>{city.region}, {city.country}</small></span>
+                <span className="snapshot-watch-open"><b>{cityStats.open.toLocaleString()}</b><small>open</small></span>
+              </button>
+              <button className="snapshot-watch-menu-trigger" type="button"
+                aria-label={`Manage ${city.name}`} aria-expanded={actionsOpen}
+                onClick={() => setOpenActionsId(actionsOpen ? null : city.id)}><MoreHorizontal size={18} aria-hidden="true"/></button>
+            </div>
+            {actionsOpen && <div className="snapshot-watch-menu" role="group" aria-label={`Manage ${city.name}`}
+              onKeyDown={(event) => { if (event.key === "Escape") setOpenActionsId(null); }}>
+              {watchlist.length > 1 && <>
+                <button type="button" disabled={index === 0} onClick={() => move(index, -1)}>Move up</button>
+                <button type="button" disabled={index === watchlist.length - 1} onClick={() => move(index, 1)}>Move down</button>
+              </>}
+              <button type="button" className="snapshot-watch-remove" onClick={() => remove(city.id)}>Remove town</button>
+            </div>}
+          </div>;
+        })}
       </div>
-      <p className="snapshot-watch-foot">{watchlist.length > 1 ? "Drag to reorder · " : ""}{watchlist.length} of {MAX_PLACES} towns</p>
+      <p className="snapshot-watch-foot">{watchlist.length > 1 ? "Drag to reorder · " : ""}Up to {MAX_PLACES} towns</p>
     </div>
     <div className="snapshot-detail">
       {selected ? <>
-        <div className="snapshot-detail-header"><div><span className="section-kicker">SELECTED TOWN · {selected.region.toUpperCase()}</span><h2>{selected.name}<span className="snapshot-muted">, {selected.country}</span></h2></div><button className="button secondary" onClick={() => onExplore(selected)}>{copy.watchlist.mapAction} <ArrowRight size={15}/></button></div>
+        <div className="snapshot-detail-header">
+          <div className="snapshot-detail-heading"><h2>{selected.name}</h2><p>{selected.region}, {selected.country}</p></div>
+          <button type="button" className="button secondary" onClick={() => onExplore(selected)}>{copy.watchlist.mapAction} <ArrowRight size={15} aria-hidden="true"/></button>
+        </div>
         <div className="snapshot-detail-map"><CivicMap key={selected.id} compact center={selected.center} categories={categories} clusters={clusters} onSelect={onSelectCluster}/></div>
         {selectedStats.reports > 0 && <div className="snapshot-town-section">
-          {watchlist.length > 1 && <><div className="snapshot-town-section-head"><h3>{copy.watchlist.townTotals}</h3></div>
-          <dl className="snapshot-town-metrics">
+          {watchlist.length > 1 && <dl className="snapshot-town-metrics" aria-label={`Report totals for ${selected.name}`}>
             <div><dt>All reports</dt><dd>{selectedStats.reports.toLocaleString()}</dd></div>
             <div><dt>Still open</dt><dd>{selectedStats.open.toLocaleString()}</dd></div>
             <div><dt>Resolved</dt><dd>{selectedStats.resolved.toLocaleString()}</dd></div>
             <div><dt>People involved</dt><dd>{selectedStats.people.toLocaleString()}</dd></div>
-          </dl></>}
+          </dl>}
           <div className="snapshot-resolution"><div><strong>{copy.watchlist.resolutionRate}</strong><span>{selectedStats.reports ? `${resolution}%` : copy.watchlist.noData}</span></div><div className="snapshot-resolution-track"><i style={{ width: `${resolution}%` }}/></div>{selectedStats.resolved > 0 && <small>{copy.watchlist.resolutionCaption}</small>}</div>
         </div>}
         <div className="snapshot-activity">{recent.length ? <><div className="snapshot-activity-heading"><h3>{copy.watchlist.recent}</h3></div>{recent.map((issue) => <article key={issue.id} className="snapshot-activity-row"><span className="snapshot-status-dot"/><div><strong>{issue.title}</strong><p>{issue.status === "resolved" ? "Resolved" : "Open"} · {relativeTime(issue.createdAt)}</p></div></article>)}</> : <div className="snapshot-no-reports"><strong>{copy.watchlist.noReports}</strong><p>{copy.watchlist.noReportsText}</p><button className="button secondary" onClick={() => onReport(selected)}>{copy.actions.report}</button></div>}</div>
