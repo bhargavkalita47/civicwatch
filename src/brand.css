@@ -426,3 +426,24 @@ dialog.modal[data-step-scroll] > .modal-header {
 }
 
 
+
+/* UI cleanup: visually separate the clock/logo identity from the navigation.
+   The divider and breathing room work in the desktop rail and mobile drawer. */
+#root .site-header .main-nav {
+  margin-top: 25px;
+  border-top: 1px solid var(--cw-border);
+  padding-top: 15px;
+}
+
+#root > footer.site-footer .footer-demo-label {
+  color: var(--cw-muted);
+  font-size: 11px;
+  font-weight: 400;
+}
+
+@media (max-width: 790px) {
+  #root .site-header .main-nav {
+    margin-top: 27px;
+    padding-top: 15px;
+  }
+}
