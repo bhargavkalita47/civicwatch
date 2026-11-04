@@ -180,9 +180,7 @@ export function LocalSnapshots({ cities, watchlist, setWatchlist, stats, issues,
   // duplicate empty-state cards. The place search IS the only start action.
   if (!watchlist.length) return <section className="local-snapshots-page snapshot-is-empty" aria-label="Town watchlist">
     <div className="snapshot-onboarding">
-      <div className="snapshot-onboarding-icon" aria-hidden="true"><MapPin size={23}/></div>
       <div className="snapshot-onboarding-copy">
-        <span className="section-kicker">START YOUR WATCHLIST</span>
         <h2>Choose your first town.</h2>
         <p>Search for a city or town to follow its civic reports.</p>
       </div>
