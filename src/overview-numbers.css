@@ -40,11 +40,6 @@
   font-weight: 650;
   letter-spacing: .09em;
 }
-.cw-overview-scope {
-  font-size: 12px;
-  line-height: 1.45;
-  color: var(--cw-muted);
-}
 
 /* All four metrics share a top label, bottom-aligned value and a
    predictable caption zone. The large total remains the visual lead. */
@@ -274,19 +269,6 @@
   display: block;
   flex-shrink: 0;
 }
-.cw-overview-numbers .overview-disclaimer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 8px 20px;
-  margin: 0;
-  padding: 0 2px;
-  border: none;
-  color: var(--cw-muted);
-  font-size: 12px;
-  line-height: 1.5;
-}
 
 @media (max-width: 1080px) {
   .cw-overview-figures { grid-template-columns: minmax(0, 1fr); }
@@ -316,7 +298,6 @@
 @media (max-width: 640px) {
   .cw-overview-numbers { gap: 12px; padding-bottom: 22px; }
   .cw-overview-eyebrow { display: grid; gap: 4px; }
-  .cw-overview-scope { font-size: 12px; }
   .cw-overview-figures,
   .cw-overview-stat-grid { gap: 9px; }
   .cw-overview-total {
@@ -369,7 +350,6 @@
     padding: 18px;
   }
   .cw-overview-explore-button { width: 100%; }
-  .cw-overview-numbers .overview-disclaimer { display: grid; }
 }
 
 @media (max-width: 360px) {
