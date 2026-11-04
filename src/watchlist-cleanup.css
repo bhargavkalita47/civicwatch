@@ -450,6 +450,50 @@
     padding-top: 20px;
     gap: 14px;
   }
+
+  /* Mobile watchlist is a single continuous workspace, not two
+   * independently elevated desktop cards. Preserve the desktop panels. */
+  #root .local-snapshots-page .local-snapshots {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+    background: transparent;
+  }
+  #root .local-snapshots-page .snapshot-watchlist,
+  #root .local-snapshots-page .snapshot-detail {
+    position: static;
+    min-height: 0;
+    overflow: visible;
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+  #root .local-snapshots-page .snapshot-side-head,
+  #root .local-snapshots-page .snapshot-detail-header {
+    background: transparent;
+    box-shadow: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+  #root .local-snapshots-page .snapshot-side-head {
+    padding: 14px 16px 8px;
+  }
+  #root .local-snapshots-page .snapshot-watch-rows {
+    padding: 8px 8px 0;
+  }
+  #root .local-snapshots-page .snapshot-detail {
+    margin-top: 18px;
+    padding-top: 16px;
+    border-top: 1px solid var(--cw-border);
+  }
+  /* The embedded map alone keeps its own soft frame. */
+  #root .local-snapshots-page .snapshot-detail-map {
+    margin-inline: 16px;
+    border-radius: 12px;
+    overflow: hidden;
+  }
   #root .snapshot-inline-summary { padding: 0 16px 14px; }
   #root .snapshot-inline-metrics { gap: 5px 14px; }
   #root .snapshot-watch-entry .snapshot-drag-handle {
