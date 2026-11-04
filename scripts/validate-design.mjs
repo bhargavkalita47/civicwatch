@@ -63,7 +63,16 @@ assert.match(watchlist, /snapshot-onboarding-search/, 'A single place-search flo
 assert.doesNotMatch(watchlist, /snapshot-detail-empty/, 'Duplicated empty-state CTA must be removed');
 assert.match(watchlist, /watchlist.length > 1 && <button className="snapshot-drag-handle"/, 'Single watched towns should not show disabled drag handles');
 assert.match(watchlistLayout, /snapshot-onboarding/, 'New first-use layout must have its own styles');
-assert.match(copy, /The usual problems\. Your chosen places\./);
+assert.match(copy, /placesHeading: "Your towns"/);
+assert.doesNotMatch(copy, /The usual problems/, "Competing headline must be removed");
+const watchlistCleanupCSS = read("src/watchlist-cleanup.css");
+assert.match(root, /watchlist-cleanup\.css/, "List-first styling must be loaded");
+assert.match(watchlistCleanupCSS, /snapshot-watch-summary-compact/, "Combined totals must be compact");
+assert.match(watchlist, /snapshot-watch-menu-trigger/, "Town actions should be grouped");
+assert.match(watchlist, /function undoRemove/, "Town removal must support Undo");
+assert.match(watchlist, /cityStats\.open\.toLocaleString/, "Town counts should be labelled");
+assert.match(watchlist, /CivicMap key=\{selected\.id\} compact/, "Map stays as a preview");
+assert.doesNotMatch(watchlist, /snapshot-summary-heading|THE USUAL PROBLEMS/, "No duplicate watchlist headline");
 assert.match(watchlistLogic, /summarizeWatchlist/);
 assert.match(watchlistLogic, /new Set\(relevantIssues\.flatMap/, 'Do not double-count people in multiple towns');
 assert.match(overview, /stats\.platform/, 'Overview must show platform-wide totals');
