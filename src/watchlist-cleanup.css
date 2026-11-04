@@ -284,13 +284,21 @@
 }
 #root .local-snapshots-page .snapshot-detail-header {
   display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 0;
+  padding: 19px 20px 16px;
+}
+#root .snapshot-detail-topline {
+  display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 19px 20px 16px;
+  min-width: 0;
 }
 #root .snapshot-detail-heading { min-width: 0; }
-#root .snapshot-detail-heading h2 {
+#root .snapshot-detail-topline h2 {
   margin: 0;
   font-family: "Public Sans", system-ui, sans-serif;
   font-size: clamp(19px, 1.8vw, 24px);
@@ -305,9 +313,16 @@
   font-size: 12px;
   line-height: 1.4;
 }
-#root .snapshot-detail-header .button {
-  min-height: 40px;
+#root .snapshot-detail-topline > .button {
+  min-height: 44px;
+  flex: 0 0 auto;
+  align-self: center;
   font-size: 12px;
+  white-space: nowrap;
+}
+#root .snapshot-detail-topline h2 {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 /* Selected-town facts are secondary to the town list. Keep numbers and
  * labels together and let the row wrap, rather than creating a 2x2 dashboard. */
@@ -412,10 +427,19 @@
   #root .local-snapshots-page .snapshot-detail-header {
     flex-direction: column;
     align-items: stretch;
-    gap: 12px;
+    gap: 0;
     padding: 18px 16px 15px;
   }
-  #root .snapshot-detail-header .button { align-self: center; }
+  #root .snapshot-detail-topline {
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+  }
+  #root .snapshot-detail-topline > .button {
+    align-self: center;
+    padding: 0 10px;
+    font-size: 11px;
+  }
   #root .snapshot-town-inline-metrics { gap: 5px 13px; margin-top: 10px; }
   #root .snapshot-town-inline-metrics > span { font-size: 12px; }
   #root .snapshot-activity { padding: 17px 16px 21px; }
@@ -434,4 +458,6 @@
   #root .snapshot-watch-menu-trigger { flex-basis: 44px; width: 44px; }
   #root .snapshot-watch-open small { font-size: 10px; }
   #root .snapshot-town-inline-metrics { column-gap: 11px; }
+  #root .snapshot-detail-topline { gap: 6px; }
+  #root .snapshot-detail-topline > .button { padding-inline: 8px; }
 }
