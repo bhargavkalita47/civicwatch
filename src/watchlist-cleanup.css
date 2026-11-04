@@ -28,62 +28,6 @@
   padding-top: clamp(22px, 2.2vw, 30px);
   border-top: 1px solid var(--cw-border);
 }
-#root .snapshot-watch-summary-compact {
-  padding: 15px 18px;
-  min-width: 0;
-  background: var(--cw-panel);
-  box-shadow: none;
-  border-radius: 16px;
-}
-#root .snapshot-watch-summary-compact .snapshot-summary-metrics {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 0;
-}
-#root .snapshot-watch-summary-compact .snapshot-summary-metric {
-  --snapshot-metric-accent: none;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 5px;
-  min-width: 0;
-  min-height: 0;
-  padding: 4px clamp(12px, 1.8vw, 23px);
-  border: none;
-  border-right: 1px solid var(--cw-border);
-  border-radius: 0;
-  background: transparent;
-  box-shadow: none;
-}
-#root .snapshot-watch-summary-compact .snapshot-summary-metric::before {
-  content: none;
-}
-#root .snapshot-watch-summary-compact .snapshot-summary-metric:first-child {
-  padding-left: 2px;
-}
-#root .snapshot-watch-summary-compact .snapshot-summary-metric:last-child {
-  border-right: none;
-  padding-right: 2px;
-}
-#root .snapshot-watch-summary-compact .snapshot-summary-metric-top {
-  color: var(--cw-muted);
-  font-family: "Public Sans", system-ui, sans-serif;
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 1.4;
-}
-#root .snapshot-watch-summary-compact .snapshot-summary-metric > strong {
-  margin: 0;
-  padding: 0;
-  color: var(--cw-heading);
-  font-family: "Public Sans", system-ui, sans-serif;
-  font-size: clamp(29px, 2.6vw, 38px);
-  font-weight: 750;
-  line-height: 1.15;
-  letter-spacing: -.035em;
-  font-variant-numeric: lining-nums tabular-nums;
-}
-
 /* Give the editable list more room than the previous 310px rail, while the
  * town map stays in its existing context panel, not a full-bleed hero. */
 #root .local-snapshots-page .local-snapshots {
@@ -101,7 +45,8 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 18px;
+  padding: 18px 18px 10px;
+  border-bottom: 0;
 }
 #root .snapshot-side-title {
   min-width: 0;
@@ -131,6 +76,47 @@
   padding: 0 12px;
   font-size: 12px;
   gap: 6px;
+}
+
+/* Four contextual facts, not a second dashboard. The flex items keep
+ * numbers and nouns together and wrap as the panel narrows. */
+#root .snapshot-inline-summary {
+  padding: 0 18px 15px;
+  border-bottom: 1px solid var(--cw-border);
+  min-width: 0;
+}
+#root .snapshot-inline-kicker {
+  margin: 0 0 8px;
+  color: var(--cw-muted);
+  font-family: "Public Sans", system-ui, sans-serif;
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.4;
+}
+#root .snapshot-inline-metrics {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: 5px 15px;
+  min-width: 0;
+}
+#root .snapshot-inline-stat {
+  display: inline-block;
+  flex: 0 0 auto;
+  white-space: nowrap;
+  color: var(--cw-muted);
+  font-family: "Public Sans", system-ui, sans-serif;
+  font-size: 12px;
+  line-height: 1.45;
+}
+#root .snapshot-inline-stat > strong {
+  color: var(--cw-heading);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: -.01em;
+  font-variant-numeric: lining-nums tabular-nums;
 }
 
 /* All management actions live behind one clearly labelled, comfortably
@@ -403,33 +389,8 @@
     padding-top: 20px;
     gap: 14px;
   }
-  #root .snapshot-watch-summary-compact { padding: 12px 13px; }
-  #root .snapshot-watch-summary-compact .snapshot-summary-metrics {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  #root .snapshot-watch-summary-compact .snapshot-summary-metric {
-    padding: 11px 13px;
-    gap: 4px;
-    min-height: 0;
-    border-bottom: 1px solid var(--cw-border);
-  }
-  #root .snapshot-watch-summary-compact .snapshot-summary-metric:nth-child(2) {
-    border-right: 0;
-    padding-right: 3px;
-  }
-  #root .snapshot-watch-summary-compact .snapshot-summary-metric:nth-child(3) {
-    border-bottom: 0;
-    padding-left: 3px;
-  }
-  #root .snapshot-watch-summary-compact .snapshot-summary-metric:nth-child(4) {
-    border-bottom: 0;
-  }
-  #root .snapshot-watch-summary-compact .snapshot-summary-metric > strong {
-    font-size: clamp(28px, 7vw, 34px);
-  }
-  #root .snapshot-watch-summary-compact .snapshot-summary-metric-top {
-    font-size: 12px;
-  }
+  #root .snapshot-inline-summary { padding: 0 16px 14px; }
+  #root .snapshot-inline-metrics { gap: 5px 14px; }
   #root .snapshot-watch-entry .snapshot-drag-handle {
     flex-basis: 44px;
     width: 44px;
@@ -448,8 +409,8 @@
   #root .snapshot-activity { padding: 17px 16px 21px; }
 }
 @media (max-width: 390px) {
-  #root .snapshot-watch-summary-compact .snapshot-summary-metric > strong { font-size: 29px; }
-  #root .snapshot-watch-summary-compact .snapshot-summary-metric-top { font-size: 11px; }
+  #root .snapshot-inline-summary { padding-inline: 12px; }
+  #root .snapshot-inline-metrics { column-gap: 11px; }
   #root .local-snapshots-page .snapshot-side-head {
     gap: 7px;
     padding-inline: 12px;
