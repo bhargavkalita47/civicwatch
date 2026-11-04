@@ -141,3 +141,21 @@ it("does not show the redundant click-to-place-pin map text", async () => {
   expect(container.querySelector(".picker-hint")).toBeNull();
   expect(onPick).toHaveBeenCalled();
 });
+
+it("groups neighbouring markers when zoomed out and separates them when zoomed in", async () => {
+  const make = (id: string, lat: number, lng: number): Issue => ({
+    id, categoryId: "pothole", cityId: "test", title: id, description: "", address: "Test street",
+    location: {lat, lng}, attachments: [], status: "reported", authorId: id,
+    organizationId: null, confirmationUserIds: [], createdAt: "2026-11-04T00:00:00Z", updatedAt: "2026-11-04T00:00:00Z",
+  });
+  const a = make("first", 26.17, 91.76), b = make("second", 26.17001, 91.76001);
+  const clusters: LocationCluster[] = [a, b].map(issue => ({
+    id: issue.id, location: issue.location, issues: [issue], totalPeople: 1,
+  }));
+  const maps = vi.spyOn(L, "map");
+  await act(async () => { root.render(<CivicMap categories={categories} clusters={clusters} />); });
+  expect(container.querySelectorAll(".civic-marker")).toHaveLength(1);
+  const map = maps.mock.results[0].value as L.Map;
+  await act(async () => { map.setZoom(15); });
+  expect(container.querySelectorAll(".civic-marker")).toHaveLength(2);
+});
