@@ -290,7 +290,71 @@
 
 /* An edge-to-edge map-first mobile workspace with a draggable reports sheet. */
 @media (max-width: 790px) {
-  #root .workspace-explore { padding-bottom: 12px; }
+  /* On phones the Explore workspace is part of the page, not a floating
+   * card. The search/filter toolbar stays aligned with the page gutters,
+   * while the map itself reaches both screen edges. */
+  #root .workspace-explore {
+    --explore-mobile-gutter: 16px;
+    padding-bottom: 12px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    overflow: visible;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+  #root .workspace-explore > .explore-toolbar {
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+  #root .workspace-explore > .map-workspace {
+    margin-inline: calc(-1 * var(--explore-mobile-gutter));
+    border-top: 1px solid var(--cw-border);
+  }
+  /* Leaflet defaults to touch-action:none, which traps a vertical swipe
+   * inside a nearly full-height mobile map. With dragging locked, let a
+   * one-finger swipe scroll the actual page. */
+  #root .map-shell.explore-map.map-scroll-friendly .leaflet-container {
+    touch-action: pan-y !important;
+  }
+  #root .map-shell.explore-map.map-pan-enabled .leaflet-container {
+    touch-action: none !important;
+  }
+  #root .map-shell.explore-map .map-pan-toggle {
+    position: absolute;
+    z-index: 8;
+    right: 12px;
+    bottom: 78px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    min-height: 44px;
+    padding: 0 12px;
+    border: 1px solid #e5e1eb;
+    border-radius: 10px;
+    background: #fffdfb;
+    box-shadow: 0 4px 14px rgba(25, 22, 38, .12);
+    color: #34353e;
+    font-family: "Public Sans", system-ui, sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.4;
+    cursor: pointer;
+  }
+  #root .map-shell.explore-map .map-pan-toggle[aria-pressed="true"] {
+    border-color: var(--cw-accent);
+    color: #34353e;
+  }
+  #root .map-shell.explore-map .map-pan-toggle:focus-visible {
+    outline: 2px solid var(--cw-accent);
+    outline-offset: 3px;
+  }
   #root .explore-toolbar {
     grid-template-columns: minmax(0, 1fr) auto;
     grid-template-areas: "search search" "chips filters";
@@ -472,6 +536,7 @@
   }
 }
 @media (max-width: 390px) {
+  #root .workspace-explore { --explore-mobile-gutter: 12px; }
   #root .explore-toolbar { padding-inline: 9px; }
   #root .explore-toolbar > .filter-button { padding-inline: 9px; }
   #root .explore-toolbar .explore-search-place { padding-inline: 8px; font-size: 11px; }
