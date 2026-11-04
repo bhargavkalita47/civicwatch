@@ -94,3 +94,384 @@
      64px sticky navigation; do not promote the toolbar above it. */
   .explore-toolbar { z-index: 2; }
 }
+
+
+/* Explore Map refinement: the map is the primary workspace, filters and
+ * reports are supporting instruments. Desktop gets a two-row toolbar. */
+#root .explore-toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: "search filters" "chips chips";
+  align-items: center;
+  gap: 11px 14px;
+  padding: 19px 20px 15px;
+}
+#root .explore-toolbar .explore-search {
+  grid-area: search;
+  flex: none;
+  width: min(590px, 100%);
+  max-width: 100%;
+  min-width: 0;
+}
+#root .explore-toolbar > .category-chips {
+  grid-area: chips;
+  display: flex;
+  flex: none;
+  width: 100%;
+  min-width: 0;
+  gap: 7px;
+  padding-bottom: 2px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  white-space: nowrap;
+  scrollbar-width: thin;
+}
+#root .explore-toolbar > .category-chips button {
+  flex: 0 0 auto;
+  min-height: 37px;
+}
+#root .explore-toolbar > .filter-button {
+  grid-area: filters;
+  justify-self: end;
+  margin: 0;
+  min-height: 43px;
+}
+
+/* Reports in view: flat readable rows, rather than cards inside a card. */
+#root .map-workspace[aria-label="Explore report map"] {
+  position: relative;
+  min-width: 0;
+}
+#root .map-workspace .reports-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 650px;
+  overflow: hidden;
+  background: var(--cw-panel);
+}
+#root .map-workspace .reports-panel-heading {
+  display: flex;
+  flex: 0 0 auto;
+  padding: 19px 17px 16px;
+  border-bottom: 1px solid var(--cw-border);
+  background: var(--cw-panel);
+}
+#root .map-workspace .reports-panel-heading-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+}
+#root .map-workspace .reports-panel-heading-main h3 {
+  margin: 0;
+  color: var(--cw-heading);
+  font-family: "Public Sans", system-ui, sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+#root .map-workspace .explore-sheet-toggle { display: none; }
+#root .map-workspace .report-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0 14px;
+  background: var(--cw-panel);
+}
+#root .map-workspace .report-list > .issue-card {
+  position: relative;
+  display: block;
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 17px 7px 18px;
+  border: 0;
+  border-bottom: 1px solid var(--cw-border);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  text-align: left;
+  transform: none;
+  transition: background-color 140ms ease;
+}
+#root .map-workspace .report-list > .issue-card:hover,
+#root .map-workspace .report-list > .issue-card:focus-visible {
+  background: var(--cw-soft);
+  border-color: var(--cw-border);
+  box-shadow: none;
+  transform: none;
+}
+#root .map-workspace .report-list > .issue-card:hover::before { content: none; }
+#root .map-workspace .report-list > .issue-card.on-map {
+  background: var(--cw-atmosphere-selected);
+}
+#root .map-workspace .report-list > .issue-card h3 {
+  font-size: 14px;
+  line-height: 1.45;
+  letter-spacing: -.01em;
+}
+#root .map-workspace .report-list > .issue-card .issue-card-bottom { margin-top: 12px; }
+#root .map-workspace .panel-footer { flex: 0 0 auto; }
+#root .map-workspace .map-shell.explore-map { min-height: 650px; }
+
+/* A deliberate map-tap choice: do not launch the form accidentally while
+ * someone is browsing markers or panning across a neighbourhood. */
+#root .map-workspace .explore-map-prompt {
+  position: absolute;
+  z-index: 12;
+  bottom: 18px;
+  left: 18px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  max-width: min(470px, calc(100% - 380px));
+  gap: 10px;
+  padding: 12px 14px;
+  background: var(--cw-panel);
+  color: var(--cw-heading);
+  border: 1px solid var(--cw-border);
+  border-radius: 12px;
+  box-shadow: var(--cw-shadow-float);
+}
+#root .explore-map-prompt > div { flex: 1 1 150px; min-width: 0; }
+#root .explore-map-prompt strong { display: block; font-size: 13px; line-height: 1.4; }
+#root .explore-map-prompt span { display: block; color: var(--cw-muted); font-size: 11px; line-height: 1.4; }
+#root .explore-map-prompt > .button { min-height: 40px; font-size: 12px; }
+#root .explore-map-prompt > .icon-button {
+  flex: 0 0 38px;
+  display: grid;
+  place-items: center;
+  height: 38px;
+}
+
+/* Controls stay light even in dark mode; zoom is visibly separated from
+ * location and map utilities, with no change to compact form maps. */
+#root .map-shell .map-controls.explore-map-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+#root .map-shell .map-controls.explore-map-controls .map-control-group {
+  display: flex;
+  flex-direction: column;
+  padding: 4px;
+  background: #fffdfb;
+  border: 1px solid #e5e1eb;
+  border-radius: 11px;
+  box-shadow: 0 5px 15px rgba(25, 22, 38, .10);
+}
+#root .map-shell .map-controls.explore-map-controls button {
+  width: 36px;
+  height: 36px;
+  border-radius: 7px;
+}
+#root .map-controls:not(.explore-map-controls) .map-control-group {
+  display: contents;
+}
+#root .map-shell.map-zoom-dense .civic-marker:not(.civic-marker-highlighted) .pin-body {
+  transform: rotate(-45deg) scale(.9);
+}
+#root .map-shell.map-zoom-dense .civic-marker:not(.civic-marker-highlighted) .pin-body > svg {
+  transform: rotate(45deg);
+}
+
+/* An edge-to-edge map-first mobile workspace with a draggable reports sheet. */
+@media (max-width: 790px) {
+  #root .intro-explore {
+    gap: 9px;
+    padding: 17px 2px 15px;
+  }
+  #root .intro-explore h1 {
+    margin: 0 0 7px;
+    font-size: clamp(34px, 8.4vw, 47px);
+    line-height: 1.08;
+  }
+  #root .intro-explore p {
+    font-size: 13px;
+    line-height: 1.45;
+  }
+  #root .intro-explore > .report-button {
+    align-self: center;
+    width: fit-content;
+    min-height: 43px;
+    height: 43px;
+  }
+  #root .explore-toolbar {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: "search search" "chips filters";
+    gap: 9px 8px;
+    padding: 13px 12px 12px;
+  }
+  #root .explore-toolbar .explore-search { width: 100%; }
+  #root .explore-toolbar .explore-search-form { min-height: 44px; }
+  #root .explore-toolbar .explore-search-form input { font-size: 16px; }
+  #root .explore-toolbar .explore-search-place { min-height: 38px; }
+  #root .explore-toolbar > .category-chips {
+    grid-area: chips;
+    flex: none;
+    width: 100%;
+    min-width: 0;
+    gap: 6px;
+    padding-bottom: 1px;
+  }
+  #root .explore-toolbar > .category-chips button { min-height: 40px; }
+  #root .explore-toolbar > .filter-button {
+    grid-area: filters;
+    min-height: 42px;
+    padding-inline: 12px;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+  #root .map-workspace[aria-label="Explore report map"] {
+    position: relative;
+    display: block;
+    height: clamp(540px, 78dvh, 820px);
+    min-height: 540px;
+    overflow: hidden;
+    isolation: isolate;
+  }
+  #root .map-workspace .map-shell.explore-map {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    border-radius: 0;
+  }
+  #root .map-workspace .map-controls.explore-map-controls { top: 13px; right: 13px; }
+  #root .map-workspace .explore-reports-sheet {
+    position: absolute;
+    z-index: 18;
+    inset: auto 0 0;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+    background: var(--cw-panel);
+    border: 0;
+    border-top: 1px solid var(--cw-border);
+    border-radius: 17px 17px 0 0;
+    box-shadow: 0 -6px 22px rgba(25, 22, 38, .12);
+    transition: height 210ms ease;
+  }
+  #root .map-workspace .explore-reports-sheet.sheet-collapsed { height: 64px; }
+  #root .map-workspace .explore-reports-sheet.sheet-half { height: 43%; }
+  #root .map-workspace .explore-reports-sheet.sheet-full { height: 92%; }
+  #root .map-workspace .reports-panel-heading {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    flex: 0 0 auto;
+    gap: 0;
+    padding: 0;
+    border-bottom: 1px solid var(--cw-border);
+  }
+  #root .map-workspace .explore-sheet-toggle {
+    position: relative;
+    display: flex;
+    flex: 0 0 63px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    width: 100%;
+    min-height: 63px;
+    padding: 15px 17px 7px;
+    border: 0;
+    background: transparent;
+    color: var(--cw-heading);
+    font-family: "Public Sans", system-ui, sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.4;
+    cursor: pointer;
+    touch-action: none;
+  }
+  #root .map-workspace .explore-sheet-grip {
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    display: block;
+    width: 38px;
+    height: 4px;
+    border-radius: 99px;
+    transform: translateX(-50%);
+    background: var(--cw-border-strong);
+  }
+  #root .map-workspace .explore-sheet-label {
+    display: flex;
+    align-items: baseline;
+    gap: 7px;
+  }
+  #root .map-workspace .explore-sheet-label strong {
+    padding: 2px 7px;
+    border-radius: 7px;
+    background: var(--cw-soft);
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+  }
+  #root .map-workspace .explore-reports-sheet.sheet-full .explore-sheet-toggle > svg {
+    transform: rotate(180deg);
+  }
+  #root .map-workspace .reports-panel-heading-main {
+    display: flex;
+    flex: 0 0 auto;
+    justify-content: flex-end;
+    min-height: 38px;
+    padding: 0 17px 9px;
+  }
+  #root .map-workspace .reports-panel-heading-main h3 { display: none; }
+  #root .map-workspace .explore-reports-sheet.sheet-collapsed .reports-panel-heading-main,
+  #root .map-workspace .explore-reports-sheet.sheet-collapsed .report-list,
+  #root .map-workspace .explore-reports-sheet.sheet-collapsed .panel-footer {
+    display: none;
+  }
+  #root .map-workspace .report-list {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 0 14px;
+    overscroll-behavior: contain;
+    touch-action: pan-y;
+    -webkit-overflow-scrolling: touch;
+  }
+  #root .map-workspace .panel-footer { font-size: 11px; padding: 9px 15px; }
+  #root .map-workspace .explore-map-prompt {
+    bottom: 77px;
+    left: 12px;
+    right: 12px;
+    width: auto;
+    max-width: none;
+    gap: 7px;
+    padding: 11px;
+    border-radius: 10px;
+  }
+  #root .explore-map-prompt > .button { min-height: 42px; }
+  #root .map-workspace .map-report-focus {
+    position: absolute;
+    z-index: 15;
+    top: 0;
+    left: 0;
+    right: 0;
+    padding: 10px 12px;
+  }
+}
+@media (max-width: 390px) {
+  #root .explore-toolbar { padding-inline: 9px; }
+  #root .explore-toolbar > .filter-button { padding-inline: 9px; }
+  #root .explore-toolbar .explore-search-place { padding-inline: 8px; font-size: 11px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #root .map-workspace .explore-reports-sheet,
+  #root .map-workspace .report-list > .issue-card { transition: none; }
+}
