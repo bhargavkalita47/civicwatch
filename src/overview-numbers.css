@@ -64,7 +64,7 @@
 }
 .cw-overview-total strong {
   display: block;
-  font-family: "Inter", system-ui, sans-serif;
+  font-family: "Manrope", system-ui, sans-serif;
   font-size: clamp(70px, 8vw, 132px);
   font-weight: 800;
   line-height: 1;
@@ -118,7 +118,7 @@
   margin: auto 0 18px;
   padding-top: 18px;
   display: block;
-  font-family: "Inter", system-ui, sans-serif;
+  font-family: "Manrope", system-ui, sans-serif;
   font-size: clamp(35px, 3.3vw, 61px);
   line-height: 1;
   font-weight: 800;
@@ -159,7 +159,7 @@
   margin: 7px 0 0;
 }
 .cw-overview-resolution-copy > strong {
-  font-family: "Inter", system-ui, sans-serif;
+  font-family: "Manrope", system-ui, sans-serif;
   font-size: clamp(32px, 4vw, 54px);
   font-weight: 800;
   line-height: 1;
