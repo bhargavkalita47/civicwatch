@@ -17,6 +17,7 @@ import "./thread-polish.css";
 import "./overview-numbers.css";
 import "./ux-progressive.css";
 import "./optical-alignment.css";
+import "./watchlist-cleanup.css";
 class ErrorBoundary extends Component<
   { children: ReactNode },
   { failed: boolean }
