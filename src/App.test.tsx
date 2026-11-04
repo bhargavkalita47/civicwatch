@@ -110,6 +110,7 @@ it("expands mobile reports to the viewport and restores scrolling when collapsed
   vi.stubGlobal("matchMedia", () => ({ matches: true, addEventListener: vi.fn(), removeEventListener: vi.fn() }));
   root = createRoot(container);
   await act(async () => { root.render(<App />); });
+  await act(async () => container.querySelector<HTMLButtonElement>(".mobile-menu-trigger")!.click());
   await click("Explore map");
   const toggle = container.querySelector<HTMLButtonElement>(".explore-sheet-toggle")!;
   const sheet = container.querySelector(".explore-reports-sheet")!;
