@@ -17,8 +17,8 @@ export const config = {
   // is isolated to local mock state and cannot authenticate with the live API.
   serviceMode: uiCleanupDemo ? "mock" : import.meta.env.PROD ? "api" : env.VITE_SERVICE_MODE === "api" ? "api" : "mock",
   uiCleanupDemo,
-  googleOAuthEnabled: env.VITE_GOOGLE_OAUTH_ENABLED === "true",
-  facebookOAuthEnabled: env.VITE_FACEBOOK_OAUTH_ENABLED === "true",
+  googleOAuthEnabled: !uiCleanupDemo && env.VITE_GOOGLE_OAUTH_ENABLED === "true",
+  facebookOAuthEnabled: !uiCleanupDemo && env.VITE_FACEBOOK_OAUTH_ENABLED === "true",
   apiBaseUrl: (env.VITE_API_BASE_URL || "/api/v1").replace(/\/$/, ""),
   // Fictional reports exist only in a deliberate preview or local test configuration.
   seedDemo: uiCleanupDemo || env.VITE_SEED_DEMO === "true",
