@@ -806,7 +806,7 @@ useEffect(() => {
             loading={loading || datasetLoading || (config.serviceMode === "api" && !data)}
             error={error || datasetError} onReload={() => { setDatasetAttempt(n => n + 1); void load(); }}
             onExplore={exploreWatchCity} onReport={(city) => startReport(city.center)} onSelectCluster={(cluster) => setSelection({ cluster })} />
-        ) : <section className="workspace" aria-label="Report workspace">
+        ) : <section className={tab === "explore" ? "workspace workspace-explore" : "workspace"} aria-label="Report workspace">
           <h2 className="sr-only">{tab === "explore" ? "Explore reports" : tab === "reports" ? "Watched town reports" : "My reports"}</h2>
           {tab === "reports" && (
             <section className="watch-reports-summary compact" aria-labelledby="watch-reports-heading">
