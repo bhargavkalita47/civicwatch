@@ -82,6 +82,8 @@ export function CivicMap({
   const [panEnabled, setPanEnabled] = useState(false);
   const panEnabledRef = useRef(false);
   panEnabledRef.current = panEnabled;
+  const scrollFriendlyRef = useRef(scrollFriendly);
+  scrollFriendlyRef.current = scrollFriendly;
   const [legend, setLegend] = useState(false),
     [tileError, setTileError] = useState(false),
     [locating, setLocating] = useState(false),
@@ -116,7 +118,7 @@ export function CivicMap({
     instance.on("click", (event: L.LeafletMouseEvent) => {
       // On mobile, the first empty-map tap activates browsing instead of
       // unexpectedly placing a report pin; a subsequent tap picks a point.
-      if (scrollFriendly && !panEnabledRef.current) {
+      if (scrollFriendlyRef.current && !panEnabledRef.current) {
         setPanEnabled(true);
         return;
       }
