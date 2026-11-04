@@ -138,6 +138,11 @@
 }
 
 /* Reports in view: flat readable rows, rather than cards inside a card. */
+/* Retain the quiet empty space formerly occupied by the bottom notice.
+ * No blank placeholder or duplicate copy is rendered. */
+#root .workspace-explore {
+  padding-bottom: 18px;
+}
 #root .map-workspace[aria-label="Explore report map"] {
   position: relative;
   min-width: 0;
@@ -179,7 +184,7 @@
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding: 0 14px;
+  padding: 0 14px 20px;
   background: var(--cw-panel);
 }
 #root .map-workspace .report-list > .issue-card {
@@ -285,6 +290,7 @@
 
 /* An edge-to-edge map-first mobile workspace with a draggable reports sheet. */
 @media (max-width: 790px) {
+  #root .workspace-explore { padding-bottom: 12px; }
   #root .intro-explore {
     gap: 9px;
     padding: 17px 2px 15px;
@@ -438,7 +444,7 @@
     flex: 1 1 auto;
     min-height: 0;
     overflow-y: auto;
-    padding: 0 14px;
+    padding: 0 14px 16px;
     overscroll-behavior: contain;
     touch-action: pan-y;
     -webkit-overflow-scrolling: touch;
