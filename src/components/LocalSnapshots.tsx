@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import type { PointerEvent as ReactPointerEvent, KeyboardEvent as ReactKeyboardEvent } from "react";
-import { ArrowRight, GripVertical, MoreHorizontal, Plus, X } from "lucide-react";
+import { ArrowUpRight, GripVertical, MoreHorizontal, Plus, X } from "lucide-react";
 import type { Category, City, Issue, LocationCluster, OverviewSnapshot } from "../domain/types";
 import { activeIssues, clusterIssues, relativeTime, summarizeIssues } from "../domain/logic";
 import { PlaceSearch } from "./PlaceSearch";
@@ -253,7 +253,7 @@ export function LocalSnapshots({ cities, watchlist, setWatchlist, stats, issues,
         <div className="snapshot-detail-header">
           <div className="snapshot-detail-topline">
             <h2>{selected.name}</h2>
-            <button type="button" className="button secondary" onClick={() => onExplore(selected)}>{copy.watchlist.mapAction} <ArrowRight size={15} aria-hidden="true"/></button>
+            <button type="button" className="snapshot-full-map-link" onClick={() => onExplore(selected)}>{copy.watchlist.mapAction} <ArrowUpRight size={13} aria-hidden="true"/></button>
           </div>
           <div className="snapshot-detail-heading">
             <p>{selected.region}, {selected.country}</p>
