@@ -46,7 +46,6 @@ import {
   activeIssues,
   filterIssues,
   peopleCount,
-  summarizeIssues,
   relativeTime,
   statusLabels,
 } from "./domain/logic";
@@ -190,7 +189,6 @@ export default function App() {
   const drawerCloseRef = useRef<HTMLButtonElement>(null);
   const [filterOpen, setFilterOpen] = useState(false),
     [help, setHelp] = useState(false),
-    [about, setAbout] = useState(false),
     [signIn, setSignIn] = useState(false),
     [reportPoint, setReportPoint] = useState<Coordinate | null>(null),
     [selection, setSelection] = useState<ThreadSelection | null>(null),
@@ -441,7 +439,6 @@ useEffect(() => {
   const scopedIssues = useMemo(() => tab === "explore" && mapBounds
     ? cityIssues.filter((i) => inMapBounds(i.location, mapBounds))
     : cityIssues, [cityIssues, mapBounds, tab]);
-  const citySummary = useMemo(() => summarizeIssues(scopedIssues), [scopedIssues]);
   const reportGroups = useMemo(() => watchlistReportGroups(watchlist, cityIssues), [watchlist, cityIssues]);
   const reportCounts = {total: reportGroups.all.length, active: reportGroups.active.length, inactive: reportGroups.inactive.length};
   function openResidentProfile(userId: string) {
@@ -529,7 +526,6 @@ useEffect(() => {
   const exploreClusters = useMemo(() => mapIssue?.status === "resolved"
     ? [...clusters, { id: "historical:" + mapIssue.id, location: mapIssue.location, issues: [mapIssue], totalPeople: peopleCount(mapIssue) }]
     : clusters, [clusters, mapIssue]);
-  const issueCount = citySummary.open;
   const hasFilters = categoryIds.length > 0 || (status !== "all" && tab !== "explore" && (tab !== "reports" || reportSection === "active"));
   function changeReportSection(next: ReportSection) {
     setReportSection(next);
@@ -1053,9 +1049,6 @@ useEffect(() => {
                     </div>
                   )}
                 </div>
-                <div className="panel-footer" inert={isMobile && exploreSheet === "collapsed"} aria-hidden={isMobile && exploreSheet === "collapsed" ? true : undefined}>
-                  {reportCount(visible.length)} in view · {reportCount(issueCount)} open overall
-                </div>
               </aside>
             </div>
           ) : (
@@ -1128,22 +1121,12 @@ useEffect(() => {
               )}
             </>
           )}
-          <div className="workspace-footnote">
-            <span>
-              <ShieldCheck size={14} />Community-submitted · Not officially verified
-            </span>
-            <button onClick={() => setAbout(true)}>
-              {copy.actions.about}
-              <ArrowRight size={14} />
-            </button>
-          </div>
         </section>}
       </main>
       <footer className="site-footer">
         <span className="footer-copyright">© {new Date().getFullYear()} CivicWatch{config.uiCleanupDemo && <span className="footer-demo-label" title="Fictional reports; changes are saved in this browser only"> · Demo preview</span>}</span>
         <nav className="footer-links" aria-label="Footer">
           <button type="button" className="footer-link" onClick={() => setHelp(true)}>{copy.nav.help}</button>
-          <button type="button" className="footer-link" onClick={() => setAbout(true)} aria-label="About CivicWatch">About</button>
         </nav>
       </footer>
       {filterOpen && (
@@ -1239,16 +1222,6 @@ useEffect(() => {
               Explore the map
               <ArrowRight size={16} />
             </button>
-          </div>
-        </Modal>
-      )}
-      {about && (
-        <Modal title={copy.brand.aboutTitle} onClose={() => setAbout(false)}>
-          <div className="form-body">
-            <p>{copy.brand.aboutBody}</p>
-            <p>{copy.brand.aboutEnding}</p>
-            <div className="info-note"><p>{copy.brand.disclosure}</p>
-            </div>
           </div>
         </Modal>
       )}
