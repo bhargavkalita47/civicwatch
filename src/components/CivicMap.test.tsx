@@ -160,32 +160,34 @@ it("groups neighbouring markers when zoomed out and separates them when zoomed i
   expect(container.querySelectorAll(".civic-marker")).toHaveLength(2);
 });
 
-it("keeps a mobile Explore map scroll-friendly until a visitor unlocks dragging", async () => {
+it("activates map dragging on a tap and restores page scrolling when tapping outside", async () => {
   const maps = vi.spyOn(L, "map");
-  await act(async () => { root.render(<CivicMap categories={categories} scrollFriendly />); });
+  await act(async () => { root.render(<CivicMap categories={categories} scrollFriendly onPick={onPick} />); });
   const instance = maps.mock.results[0].value as L.Map;
-  const toggle = container.querySelector<HTMLButtonElement>(".map-pan-toggle")!;
-  expect(toggle).not.toBeNull();
-  expect(toggle.textContent).toContain("Move map");
-  expect(toggle.getAttribute("aria-pressed")).toBe("false");
+  expect(container.querySelector(".map-pan-toggle")).toBeNull();
   expect(container.querySelector(".map-scroll-friendly")).not.toBeNull();
   expect(instance.dragging.enabled()).toBe(false);
   expect(instance.scrollWheelZoom.enabled()).toBe(false);
   expect(container.querySelector('[aria-label="Zoom in"]')).not.toBeNull();
 
-  await act(async () => { toggle.click(); });
+  // First empty-map tap activates navigation rather than placing a report pin.
+  await act(async () => { instance.fire("click", { latlng: L.latLng(26.17, 91.76) }); });
   expect(container.querySelector(".map-pan-enabled")).not.toBeNull();
-  expect(toggle.getAttribute("aria-pressed")).toBe("true");
-  expect(toggle.textContent).toContain("Scroll page");
   expect(instance.dragging.enabled()).toBe(true);
+  expect(onPick).not.toHaveBeenCalled();
 
-  await act(async () => { toggle.click(); });
+  // Once active, an empty-map tap still supports the existing Report here prompt.
+  await act(async () => { instance.fire("click", { latlng: L.latLng(26.18, 91.75) }); });
+  expect(onPick).toHaveBeenCalledWith({ lat: 26.18, lng: 91.75 });
+
+  await act(async () => {
+    document.body.dispatchEvent(new MouseEvent("pointerdown", { bubbles: true }));
+  });
   expect(container.querySelector(".map-scroll-friendly")).not.toBeNull();
   expect(instance.dragging.enabled()).toBe(false);
 
-  // If the viewport changes to desktop, map dragging returns automatically.
+  // Desktop interaction remains unrestricted without a new map instance.
   await act(async () => { root.render(<CivicMap categories={categories} scrollFriendly={false} />); });
-  expect(container.querySelector(".map-pan-toggle")).toBeNull();
   expect(instance.dragging.enabled()).toBe(true);
   expect(instance.scrollWheelZoom.enabled()).toBe(true);
 });
