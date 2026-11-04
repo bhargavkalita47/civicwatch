@@ -1,0 +1,313 @@
+/*
+ * CivicWatch | UI cleanup / optical alignment
+ *
+ * A final, deliberately scoped presentation layer. Use shape-specific visual
+ * offsets instead of moving entire hit targets: the icon occupies its original
+ * clickable area, while its artwork is centered against the actual text ink.
+ * Keep all colors, logo variants, content, and data behavior unchanged.
+ */
+
+/* A shared baseline for icon + label controls across all app sections. */
+#root :is(
+  .button, .text-button, .help-button, .profile-account-button,
+  .filter-button, .snapshot-add-button, .view-report-map,
+  .place-search-submit, .explore-search-place
+) {
+  align-items: center;
+}
+
+#root :is(
+  .button, .text-button, .help-button, .profile-account-button,
+  .filter-button, .snapshot-add-button, .place-search-submit,
+  .explore-search-place
+) > svg {
+  display: block;
+  position: relative;
+  top: -0.5px;
+  flex-shrink: 0;
+}
+
+/* Identity and navigation: logo/clock spacing is owned by brand.css.
+ * Nudge only the light-weight navigation icons, never the SVG logo. */
+#root .site-header .main-nav button {
+  display: flex;
+  align-items: center;
+  text-align: left;
+}
+#root .site-header .main-nav button > svg {
+  display: block;
+  position: relative;
+  top: -1px;
+  flex: 0 0 auto;
+}
+#root .site-header :is(
+  .help-button, .theme-control button, .profile-account-button
+) > svg {
+  position: relative;
+  top: -0.5px;
+  flex-shrink: 0;
+}
+#root .site-header .theme-control button {
+  align-items: center;
+  justify-content: center;
+}
+#root .mobile-topbar-actions button {
+  align-items: center;
+  justify-content: center;
+}
+#root .mobile-topbar-actions button > svg {
+  display: block;
+  flex: 0 0 auto;
+}
+
+/* Hero: title and description share a visual left edge. Align the main CTA
+ * to their optical bottom on desktop; preserve centered mobile CTA behavior. */
+#root .intro > div {
+  min-width: 0;
+}
+#root .intro h1 {
+  margin-top: 0;
+}
+@media (min-width: 791px) {
+  #root .intro > .report-button {
+    align-self: flex-end;
+    margin-bottom: 2px;
+  }
+}
+
+/* Platform Overview: compare text and numerals, not the surrounding boxes. */
+#root .cw-overview-stat-head,
+#root .snapshot-summary-metric-top {
+  align-items: center;
+}
+#root .cw-overview-stat-head > svg,
+#root .snapshot-summary-metric-top > svg {
+  display: block;
+  position: relative;
+  top: -1px;
+  flex-shrink: 0;
+}
+#root :is(
+  .cw-overview-total, .cw-overview-stat, .snapshot-summary-metric
+) > strong,
+#root :is(
+  .cw-overview-resolution-copy, .profile-stats, .snapshot-town-metrics
+) strong,
+#root .profile-stats dd,
+#root .snapshot-town-metrics dd {
+  font-variant-numeric: lining-nums tabular-nums;
+}
+#root .cw-overview-resolution-copy {
+  align-items: flex-end;
+}
+#root .cw-overview-resolution-copy > strong {
+  position: relative;
+  top: 2px;
+}
+
+/* Watchlist: keep label stacks, drag handles and actions optically balanced. */
+#root .snapshot-side-head,
+#root .snapshot-detail-header {
+  align-items: center;
+}
+#root .snapshot-side-head > div,
+#root .snapshot-detail-header > div {
+  min-width: 0;
+}
+#root .snapshot-watch-row {
+  align-items: center;
+}
+#root .snapshot-watch-select {
+  align-items: center;
+}
+#root .snapshot-watch-select > span {
+  justify-content: center;
+}
+#root :is(
+  .snapshot-drag-handle, .snapshot-watch-actions button
+) {
+  display: grid;
+  place-items: center;
+}
+#root :is(
+  .snapshot-drag-handle, .snapshot-watch-actions button
+) > svg {
+  display: block;
+  position: relative;
+  top: -0.5px;
+}
+#root .snapshot-add-button > svg {
+  position: relative;
+  top: -0.5px;
+}
+#root .snapshot-suggestions button {
+  align-items: baseline;
+}
+
+/* Reports: align time, category and status indicators with their text. */
+#root .reports-panel-heading {
+  align-items: center;
+}
+#root .reports-panel-heading h3 {
+  margin-block: 0;
+}
+#root .issue-card-top,
+#root .issue-card-bottom,
+#root .profile-report-meta,
+#root .profile-report-actions {
+  align-items: center;
+}
+#root .category-badge,
+#root .status-badge {
+  align-items: center;
+}
+#root .category-badge > svg,
+#root :is(
+  .issue-card-address, .issue-card-bottom, .profile-report-meta
+) svg {
+  position: relative;
+  top: -0.5px;
+  flex-shrink: 0;
+}
+#root .status-badge i {
+  position: relative;
+  top: -0.5px;
+}
+#root .sort-label,
+#root .board-toolbar label {
+  align-items: center;
+}
+#root .sort-label > svg,
+#root .board-toolbar label > svg {
+  position: relative;
+  top: -0.5px;
+  flex-shrink: 0;
+}
+
+/* Search and filters: center glyphs against the input's character shapes
+ * without changing the input or the icon-button hit target. */
+#root .filter-bar {
+  align-items: center;
+}
+#root .search-field,
+#root :is(.place-search-form, .explore-search-form) {
+  align-items: center;
+}
+#root :is(
+  .search-field, .place-search-form, .explore-search-form
+) > svg {
+  display: block;
+  position: relative;
+  top: -0.5px;
+  flex-shrink: 0;
+}
+#root :is(
+  .search-field, .place-search-form, .explore-search-form
+) > button {
+  align-self: center;
+}
+#root .category-chips {
+  align-items: center;
+}
+#root .category-chips button {
+  align-items: center;
+}
+#root .category-chips button > svg,
+#root .category-chips button > i {
+  position: relative;
+  top: -0.5px;
+  flex-shrink: 0;
+}
+
+/* Thread, profile and forms: align the avatar/title and icon/control pairs. */
+#root .profile-identity > .profile-avatar {
+  margin-top: 2px;
+}
+#root .profile-details h2,
+#root .profile-reports > h2 {
+  margin-top: 0;
+}
+#root .author-line,
+#root .comment-meta,
+#root .comment-actions {
+  align-items: center;
+}
+#root .view-report-map > svg,
+#root .thread-address > svg,
+#root .resident-profile-place > svg {
+  display: block;
+  position: relative;
+  top: -0.5px;
+  flex-shrink: 0;
+}
+#root .modal-header {
+  align-items: center;
+}
+#root .modal-header h2 {
+  margin: 0;
+  min-width: 0;
+}
+#root .modal-header .icon-button {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+}
+#root .form-actions,
+#root .comment-edit-actions {
+  align-items: center;
+}
+#root .report-steps span {
+  align-items: center;
+}
+#root .report-steps i {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+}
+
+/* The map's plus/minus/locate controls remain perfectly centered inside
+ * their original tap targets. Never offset the geospatial pin symbols. */
+#root .map-controls button {
+  display: grid;
+  place-items: center;
+}
+#root .map-controls button > svg {
+  display: block;
+}
+
+/* The minimal footer follows the clock's UI type, not the headline rhythm. */
+#root > footer.site-footer {
+  align-items: center;
+}
+#root > footer.site-footer .footer-copyright,
+#root > footer.site-footer .footer-about {
+  line-height: 1.4;
+}
+
+/* Responsive safeguards: do not force cross-axis offsets or widths into
+ * vertically stacked mobile forms, watchlist controls or CTA rows. */
+@media (max-width: 790px) {
+  #root .intro > .report-button {
+    align-self: center;
+    margin-bottom: 0;
+  }
+  #root .snapshot-detail-header,
+  #root .snapshot-side-head {
+    align-items: center;
+  }
+  #root .profile-identity > .profile-avatar {
+    margin-top: 1px;
+  }
+  #root .cw-overview-resolution-copy > strong {
+    top: 1px;
+  }
+}
+@media (max-width: 480px) {
+  #root .snapshot-detail-header,
+  #root .snapshot-side-head {
+    align-items: center;
+  }
+  #root .profile-report-meta {
+    align-items: center;
+  }
+}
