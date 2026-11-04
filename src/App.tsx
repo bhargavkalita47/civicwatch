@@ -202,6 +202,17 @@ useEffect(() => {
   });
 }, [tab, reportSection]);
 
+  // Branch-only Design Lab: navigate to the real Explore map from the palette panel.
+  useEffect(() => {
+    const openMap = () => {
+      setStatus("all");
+      setSelection(null);
+      setTab("explore");
+      setMenuOpen(false);
+    };
+    window.addEventListener("civicwatch:design-preview-map", openMap);
+    return () => window.removeEventListener("civicwatch:design-preview-map", openMap);
+  }, []);
   const mapWorkspaceRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (tab !== "explore" || !mapIssueId) return;
@@ -887,7 +898,7 @@ useEffect(() => {
               </button>
             </div>
           )}
-          {loading || (tab === "explore" && config.serviceMode === "api" && !data && !datasetError) ? (
+          {tab !== "explore" && loading ? (
             <div className="loading-workspace" role="status">
               <div className="skeleton-map" />
               <div className="loading-side">
@@ -896,7 +907,7 @@ useEffect(() => {
                 <p>The map will appear shortly.</p>
               </div>
             </div>
-          ) : error || (tab === "explore" && datasetError) ? (
+          ) : tab !== "explore" && error ? (
             <div className="empty-state">
               <ShieldCheck size={38} />
               <h3>Reports could not be loaded.</h3>
@@ -917,6 +928,16 @@ useEffect(() => {
             </div>
           ) : tab === "explore" ? (
             <div className="map-workspace" ref={mapWorkspaceRef} tabIndex={-1} aria-label="Explore report map">
+              {(error || datasetError || (datasetLoading && !data)) && (
+                <div className="cw-design-map-notice" role="status">
+                  <strong>Design preview: map remains available.</strong>
+                  <span>{error || datasetError || "Report data is loading. You can still test map-adjacent colors."}</span>
+                  {(error || datasetError) && <button type="button" onClick={() => {
+                    if (error) void load();
+                    if (datasetError) { setDatasetError(""); setDatasetAttempt(n => n + 1); }
+                  }}>Retry report data</button>}
+                </div>
+              )}
               {mapIssue && <div className="map-report-focus" role="status">
                 <MapPin size={18} aria-hidden="true" />
                 <div><strong>{mapIssue.title}</strong><span>{mapIssue.status === "resolved" ? "Resolved report — location only" : "Highlighted on the map"}</span></div>
