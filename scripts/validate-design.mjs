@@ -68,7 +68,7 @@ assert.doesNotMatch(copy, /The usual problems/, "Competing headline must be remo
 const watchlistCleanupCSS = read("src/watchlist-cleanup.css");
 assert.match(root, /watchlist-cleanup\.css/, "List-first styling must be loaded");
 assert.match(watchlistCleanupCSS, /snapshot-inline-metrics/, "Totals must be a wrapping inline summary");
-assert.match(watchlist, /Across your towns\. The backlog gets around\./, "Keep the doomer tone in tertiary copy");
+assert.doesNotMatch(watchlist, /Across your towns|snapshot-inline-kicker/, "Remove redundant sarcastic line beneath Your towns");
 assert.doesNotMatch(watchlist, /snapshot-watch-summary-compact|snapshot-summary-metrics/, "No detached statistics strip");
 assert.match(watchlist, /snapshot-watch-menu-trigger/, "Town actions should be grouped");
 assert.match(watchlist, /function undoRemove/, "Town removal must support Undo");
@@ -77,6 +77,8 @@ assert.match(watchlist, /CivicMap key=\{selected\.id\} compact/, "Map stays as a
 assert.match(watchlist, /snapshot-town-inline-metrics/, "Selected town figures belong beneath town identity");
 assert.match(watchlist, /snapshot-detail-topline/, "Selected town name and map action must share a top row");
 assert.match(watchlist, /className="snapshot-full-map-link"/, "Map action must be visually subordinate to the city");
+assert.match(watchlist, /aria-label=\{`View \$\{selected\.name\} on full map`\}/, "Icon-only map action must have accessible name");
+assert.match(watchlistCleanupCSS, /\.snapshot-detail-topline\s*\{[^}]*justify-content:\s*flex-start;/, "Arrow belongs immediately beside town name");
 assert.doesNotMatch(watchlist, /className="button secondary" onClick=\{\(\) => onExplore\(selected\)\}/, "Map action should not be a bordered secondary button");
 assert.match(watchlistCleanupCSS, /\.snapshot-full-map-link\s*\{[^}]*min-height:\s*44px;/, "Map text action must preserve mobile tap target");
 assert.match(watchlistCleanupCSS, /\.snapshot-detail-topline\s*\{[^}]*display:\s*flex;/, "Map action row must remain flex");
