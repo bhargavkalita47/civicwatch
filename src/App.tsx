@@ -15,6 +15,7 @@ import {
   MapPin,
   ListFilter,
   MessageSquare,
+  Plus,
   Search,
   ShieldCheck,
   SlidersHorizontal,
@@ -619,7 +620,7 @@ useEffect(() => {
         </a>
         <div className="mobile-topbar-actions">
           <button type="button" className="mobile-report-action" onClick={() => startReport()} disabled={auth.loading} aria-label={copy.actions.report} title={copy.actions.report}>
-            <span>Report</span>
+            <Plus size={18} /><span>Report</span>
           </button>
           <button type="button" ref={menuButtonRef} className="mobile-menu-trigger" aria-label="Open menu" aria-expanded={menuOpen} aria-controls="civicwatch-navigation" onClick={() => setMenuOpen(true)}>
             <Menu size={22} />
