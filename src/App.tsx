@@ -959,9 +959,12 @@ useEffect(() => {
                 cityName={activeCity?.name ?? "current area"}
                 showLocationBadge={false}
                 clusters={exploreClusters}
-                highlightedIssueId={mapIssue?.id}
+                highlightedIssueId={mapIssue?.id ?? hoveredIssueId ?? undefined}
+                pick={reportHerePoint ?? undefined}
                 onSelect={(cluster) => {
+                  setReportHerePoint(null);
                   setSelection({ cluster });
+                  if (isMobile) setExploreSheet("collapsed");
                   if (cluster.issues.length === 1)
                     history.replaceState(
                       null,
@@ -969,7 +972,11 @@ useEffect(() => {
                       `#issue=${encodeURIComponent(cluster.issues[0].id)}`,
                     );
                 }}
-                onPick={(point) => startReport(point)}
+                onPick={(point) => {
+                  setReportHerePoint(point);
+                  setMapIssueId(null);
+                  if (isMobile) setExploreSheet("collapsed");
+                }}
                 focus={focus}
                 onCenter={(point) => {
                   center.current = point;
@@ -977,28 +984,55 @@ useEffect(() => {
                 onBounds={setMapBounds}
                 onError={notify}
               />
-              <aside className="reports-panel">
+              {reportHerePoint && <div className="explore-map-prompt" role="group" aria-label="Report at selected map location">
+                <div><strong>Report an issue here?</strong><span>This location will be filled in for you.</span></div>
+                <button type="button" className="button primary" onClick={() => startReport(reportHerePoint)}>Report here</button>
+                <button type="button" className="icon-button" aria-label="Dismiss map reporting prompt" onClick={() => setReportHerePoint(null)}><X size={17} /></button>
+              </div>}
+              <aside className={`reports-panel explore-reports-sheet sheet-${exploreSheet}`} aria-label="Reports in the map view">
                 <div className="reports-panel-heading">
-                  <div>
-                    <h3>
-                      {copy.map.results} <span>{visible.length}</span>
-                    </h3>
-                    <p>{copy.map.resultsCaption}</p>
+                  <button type="button" className="explore-sheet-toggle"
+                    aria-label={`${visible.length} reports in view. ${exploreSheet === "collapsed" ? "Show reports" : exploreSheet === "half" ? "Expand reports" : "Collapse reports"}`}
+                    aria-controls="explore-reports-list" aria-expanded={exploreSheet !== "collapsed"}
+                    onPointerDown={(event) => {
+                      if (!isMobile || event.button !== 0) return;
+                      sheetDrag.current = { startY: event.clientY };
+                      event.currentTarget.setPointerCapture(event.pointerId);
+                    }}
+                    onPointerUp={(event) => {
+                      const start = sheetDrag.current;
+                      sheetDrag.current = null;
+                      if (!start || !isMobile) return;
+                      const delta = event.clientY - start.startY;
+                      if (Math.abs(delta) > 34) {
+                        suppressSheetClick.current = true;
+                        shiftExploreSheet(delta < 0 ? "up" : "down");
+                      }
+                      if (event.currentTarget.hasPointerCapture(event.pointerId))
+                        event.currentTarget.releasePointerCapture(event.pointerId);
+                    }}
+                    onPointerCancel={() => { sheetDrag.current = null; suppressSheetClick.current = false; }}
+                    onClick={() => {
+                      if (suppressSheetClick.current) { suppressSheetClick.current = false; return; }
+                      setExploreSheet((current) => current === "collapsed" ? "half" : current === "half" ? "full" : "collapsed");
+                    }}>
+                    <span className="explore-sheet-grip" aria-hidden="true"/>
+                    <span className="explore-sheet-label">{copy.map.results} <strong>{visible.length}</strong></span>
+                    <ChevronUp size={18} aria-hidden="true"/>
+                  </button>
+                  <div className="reports-panel-heading-main">
+                    <h3>{copy.map.results} <span>{visible.length}</span></h3>
+                    <label className="sort-label">
+                      <ArrowDownUp size={13} />
+                      <select aria-label="Sort reports" value={sort} onChange={(event) => setSort(event.target.value as typeof sort)}>
+                        <option value="recent">Latest</option>
+                        <option value="supported">Most supported</option>
+                      </select>
+                      <ChevronDown size={12} />
+                    </label>
                   </div>
-                  <label className="sort-label">
-                    <ArrowDownUp size={13} />
-                    <select
-                      aria-label="Sort reports"
-                      value={sort}
-                      onChange={(e) => setSort(e.target.value as typeof sort)}
-                    >
-                      <option value="recent">Latest</option>
-                      <option value="supported">Most supported</option>
-                    </select>
-                    <ChevronDown size={12} />
-                  </label>
                 </div>
-                <div className="report-list">
+                <div className="report-list" id="explore-reports-list" inert={isMobile && exploreSheet === "collapsed"} aria-hidden={isMobile && exploreSheet === "collapsed" ? true : undefined}>
                   {visible.length ? (
                     visible.map((i) => issueCard(i))
                   ) : (
@@ -1018,7 +1052,7 @@ useEffect(() => {
                     </div>
                   )}
                 </div>
-                <div className="panel-footer">
+                <div className="panel-footer" inert={isMobile && exploreSheet === "collapsed"} aria-hidden={isMobile && exploreSheet === "collapsed" ? true : undefined}>
                   {reportCount(visible.length)} in view · {reportCount(issueCount)} open overall
                 </div>
               </aside>
