@@ -457,13 +457,34 @@
     border-radius: 10px;
   }
   #root .explore-map-prompt > .button { min-height: 42px; }
+  /* Report focus and map legend float above the collapsed sheet rather
+   * than hiding the zoom/location controls at the top of the map. */
   #root .map-workspace .map-report-focus {
     position: absolute;
     z-index: 15;
-    top: 0;
-    left: 0;
-    right: 0;
+    top: auto;
+    bottom: 78px;
+    left: 12px;
+    right: 12px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
     padding: 10px 12px;
+    border: 1px solid var(--cw-border);
+    border-radius: 11px;
+    box-shadow: var(--cw-shadow);
+  }
+  #root .map-workspace .map-report-focus > div {
+    flex: 1 1 140px;
+    min-width: 0;
+  }
+  #root .map-workspace .map-report-focus .button { min-height: 40px; }
+  #root .map-workspace .map-key {
+    top: 13px;
+    bottom: auto;
+    left: 13px;
+    max-height: min(44%, 310px);
+    overflow-y: auto;
   }
 }
 @media (max-width: 390px) {
