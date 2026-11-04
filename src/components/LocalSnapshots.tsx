@@ -153,13 +153,6 @@ export function LocalSnapshots({ cities, watchlist, setWatchlist, stats, issues,
   if (loading) return <section className="overview-loading" role="status">Checking whether anything has changed…</section>;
   if (error || !stats) return <section className="overview-loading"><h2>The numbers have disappeared.</h2><p>{error || "Local reporting data is unavailable."}</p><button className="button primary" onClick={onReload}>Try again</button></section>;
 
-  const watchMetrics = [
-    { label: "Total reports", value: watchTotals.reports },
-    { label: "Open", value: watchTotals.open },
-    { label: "Resolved", value: watchTotals.resolved },
-    { label: "People involved", value: watchTotals.people },
-  ];
-
   // The same search flow is used for both first-time setup and adding more
   // towns. Only one instance renders at a time; no duplicate onboarding CTA.
   function townSearch() {
@@ -194,14 +187,6 @@ export function LocalSnapshots({ cities, watchlist, setWatchlist, stats, issues,
   </section>;
 
   return <section className="local-snapshots-page" aria-label="Local reporting watchlist">
-    <section className="snapshot-watch-summary snapshot-watch-summary-compact" aria-label="Combined totals across watched towns">
-      <div className="snapshot-summary-metrics" aria-live="polite">
-        {watchMetrics.map(({ label, value }) => <article className="snapshot-summary-metric" key={label}>
-          <div className="snapshot-summary-metric-top"><span>{label}</span></div>
-          <strong>{value.toLocaleString()}</strong>
-        </article>)}
-      </div>
-    </section>
     <div className="local-snapshots">
     <div className="snapshot-watchlist">
       <div className="snapshot-side-head">
@@ -212,6 +197,15 @@ export function LocalSnapshots({ cities, watchlist, setWatchlist, stats, issues,
         <button type="button" className="snapshot-add-button" onClick={() => setAdding((v) => !v)} aria-label={adding ? "Close add town" : copy.watchlist.addTown} aria-expanded={adding}>
           <Plus size={16} aria-hidden="true"/><span>{adding ? "Close" : "Add town"}</span>
         </button>
+      </div>
+      <div className="snapshot-inline-summary" role="group" aria-label="Combined totals across watched towns">
+        <p className="snapshot-inline-kicker">Across your towns. The backlog gets around.</p>
+        <div className="snapshot-inline-metrics" aria-live="polite">
+          <span className="snapshot-inline-stat"><strong>{watchTotals.reports.toLocaleString()}</strong> reports</span>
+          <span className="snapshot-inline-stat"><strong>{watchTotals.open.toLocaleString()}</strong> open</span>
+          <span className="snapshot-inline-stat"><strong>{watchTotals.resolved.toLocaleString()}</strong> resolved</span>
+          <span className="snapshot-inline-stat"><strong>{watchTotals.people.toLocaleString()}</strong> people</span>
+        </div>
       </div>
       {adding && <div className="snapshot-add-panel">
         <span className="snapshot-field-label">Search for a city or town</span>
