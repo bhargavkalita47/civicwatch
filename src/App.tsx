@@ -954,6 +954,7 @@ useEffect(() => {
                 center={activeCity?.center || center.current}
                 cityName={activeCity?.name ?? "current area"}
                 showLocationBadge={false}
+                scrollFriendly={isMobile}
                 clusters={exploreClusters}
                 highlightedIssueId={mapIssue?.id ?? hoveredIssueId ?? undefined}
                 pick={reportHerePoint ?? undefined}
