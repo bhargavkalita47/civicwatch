@@ -1,5 +1,6 @@
 import type { AreaStats, City, Issue, OverviewSnapshot } from "./types";
 import { activeIssues, historicalIssues, summarizeIssues } from "./logic";
+import { cities as demoCities } from "../data/cities";
 
 /** Keep saved towns in the user's chosen order, without cloning or losing an entry. */
 export function reorderWatchlist<T extends { id: string }>(items: T[], sourceId: string, destinationId: string): T[] {
@@ -42,13 +43,14 @@ export function summarizeWatchlist(watchlist: City[], issues: Issue[], snapshot:
 
 
 /** One storage key shared by Local Snapshot and Reports. */
-export const WATCHLIST_KEY = "civicwatch.local-watchlist.v1";
+export const WATCHLIST_KEY = "civicwatch.design-lab.watchlist.v2";
 export const MAX_WATCHED_TOWNS = 30;
 
 /** Read old watchlists without assuming every browser permits storage access. */
 export function restoreWatchlist(): City[] {
   try {
-    const value: unknown = JSON.parse(localStorage.getItem(WATCHLIST_KEY) || "[]");
+    // Only first-time visitors receive a sample watchlist. An intentionally cleared list stays empty.
+    const value: unknown = JSON.parse(localStorage.getItem(WATCHLIST_KEY) ?? JSON.stringify(demoCities.slice(0, 3)));
     if (!Array.isArray(value)) return [];
     const seen = new Set<string>();
     return value.filter((v): v is City => {
@@ -61,7 +63,7 @@ export function restoreWatchlist(): City[] {
       seen.add(v.id);
       return true;
     }).slice(0, MAX_WATCHED_TOWNS);
-  } catch { return []; }
+  } catch { return demoCities.slice(0, 3); }
 }
 
 /** Match report areas by their canonical IDs, never by arbitrary map proximity. */
