@@ -80,6 +80,10 @@ it("integrates subtle, icon-free totals into the town list without another dashb
   expect(container.querySelector(".snapshot-town-section")).toBeNull();
   expect(town.compareDocumentPosition(container.querySelector(".snapshot-detail-map")!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   expect(container.querySelector('[data-testid="town-map-preview"]')).not.toBeNull();
+  const topline = container.querySelector(".snapshot-detail-topline");
+  expect(topline?.querySelector("h2")?.textContent).toBe("Guwahati");
+  expect(topline?.querySelector("button")?.textContent).toContain("View full map");
+  expect(topline?.compareDocumentPosition(town) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   await act(async () => button("View full map").click());
   expect(onExplore).toHaveBeenCalledWith(towns[0]);
 });
