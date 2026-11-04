@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { ColorLab, applyStoredPalette } from "./ColorLab";
+import { config } from "../config";
+import { WATCHLIST_KEY } from "../domain/watchlist";
 
 /**
  * Branch-only typography playground.
@@ -124,6 +126,18 @@ export function FontLab() {
     catch { /* private browsing */ }
   }, [pair]);
 
+  function resetDemo() {
+    // Only test-branch browser storage is cleared; font and palette settings survive.
+    try {
+      localStorage.removeItem(config.storageKey);
+      localStorage.removeItem(config.sessionKey);
+      localStorage.removeItem(WATCHLIST_KEY);
+      localStorage.removeItem("civicwatch.design-lab.initial-session.v2");
+      localStorage.removeItem("civicwatch.local-selected.v1");
+    } catch { /* storage may be disabled */ }
+    window.location.reload();
+  }
+
   function selectFont(role: FontRole, name: string) {
     if (name === CUSTOM) {
       setCustomDraft(role === "ui" ? pair.ui : pair.display);
@@ -166,6 +180,13 @@ export function FontLab() {
             <button type="button" className="cw-font-lab-close" aria-label="Close design lab" onClick={() => setOpen(false)}>×</button>
           </header>
 
+          <div className="cw-design-demo-banner">
+            <div>
+              <strong>Demo mode · fictional content</strong>
+              <span>40 sample reports across four towns, resident profiles and comment threads. Nothing is sent to production.</span>
+            </div>
+            <button type="button" onClick={resetDemo}>Reset demo</button>
+          </div>
           <nav className="cw-design-lab-tabs" role="tablist" aria-label="Design experiments">
             <button type="button" role="tab" aria-selected={tab === "fonts"} onClick={() => setTab("fonts")}>Typography</button>
             <button type="button" role="tab" aria-selected={tab === "colors"} onClick={() => setTab("colors")}>Colors & themes</button>
