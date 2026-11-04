@@ -64,7 +64,7 @@
 }
 .cw-overview-total strong {
   display: block;
-  font-family: "Inter", system-ui, sans-serif;
+  font-family: var(--cw-font-ui, "Inter"), system-ui, sans-serif;
   font-size: clamp(70px, 8vw, 132px);
   font-weight: 800;
   line-height: 1;
@@ -118,7 +118,7 @@
   margin: auto 0 18px;
   padding-top: 18px;
   display: block;
-  font-family: "Inter", system-ui, sans-serif;
+  font-family: var(--cw-font-ui, "Inter"), system-ui, sans-serif;
   font-size: clamp(35px, 3.3vw, 61px);
   line-height: 1;
   font-weight: 800;
@@ -150,7 +150,7 @@
   font-size: 10px;
 }
 .cw-overview-resolution h2 {
-  font-family: "Instrument Serif", Georgia, serif;
+  font-family: var(--cw-font-display, "Instrument Serif"), Georgia, serif;
   font-weight: 400;
   font-size: clamp(24px, 3vw, 32px);
   letter-spacing: -.025em;
@@ -159,7 +159,7 @@
   margin: 7px 0 0;
 }
 .cw-overview-resolution-copy > strong {
-  font-family: "Inter", system-ui, sans-serif;
+  font-family: var(--cw-font-ui, "Inter"), system-ui, sans-serif;
   font-size: clamp(32px, 4vw, 54px);
   font-weight: 800;
   line-height: 1;
@@ -206,7 +206,7 @@
 .cw-overview-explore .section-kicker { color: var(--cw-muted); font-size: 10px; }
 .cw-overview-explore h2 {
   color: var(--cw-heading);
-  font-family: "Instrument Serif", Georgia, serif;
+  font-family: var(--cw-font-display, "Instrument Serif"), Georgia, serif;
   font-size: clamp(26px, 3vw, 34px);
   font-weight: 400;
   letter-spacing: -.025em;
