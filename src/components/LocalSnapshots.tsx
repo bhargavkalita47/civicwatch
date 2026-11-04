@@ -245,24 +245,24 @@ export function LocalSnapshots({ cities, watchlist, setWatchlist, stats, issues,
           </div>;
         })}
       </div>
-      <p className="snapshot-watch-foot">Up to {MAX_PLACES} towns</p>
     </div>
     <div className="snapshot-detail">
       {selected ? <>
         <div className="snapshot-detail-header">
-          <div className="snapshot-detail-heading"><h2>{selected.name}</h2><p>{selected.region}, {selected.country}</p></div>
+          <div className="snapshot-detail-heading">
+            <h2>{selected.name}</h2>
+            <p>{selected.region}, {selected.country}</p>
+            <div className="snapshot-town-inline-metrics" aria-label={`Report totals for ${selected.name}`}>
+              <span><strong>{selectedStats.reports.toLocaleString()}</strong> reports</span>
+              <span><strong>{selectedStats.open.toLocaleString()}</strong> open</span>
+              <span><strong>{selectedStats.resolved.toLocaleString()}</strong> resolved</span>
+              <span><strong>{selectedStats.people.toLocaleString()}</strong> people</span>
+            </div>
+            {selectedStats.reports > 0 && <p className="snapshot-town-resolution">{resolution}% resolved</p>}
+          </div>
           <button type="button" className="button secondary" onClick={() => onExplore(selected)}>{copy.watchlist.mapAction} <ArrowRight size={15} aria-hidden="true"/></button>
         </div>
         <div className="snapshot-detail-map"><CivicMap key={selected.id} compact center={selected.center} categories={categories} clusters={clusters} onSelect={onSelectCluster}/></div>
-        {selectedStats.reports > 0 && <div className="snapshot-town-section">
-          {watchlist.length > 1 && <dl className="snapshot-town-metrics" aria-label={`Report totals for ${selected.name}`}>
-            <div><dt>All reports</dt><dd>{selectedStats.reports.toLocaleString()}</dd></div>
-            <div><dt>Still open</dt><dd>{selectedStats.open.toLocaleString()}</dd></div>
-            <div><dt>Resolved</dt><dd>{selectedStats.resolved.toLocaleString()}</dd></div>
-            <div><dt>People involved</dt><dd>{selectedStats.people.toLocaleString()}</dd></div>
-          </dl>}
-          <div className="snapshot-resolution"><div><strong>{copy.watchlist.resolutionRate}</strong><span>{selectedStats.reports ? `${resolution}%` : copy.watchlist.noData}</span></div><div className="snapshot-resolution-track"><i style={{ width: `${resolution}%` }}/></div>{selectedStats.resolved > 0 && <small>{copy.watchlist.resolutionCaption}</small>}</div>
-        </div>}
         <div className="snapshot-activity">{recent.length ? <><div className="snapshot-activity-heading"><h3>{copy.watchlist.recent}</h3></div>{recent.map((issue) => <article key={issue.id} className="snapshot-activity-row"><span className="snapshot-status-dot"/><div><strong>{issue.title}</strong><p>{issue.status === "resolved" ? "Resolved" : "Open"} · {relativeTime(issue.createdAt)}</p></div></article>)}</> : <div className="snapshot-no-reports"><strong>{copy.watchlist.noReports}</strong><p>{copy.watchlist.noReportsText}</p><button className="button secondary" onClick={() => onReport(selected)}>{copy.actions.report}</button></div>}</div>
       </> : null}
     </div>
