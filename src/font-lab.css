@@ -1,0 +1,367 @@
+/*
+ * Font Lab is a debug-only feature for the dev/design-lab branch.
+ * Never cherry-pick or merge this stylesheet into main.
+ */
+.cw-font-lab,
+.cw-font-lab * {
+  box-sizing: border-box;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif !important;
+  letter-spacing: normal;
+}
+.cw-font-lab {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 2147483000;
+  pointer-events: none;
+  color: #241d35;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.cw-font-lab button,
+.cw-font-lab select,
+.cw-font-lab input { font: inherit; }
+.cw-font-lab button { cursor: pointer; }
+.cw-font-lab-trigger {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-left: auto;
+  padding: 10px 15px;
+  min-height: 44px;
+  border-radius: 999px;
+  border: 1px solid #332641;
+  background: #231a33;
+  color: #fff;
+  font-weight: 700;
+  box-shadow: 0 7px 22px #110f2040;
+}
+.cw-font-lab-trigger-icon {
+  width: 25px;
+  height: 25px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  background: #f0d7ff;
+  color: #2a1a3c;
+  font-weight: 850;
+  font-size: 12px;
+}
+.cw-font-lab-panel {
+  pointer-events: auto;
+  overflow: auto;
+  width: min(374px, calc(100vw - 24px));
+  max-height: min(690px, calc(100dvh - 94px));
+  margin-bottom: 12px;
+  background: #ffffff;
+  border: 1px solid #d8d0e6;
+  box-shadow: 0 18px 64px #1711274d;
+  border-radius: 19px;
+  padding: 17px;
+  overscroll-behavior: contain;
+}
+.cw-font-lab-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.cw-font-lab-eyebrow {
+  font-size: 10px;
+  font-weight: 800;
+  color: #7e5ba5;
+  letter-spacing: .09em !important;
+}
+.cw-font-lab-header h2 {
+  margin: 2px 0 0;
+  color: #261d36;
+  font-size: 23px;
+  line-height: 1.2;
+  font-weight: 760;
+}
+.cw-font-lab-close {
+  display: grid;
+  place-items: center;
+  flex: 0 0 32px;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid #e3dceb;
+  border-radius: 9px;
+  background: #f8f6fb;
+  font-size: 25px !important;
+  line-height: 1 !important;
+  color: #4b3e63;
+}
+.cw-font-lab-help {
+  margin: 10px 0 13px;
+  font-size: 12px;
+  color: #6e627c;
+}
+.cw-font-lab-current {
+  padding: 11px 13px;
+  border: 1px solid #ede5f4;
+  border-radius: 12px;
+  background: #f9f6fc;
+  display: grid;
+  gap: 2px;
+}
+.cw-font-lab-current span,
+.cw-font-lab-presets > span,
+.cw-font-lab-field > label,
+.cw-font-lab-custom > label {
+  font-size: 11px;
+  color: #57466a;
+  font-weight: 750;
+}
+.cw-font-lab-current strong {
+  color: #291c3b;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.cw-font-lab-field { display: grid; gap: 5px; margin-top: 13px; }
+.cw-font-lab-field select,
+.cw-font-lab-custom input {
+  width: 100%;
+  min-width: 0;
+  min-height: 41px;
+  border: 1px solid #dcd3e9;
+  border-radius: 9px;
+  background: #fff;
+  color: #251a34;
+  padding: 8px 11px;
+  font-size: 13px;
+}
+.cw-font-lab-field small,
+.cw-font-lab-custom small {
+  font-size: 10px;
+  color: #756981;
+}
+.cw-font-lab-custom {
+  padding: 10px;
+  border-radius: 10px;
+  background: #f8f6fb;
+  margin-top: 12px;
+}
+.cw-font-lab-custom > div { display: flex; gap: 6px; margin: 7px 0 4px; }
+.cw-font-lab-custom button {
+  flex: 0 0 auto;
+  border-radius: 8px;
+  background: #5c3b84;
+  color: #fff;
+  padding: 0 12px;
+  font-weight: 700;
+}
+.cw-font-lab-error { color: #ae2445; font-size: 11px; margin: 5px 0 0; }
+.cw-font-lab-presets { display: grid; gap: 9px; margin-top: 15px; }
+.cw-font-lab-chip-grid { display: flex; flex-wrap: wrap; gap: 7px; }
+.cw-font-lab-chip-grid button {
+  border-radius: 999px;
+  border: 1px solid #dfd5eb;
+  background: #fff;
+  color: #534368;
+  padding: 6px 11px;
+  font-size: 11px;
+  font-weight: 680;
+}
+.cw-font-lab-chip-grid button.is-selected {
+  background: #eadff6;
+  border-color: #a988cf;
+  color: #35204f;
+}
+.cw-font-lab-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border-top: 1px solid #eee8f2;
+  padding-top: 12px;
+  margin-top: 16px;
+}
+.cw-font-lab-footer button {
+  background: transparent;
+  color: #5f3c82;
+  text-decoration: underline;
+  padding: 3px;
+  font-size: 11px;
+  font-weight: 750;
+}
+.cw-font-lab-footer span { color: #887b93; font-size: 10px; text-align: right; }
+.cw-font-lab :is(button, select, input):focus-visible {
+  outline: 3px solid #a876d1;
+  outline-offset: 3px;
+}
+@media (max-width: 600px) {
+  .cw-font-lab { right: 12px; bottom: 12px; }
+  .cw-font-lab-panel { max-height: calc(100dvh - 82px); padding: 14px; }
+}
+
+
+/* Design Lab palette controls — debug only; fixed neutral chrome, independent of
+   the colors being tested in the application beneath. */
+.cw-design-lab-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px;
+  margin: 15px 0 11px;
+  padding: 4px;
+  border-radius: 11px;
+  background: #f2eef7;
+  border: 1px solid #e7ddf0;
+}
+.cw-design-lab-tabs button {
+  padding: 9px 8px;
+  border-radius: 8px;
+  min-height: 39px;
+  color: #61516e;
+  font-size: 12px !important;
+  font-weight: 650;
+  background: transparent;
+}
+.cw-design-lab-tabs button[aria-selected="true"] {
+  background: #ffffff;
+  color: #3b2654;
+  box-shadow: 0 1px 5px #281a3820;
+}
+.cw-design-lab-tab[hidden] { display: none !important; }
+.cw-colors-lab { display: grid; gap: 13px; }
+.cw-colors-lab .cw-font-lab-help { margin: 0; }
+.cw-colors-appearance {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.cw-colors-appearance > span,
+.cw-colors-presets > span,
+.cw-colors-editor-heading > span,
+.cw-colors-contrast > span {
+  color: #57466a;
+  font-size: 11px;
+  font-weight: 750;
+}
+.cw-colors-appearance > div {
+  display: flex;
+  background: #f5f1f9;
+  padding: 3px;
+  border-radius: 9px;
+  border: 1px solid #e4dceb;
+}
+.cw-colors-appearance button {
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 11px;
+  color: #675a72;
+}
+.cw-colors-appearance button[aria-pressed="true"] {
+  color: #322045;
+  background: #ffffff;
+  box-shadow: 0 1px 4px #2d193026;
+  font-weight: 700;
+}
+.cw-colors-presets { display: grid; gap: 9px; }
+.cw-colors-preset-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.cw-colors-preset-grid button {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+  text-align: left;
+  padding: 9px 10px 10px;
+  border: 1px solid #e1d9eb;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #2e2439;
+}
+.cw-colors-preset-grid button:hover {
+  border-color: #b69cce;
+}
+.cw-colors-preset-grid button.is-selected {
+  background: #f6f0fb;
+  border-color: #9476b1;
+  box-shadow: 0 0 0 1px #9476b11c;
+}
+.cw-colors-preset-grid strong {
+  font-size: 11px;
+  font-weight: 750;
+}
+.cw-colors-preset-grid small {
+  color: #756a80;
+  font-size: 10px;
+  line-height: 1.4;
+}
+.cw-colors-preview {
+  display: flex;
+  gap: 2px;
+  width: 100%;
+  height: 24px;
+  margin-bottom: 4px;
+  overflow: hidden;
+  border-radius: 7px;
+  border: 1px solid #d4cddb;
+}
+.cw-colors-preview > i { flex: 1 1 0; display: block; }
+.cw-colors-editor { display: grid; gap: 10px; border-top: 1px solid #eee8f2; padding-top: 13px; }
+.cw-colors-editor-heading { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.cw-colors-editor-heading small { color: #8b7a96; font-size: 10px; }
+.cw-colors-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+}
+.cw-colors-field {
+  display: grid;
+  gap: 4px;
+  padding: 9px 9px 8px;
+  min-width: 0;
+  border: 1px solid #eee7f2;
+  border-radius: 9px;
+  background: #fcfafe;
+}
+.cw-colors-field > span:first-child { font-size: 10px; color: #594a69; font-weight: 650; }
+.cw-colors-field-input {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.cw-colors-field-input input[type="color"] {
+  appearance: none;
+  -webkit-appearance: none;
+  border: 1px solid #d6cce3;
+  padding: 2px;
+  margin: 0;
+  border-radius: 7px;
+  width: 37px;
+  height: 31px;
+  min-width: 37px;
+  background: #ffffff;
+  cursor: pointer;
+}
+.cw-colors-field-input code {
+  color: #63536f;
+  font: 600 10px/1.2 ui-monospace, monospace !important;
+  white-space: nowrap;
+}
+.cw-colors-contrast {
+  padding: 10px 11px;
+  border: 1px solid #e8def0;
+  border-radius: 10px;
+  background: #faf7fc;
+}
+.cw-colors-contrast > div {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 6px 0;
+}
+.cw-colors-contrast > div span { color: #554565; font-size: 11px; }
+.cw-colors-contrast strong { color: #28193c; }
+.cw-colors-contrast small { display: block; color: #807187; font-size: 10px; line-height: 1.5; }
+.cw-colors-footer { margin-top: 0; padding-top: 10px; }
+.cw-colors-disclaimer { color: #84768d; font-size: 10px; margin: -4px 1px 2px; }
