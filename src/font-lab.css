@@ -410,3 +410,34 @@
   font: inherit;
   font-weight: 650;
 }
+
+
+/* Only in dev/design-lab: distinguish fictional sample data from live CivicWatch. */
+.cw-design-demo-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 11px;
+  margin: 10px 0 6px;
+  border: 1px solid #d4c6eb;
+  border-radius: 10px;
+  background: #f5f0fc;
+  color: #3e2c54;
+}
+.cw-design-demo-banner > div { display: grid; gap: 3px; flex: 1; min-width: 0; }
+.cw-design-demo-banner strong { font-size: 11px; font-weight: 750; }
+.cw-design-demo-banner span { font-size: 10px; line-height: 1.45; color: #68597a; }
+.cw-design-demo-banner button {
+  flex-shrink: 0;
+  padding: 7px 9px;
+  border: 1px solid #c4b2db;
+  border-radius: 8px;
+  background: #fff;
+  color: #533f6f;
+  font-size: 10px !important;
+  font-weight: 700;
+}
+@media (max-width: 355px) {
+  .cw-design-demo-banner { flex-wrap: wrap; }
+  .cw-design-demo-banner button { margin-left: auto; }
+}
