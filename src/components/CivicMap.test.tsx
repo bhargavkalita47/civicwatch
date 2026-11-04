@@ -159,3 +159,33 @@ it("groups neighbouring markers when zoomed out and separates them when zoomed i
   await act(async () => { map.setZoom(15); });
   expect(container.querySelectorAll(".civic-marker")).toHaveLength(2);
 });
+
+it("keeps a mobile Explore map scroll-friendly until a visitor unlocks dragging", async () => {
+  const maps = vi.spyOn(L, "map");
+  await act(async () => { root.render(<CivicMap categories={categories} scrollFriendly />); });
+  const instance = maps.mock.results[0].value as L.Map;
+  const toggle = container.querySelector<HTMLButtonElement>(".map-pan-toggle")!;
+  expect(toggle).not.toBeNull();
+  expect(toggle.textContent).toContain("Move map");
+  expect(toggle.getAttribute("aria-pressed")).toBe("false");
+  expect(container.querySelector(".map-scroll-friendly")).not.toBeNull();
+  expect(instance.dragging.enabled()).toBe(false);
+  expect(instance.scrollWheelZoom.enabled()).toBe(false);
+  expect(container.querySelector('[aria-label="Zoom in"]')).not.toBeNull();
+
+  await act(async () => { toggle.click(); });
+  expect(container.querySelector(".map-pan-enabled")).not.toBeNull();
+  expect(toggle.getAttribute("aria-pressed")).toBe("true");
+  expect(toggle.textContent).toContain("Scroll page");
+  expect(instance.dragging.enabled()).toBe(true);
+
+  await act(async () => { toggle.click(); });
+  expect(container.querySelector(".map-scroll-friendly")).not.toBeNull();
+  expect(instance.dragging.enabled()).toBe(false);
+
+  // If the viewport changes to desktop, map dragging returns automatically.
+  await act(async () => { root.render(<CivicMap categories={categories} scrollFriendly={false} />); });
+  expect(container.querySelector(".map-pan-toggle")).toBeNull();
+  expect(instance.dragging.enabled()).toBe(true);
+  expect(instance.scrollWheelZoom.enabled()).toBe(true);
+});
