@@ -39,6 +39,10 @@ assert.match(overview, /cw-overview-stat-grid/, 'Show open, resolved and people 
 assert.ok(overview.indexOf('cw-overview-figures') < overview.indexOf('cw-overview-explore'), 'Numbers must precede Explore navigation');
 assert.match(overview, /onClick=\{onOpenMap\}/, 'Explore map CTA must be actionable');
 assert.match(root, /import "\.\/overview-numbers\.css";/, 'Numbers-first style overrides must be loaded');
+assert.match(app, /tab !== "explore" && loading \? \(/, 'Design Lab Explore map should not wait for API data');
+assert.match(app, /tab !== "explore" && error \? \(/, 'Design Lab Explore map must survive report API errors');
+assert.match(app, /cw-design-map-notice/, 'Design Lab needs the map data warning and retry');
+assert.match(root, /<FontLab \/>/, 'Design Lab controls must be mounted in the experiment branch');
 assert.doesNotMatch(overview, /overview-ranked-locations|city-directory/, 'Local towns must live in Local Snapshot');
 assert.match(app, /tab === "snapshots" \?/, 'Local Snapshot must be a destination');
 assert.match(app, /<LocalSnapshots cities=/, 'Local Snapshot must use its own page component');
