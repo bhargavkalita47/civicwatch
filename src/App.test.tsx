@@ -71,3 +71,36 @@ it("shows a resolved report location temporarily without restoring it to active 
   expect(mapProps.current?.highlightedIssueId).toBeUndefined();
   expect(mapProps.current?.clusters?.some(cluster=>cluster.issues.some(item=>item.id===issue.id))).toBe(false);
 });
+
+it("requires confirmation before reporting at a tapped map location", async () => {
+  await click("Explore map");
+  const point = {lat: 26.18, lng: 91.74};
+  await act(async () => { mapProps.current?.onPick?.(point); });
+  expect(container.querySelector(".explore-map-prompt")?.textContent).toContain("Report an issue here?");
+  expect(mapProps.current?.pick).toEqual(point);
+  await click("Dismiss map reporting prompt");
+  expect(container.querySelector(".explore-map-prompt")).toBeNull();
+  expect(mapProps.current?.pick).toBeUndefined();
+});
+
+it("offers three reports-sheet states and focuses the clicked report on the map", async () => {
+  await click("Explore map");
+  const sheet = container.querySelector(".explore-reports-sheet")!;
+  const toggle = container.querySelector<HTMLButtonElement>(".explore-sheet-toggle")!;
+  expect(sheet.classList.contains("sheet-collapsed")).toBe(true);
+  expect(toggle.getAttribute("aria-controls")).toBe("explore-reports-list");
+  await act(async () => toggle.click());
+  expect(sheet.classList.contains("sheet-half")).toBe(true);
+  await act(async () => toggle.click());
+  expect(sheet.classList.contains("sheet-full")).toBe(true);
+  await act(async () => toggle.click());
+  expect(sheet.classList.contains("sheet-collapsed")).toBe(true);
+  const issue = dataset.current!.issues.find(entry => entry.status !== "resolved")!;
+  const card = [...container.querySelectorAll<HTMLButtonElement>(".reports-panel .issue-card")]
+    .find(entry => entry.textContent?.includes(issue.title))!;
+  expect(card).toBeTruthy();
+  await act(async () => card.click());
+  expect(mapProps.current?.highlightedIssueId).toBe(issue.id);
+  expect(mapProps.current?.focus).toEqual(issue.location);
+  expect(container.querySelector(".map-report-focus")?.textContent).toContain(issue.title);
+});
