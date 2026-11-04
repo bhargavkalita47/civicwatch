@@ -7,7 +7,7 @@ import { activeIssues, clusterIssues, relativeTime, summarizeIssues } from "../d
 import { PlaceSearch } from "./PlaceSearch";
 import { CivicMap } from "./CivicMap";
 import { MAX_WATCHED_TOWNS, reorderWatchlist, summarizeWatchlist } from "../domain/watchlist";
-import { copy, countNoun } from "../copy";
+import { copy } from "../copy";
 
 const SELECTED_KEY = "civicwatch.local-selected.v1";
 const EMPTY = { reports: 0, open: 0, resolved: 0, people: 0 };
@@ -192,7 +192,6 @@ export function LocalSnapshots({ cities, watchlist, setWatchlist, stats, issues,
       <div className="snapshot-side-head">
         <div className="snapshot-side-title">
           <h2>{copy.watchlist.placesHeading}</h2>
-          <span className="snapshot-side-count">{countNoun(watchlist.length, "town")} watched</span>
         </div>
         <button type="button" className="snapshot-add-button" onClick={() => setAdding((v) => !v)} aria-label={adding ? "Close add town" : copy.watchlist.addTown} aria-expanded={adding}>
           <Plus size={16} aria-hidden="true"/><span>{adding ? "Close" : "Add town"}</span>
@@ -246,7 +245,7 @@ export function LocalSnapshots({ cities, watchlist, setWatchlist, stats, issues,
           </div>;
         })}
       </div>
-      <p className="snapshot-watch-foot">{watchlist.length > 1 ? "Drag to reorder · " : ""}Up to {MAX_PLACES} towns</p>
+      <p className="snapshot-watch-foot">Up to {MAX_PLACES} towns</p>
     </div>
     <div className="snapshot-detail">
       {selected ? <>
