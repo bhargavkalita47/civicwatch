@@ -30,13 +30,13 @@
 }
 .snapshot-onboarding-copy h2 {
   margin: 7px 0 5px;
-  font: 400 clamp(29px, 3.25vw, 38px)/1.1 "Instrument Serif", Georgia, serif;
+  font: 400 clamp(29px, 3.25vw, 38px)/1.1 var(--cw-font-display, "Instrument Serif"), Georgia, serif;
   letter-spacing: -.025em;
   color: var(--cw-heading);
 }
 .snapshot-onboarding-copy p {
   margin: 0;
-  font: 400 14px/1.65 "Inter", system-ui, sans-serif;
+  font: 400 14px/1.65 var(--cw-font-ui, "Inter"), system-ui, sans-serif;
   color: var(--cw-muted);
 }
 .snapshot-onboarding-search {
