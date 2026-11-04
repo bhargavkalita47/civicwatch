@@ -104,3 +104,42 @@ it("offers three reports-sheet states and focuses the clicked report on the map"
   expect(mapProps.current?.focus).toEqual(issue.location);
   expect(container.querySelector(".map-report-focus")?.textContent).toContain(issue.title);
 });
+
+it("expands mobile reports to the viewport and restores scrolling when collapsed", async () => {
+  await act(async () => { root.unmount(); });
+  vi.stubGlobal("matchMedia", () => ({ matches: true, addEventListener: vi.fn(), removeEventListener: vi.fn() }));
+  root = createRoot(container);
+  await act(async () => { root.render(<App />); });
+  await click("Explore map");
+  const toggle = container.querySelector<HTMLButtonElement>(".explore-sheet-toggle")!;
+  const sheet = container.querySelector(".explore-reports-sheet")!;
+  const workspace = container.querySelector(".map-workspace")!;
+
+  expect(sheet.classList.contains("sheet-collapsed")).toBe(true);
+  expect(workspace.classList.contains("sheet-viewport-full")).toBe(false);
+  await act(async () => toggle.click());
+  expect(sheet.classList.contains("sheet-half")).toBe(true);
+  await act(async () => toggle.click());
+  expect(sheet.classList.contains("sheet-full")).toBe(true);
+  expect(workspace.classList.contains("sheet-viewport-full")).toBe(true);
+  expect(document.body.style.overflow).toBe("hidden");
+
+  await act(async () => toggle.click());
+  expect(sheet.classList.contains("sheet-collapsed")).toBe(true);
+  expect(workspace.classList.contains("sheet-viewport-full")).toBe(false);
+  expect(document.body.style.overflow).not.toBe("hidden");
+});
+
+it("opens the mobile navigation without an X and still dismisses on backdrop tap", async () => {
+  await act(async () => { root.unmount(); });
+  vi.stubGlobal("matchMedia", () => ({ matches: true, addEventListener: vi.fn(), removeEventListener: vi.fn() }));
+  root = createRoot(container);
+  await act(async () => { root.render(<App />); });
+  const trigger = container.querySelector<HTMLButtonElement>(".mobile-menu-trigger")!;
+  await act(async () => trigger.click());
+  expect(container.querySelector(".mobile-drawer-close")).toBeNull();
+  expect(container.querySelector(".site-header.mobile-drawer-open")).not.toBeNull();
+  expect(document.activeElement?.textContent).toContain("Overview");
+  await act(async () => container.querySelector<HTMLDivElement>(".mobile-nav-backdrop")!.click());
+  expect(container.querySelector(".site-header.mobile-drawer-open")).toBeNull();
+});
