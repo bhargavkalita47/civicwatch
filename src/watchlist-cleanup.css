@@ -83,8 +83,12 @@
 }
 #root .local-snapshots-page .snapshot-add-button:hover,
 #root .local-snapshots-page .snapshot-add-button[aria-expanded="true"] {
-  background: var(--cw-soft);
+  background: transparent;
   border-color: transparent;
+  box-shadow: none;
+}
+#root .local-snapshots-page .snapshot-add-button:hover {
+  color: var(--cw-heading);
 }
 #root .local-snapshots-page .snapshot-add-button > svg {
   display: block;
