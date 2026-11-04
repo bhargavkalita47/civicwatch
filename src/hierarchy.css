@@ -14,7 +14,7 @@
  *  Metadata              12px     Inter 500–700
  *
  * Instrument Serif is deliberately restricted to its native regular/italic
- * weight (400), with synthetic bold disabled. Inter keeps strong UI/data weights.
+ * weight (400), with synthetic bold disabled. The interface font keeps strong UI/data weights.
  */
 :root {
   --type-display: clamp(48px, 4.7vw, 68px);
