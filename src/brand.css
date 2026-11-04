@@ -245,6 +245,15 @@ body { min-width: 0; }
   white-space: nowrap;
 }
 
+/* Match the mobile hamburger icon to the clock ink in each theme. */
+@media (max-width: 790px) {
+  #root .mobile-topbar .mobile-menu-trigger,
+  #root .mobile-topbar .mobile-menu-trigger svg {
+    color: var(--cw-heading);
+    stroke: currentColor;
+  }
+}
+
 @media (max-width: 790px) {
   #root .brand .header-clock-date {
     font-size: 9px;
