@@ -31,7 +31,7 @@ export const copy = {
     addTown: "Add a town", searchLabel: "Search for a city or town",
     suggestions: "Places with reports already on file",
     townTotals: "The local situation", recent: "Recently reported",
-    mapAction: "Open town map", resolutionRate: "Resolution rate",
+    mapAction: "View full map", resolutionRate: "Resolution rate",
     resolutionCaption: "Proof that occasionally, something happens.", noData: "Not enough data",
     emptyTitle: "Pick a place to keep sighing about.", emptyText: "Add a city or town to follow its reports.",
     emptyAction: "Add your first town", noReports: "Nothing reported here yet.",
