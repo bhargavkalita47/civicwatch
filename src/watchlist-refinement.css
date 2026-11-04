@@ -76,11 +76,11 @@
 .snapshot-watch-summary-compact .snapshot-summary-metric:first-child { padding-left: 0; }
 .snapshot-watch-summary-compact .snapshot-summary-metric:last-child { border-right: 0; padding-right: 0; }
 .snapshot-watch-summary-compact .snapshot-summary-metric::before { display: none; }
-.snapshot-watch-summary-compact .snapshot-summary-metric-top { font-weight: 500; font-size: 12px; }
+.snapshot-watch-summary-compact .snapshot-summary-metric-top { font-weight: 550; font-size: 12px; letter-spacing: 0; }
 .snapshot-watch-summary-compact .snapshot-summary-metric-top svg { opacity: .7; }
 .snapshot-watch-summary-compact .snapshot-summary-metric > strong {
   display: block; margin: 7px 0 0; font-size: clamp(25px, 2.2vw, 33px);
-  line-height: 1.12; letter-spacing: -.045em;
+  line-height: 1.14; letter-spacing: -.028em;
 }
 .snapshot-watch-summary-compact .snapshot-summary-zero { margin: 4px 0 0; color: var(--cw-muted); font-size: 13px; }
 
@@ -92,7 +92,7 @@
 .local-snapshots-page .snapshot-add-button {
   display: inline-flex; align-items: center; justify-content: center; gap: 6px;
   width: auto; min-width: 92px; height: 36px; padding: 0 10px;
-  font-size: 12px; font-weight: 650; white-space: nowrap;
+  font-size: 12px; font-weight: 600; letter-spacing: 0; white-space: nowrap;
 }
 .local-snapshots-page .snapshot-add-button svg { flex-shrink: 0; }
 .local-snapshots-page .snapshot-add-panel { padding: 16px; }
