@@ -80,7 +80,6 @@
 #root .snapshot-summary-metric-top {
   align-items: center;
 }
-#root .cw-overview-stat-head > svg,
 #root .snapshot-summary-metric-top > svg {
   display: block;
   position: relative;
