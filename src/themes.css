@@ -1,6 +1,6 @@
 /* CivicWatch 1.6 — two complete, accessible themes.
  * Light: Lavender / Coral. Dark: Deep Teal / Coral.
- * Instrument Serif + Inter are locked as product typography.
+ * Production baseline: Instrument Serif + Inter; this branch previews alternatives.
  * Issue-category colors remain semantically distinct; theme colors never overwrite pin data.
  */
 @import url("https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700;800&display=swap");
