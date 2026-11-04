@@ -74,6 +74,10 @@ assert.match(watchlist, /snapshot-watch-menu-trigger/, "Town actions should be g
 assert.match(watchlist, /function undoRemove/, "Town removal must support Undo");
 assert.match(watchlist, /cityStats\.open\.toLocaleString/, "Town counts should be labelled");
 assert.match(watchlist, /CivicMap key=\{selected\.id\} compact/, "Map stays as a preview");
+assert.match(watchlist, /snapshot-town-inline-metrics/, "Selected town figures belong beneath town identity");
+assert.match(watchlist, /snapshot-town-resolution/, "Resolution should be muted metadata");
+assert.doesNotMatch(watchlist, /snapshot-town-metrics|snapshot-resolution-track|snapshot-watch-foot/, "No duplicate stats grid, progress bar or list limit footer");
+assert.match(watchlistCleanupCSS, /snapshot-town-inline-metrics/, "Inline town metadata has responsive styling");
 assert.doesNotMatch(watchlist, /snapshot-summary-heading|THE USUAL PROBLEMS/, "No duplicate watchlist headline");
 assert.match(watchlistLogic, /summarizeWatchlist/);
 assert.match(watchlistLogic, /new Set\(relevantIssues\.flatMap/, 'Do not double-count people in multiple towns');
