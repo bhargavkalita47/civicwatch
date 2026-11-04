@@ -1,9 +1,9 @@
 /* CivicWatch 1.6 — two complete, accessible themes.
  * Light: Lavender / Coral. Dark: Deep Teal / Coral.
- * Instrument Serif + Inter are locked as product typography.
+ * Instrument Serif + Manrope are locked as product typography.
  * Issue-category colors remain semantically distinct; theme colors never overwrite pin data.
  */
-@import url("https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700;800&display=swap");
 :root,
 :root[data-theme="light"] {
   color-scheme: light;
@@ -97,10 +97,10 @@
 }
 * {scrollbar-color:var(--cw-scroll) transparent;}
 html{background:var(--cw-page);scroll-behavior:smooth;}
-body{background:var(--cw-page);color:var(--cw-ink);font-family:"Inter",system-ui,sans-serif; min-width:320px;}
-body,button,input,textarea,select{font-family:"Inter",system-ui,sans-serif;}
+body{background:var(--cw-page);color:var(--cw-ink);font-family:"Manrope",system-ui,sans-serif; min-width:320px;}
+body,button,input,textarea,select{font-family:"Manrope",system-ui,sans-serif;}
 h1,h2,.city-card h3,.overview-panel-heading h2,.admin-console h2,.modal-header h2{font-family:"Instrument Serif", Georgia,serif; font-weight:400;color:var(--cw-heading);letter-spacing:-.035em;}
-h3,h4,.brand>span:last-child,.button,.main-nav button,.overview-metric strong{font-family:"Inter",system-ui,sans-serif;}
+h3,h4,.brand>span:last-child,.button,.main-nav button,.overview-metric strong{font-family:"Manrope",system-ui,sans-serif;}
 h3,h4,p,div,button,label{overflow-wrap:break-word;}
 ::selection{background:var(--cw-accent);color:var(--cw-accent-ink);}
 button:focus-visible,a:focus-visible{outline:3px solid var(--cw-accent);outline-offset:3px;}
@@ -220,7 +220,7 @@ footer .footer-brand>span{color:var(--cw-muted);}
 .overview-metric{background:var(--cw-panel);border:1px solid var(--cw-border);border-radius:16px;padding:20px 21px;min-height:151px;box-shadow:none;}
 .overview-metric-top{font-size:12px;font-weight:650;color:var(--cw-muted);}
 .overview-metric-top svg{color:var(--cw-lavender);}
-.overview-metric strong{font-family:"Inter",system-ui,sans-serif;font-size:clamp(31px,2.8vw,44px);line-height:1.2;font-weight:800;letter-spacing:-.065em;margin:15px 0 2px;color:var(--cw-heading);}
+.overview-metric strong{font-family:"Manrope",system-ui,sans-serif;font-size:clamp(31px,2.8vw,44px);line-height:1.2;font-weight:800;letter-spacing:-.065em;margin:15px 0 2px;color:var(--cw-heading);}
 .overview-metric small{color:var(--cw-muted);font-size:11px;line-height:1.55;margin:0;}
 .overview-metric.metric-featured{background:var(--cw-coral-card);border-color:transparent;}
 .metric-featured .overview-metric-top,.metric-featured .overview-metric-top svg,.metric-featured strong,.metric-featured small{color:var(--cw-coral-text);}
@@ -270,7 +270,7 @@ footer .footer-brand>span{color:var(--cw-muted);}
 .city-card h3{font-family:"Instrument Serif",Georgia,serif;font-size:30px;line-height:1.1;font-weight:400;letter-spacing:-.035em;color:var(--cw-heading);}
 .city-card p{font-size:11px;color:var(--cw-muted);}
 .city-card-count{margin-top:18px;}
-.city-card-count strong{font-size:29px;font-family:"Inter",sans-serif;letter-spacing:-.055em;color:var(--cw-heading);font-weight:800;}
+.city-card-count strong{font-size:29px;font-family:"Manrope",sans-serif;letter-spacing:-.055em;color:var(--cw-heading);font-weight:800;}
 .city-card-count>span{color:var(--cw-muted);font-size:10px;}
 .city-bar{background:var(--cw-soft-2);height:5px;}
 .city-bar span{background:var(--cw-accent);}
@@ -451,7 +451,7 @@ label>input::placeholder,textarea::placeholder{color:var(--cw-faint);}
 @media(max-width:480px){.intro h1:has(.headline-second-line){font-size:clamp(33px,9vw,38px);}}
 
 /* Final typography ownership: do not load the legacy DM Sans / Manrope families. */
-.support-number,.brand,.footer-brand,.how-it-works>div>i{font-family:"Inter",system-ui,sans-serif;}
+.support-number,.brand,.footer-brand,.how-it-works>div>i{font-family:"Manrope",system-ui,sans-serif;}
 
 /* v1.7 — Map-first overview. No metrics or local ranking above/beside the map. */
 .overview-map-first .overview-map-full{width:100%;display:block;}
