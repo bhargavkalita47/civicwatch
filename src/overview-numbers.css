@@ -6,7 +6,7 @@
 
 /* The Overview hero still includes the desktop and mobile reporting CTA. */
 #root .intro-overview {
-  padding-bottom: clamp(14px, 1.7vw, 22px);
+  padding-bottom: clamp(24px, 2.7vw, 36px);
   gap: clamp(18px, 2vw, 27px);
 }
 #root .intro-overview p {
@@ -16,6 +16,8 @@
   color: var(--cw-muted);
 }
 #root .intro-overview h1 {
+  font-size: clamp(52px, 5.15vw, 76px);
+  line-height: 1.08;
   margin-bottom: 12px;
 }
 
@@ -24,7 +26,10 @@
   gap: clamp(14px, 1.5vw, 20px);
   width: 100%;
   min-width: 0;
+  margin-top: 6px;
+  padding-top: clamp(22px, 2.2vw, 30px);
   padding-bottom: 26px;
+  border-top: 1px solid var(--cw-border);
 }
 /* All four metrics share a top label, bottom-aligned value and a
    predictable caption zone. The large total remains the visual lead. */
@@ -259,7 +264,15 @@
   #root .intro-overview {
     gap: 15px;
     padding-top: 25px;
-    padding-bottom: 16px;
+    padding-bottom: 23px;
+  }
+  #root .intro-overview h1 {
+    font-size: clamp(40px, 9.6vw, 56px);
+    line-height: 1.08;
+  }
+  .cw-overview-numbers {
+    margin-top: 3px;
+    padding-top: 20px;
   }
   #root .intro-overview p {
     font-size: 14px;
