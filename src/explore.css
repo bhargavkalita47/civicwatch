@@ -215,7 +215,6 @@
   letter-spacing: -.01em;
 }
 #root .map-workspace .report-list > .issue-card .issue-card-bottom { margin-top: 12px; }
-#root .map-workspace .panel-footer { flex: 0 0 auto; }
 #root .map-workspace .map-shell.explore-map { min-height: 650px; }
 
 /* A deliberate map-tap choice: do not launch the form accidentally while
@@ -432,8 +431,7 @@
   }
   #root .map-workspace .reports-panel-heading-main h3 { display: none; }
   #root .map-workspace .explore-reports-sheet.sheet-collapsed .reports-panel-heading-main,
-  #root .map-workspace .explore-reports-sheet.sheet-collapsed .report-list,
-  #root .map-workspace .explore-reports-sheet.sheet-collapsed .panel-footer {
+  #root .map-workspace .explore-reports-sheet.sheet-collapsed .report-list {
     display: none;
   }
   #root .map-workspace .report-list {
@@ -445,7 +443,6 @@
     touch-action: pan-y;
     -webkit-overflow-scrolling: touch;
   }
-  #root .map-workspace .panel-footer { font-size: 11px; padding: 9px 15px; }
   #root .map-workspace .explore-map-prompt {
     bottom: 77px;
     left: 12px;
