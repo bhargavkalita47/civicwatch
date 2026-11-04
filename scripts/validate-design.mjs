@@ -71,6 +71,14 @@ assert.match(watchlistCleanupCSS, /snapshot-inline-metrics/, "Totals must be a w
 assert.doesNotMatch(watchlist, /Across your towns|snapshot-inline-kicker/, "Remove redundant sarcastic line beneath Your towns");
 assert.doesNotMatch(watchlist, /snapshot-watch-summary-compact|snapshot-summary-metrics/, "No detached statistics strip");
 assert.match(watchlist, /snapshot-watch-menu-trigger/, "Town actions should be grouped");
+assert.match(watchlist, /<div className="snapshot-side-title">[\s\S]*?<h2>\{copy\.watchlist\.placesHeading\}<\/h2>[\s\S]*?<button type="button" className="snapshot-add-button"/, "Plus control belongs directly beside Your towns");
+assert.match(watchlistCleanupCSS, /\.snapshot-side-title\s*\{[^}]*flex-direction:\s*row;/, "Your towns and plus icon must align on one row");
+assert.match(watchlistCleanupCSS, /\.snapshot-add-button\s*\{[^}]*border:\s*0;[^}]*background:\s*transparent;/, "The plus icon must be borderless and have no box");
+assert.match(watchlist, /role="menuitem" className="snapshot-watch-remove"/, "Three dots should provide one Remove town option");
+assert.doesNotMatch(watchlist, />Move up<|>Move down</, "Reordering stays on drag grip rather than ellipsis menu");
+assert.match(watchlistCleanupCSS, /\.snapshot-watch-menu\s*\{[^}]*position:\s*absolute;/, "Three dots open a small anchored menu, not an expanding panel");
+assert.match(watchlist, /onGripKeyDown/, "Keyboard reordering through the drag grip remains available");
+assert.match(watchlist, /document\.addEventListener\("pointerdown", closeOutside\)/, "Remove menu closes when tapping elsewhere");
 assert.match(watchlist, /function undoRemove/, "Town removal must support Undo");
 assert.match(watchlist, /cityStats\.open\.toLocaleString/, "Town counts should be labelled");
 assert.match(watchlist, /CivicMap key=\{selected\.id\} compact/, "Map stays as a preview");
