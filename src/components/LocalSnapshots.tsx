@@ -45,6 +45,23 @@ export function LocalSnapshots({ cities, watchlist, setWatchlist, stats, issues,
 
   useEffect(() => { try { localStorage.setItem(SELECTED_KEY, selectedKey); } catch { /* Storage may be disabled. */ } }, [selectedKey]);
 
+  useEffect(() => {
+    if (!openActionsId) return;
+    const closeOutside = (event: PointerEvent) => {
+      const target = event.target;
+      if (target instanceof Element && !target.closest(".snapshot-watch-entry.menu-open")) setOpenActionsId(null);
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpenActionsId(null);
+    };
+    document.addEventListener("pointerdown", closeOutside);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("pointerdown", closeOutside);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [openActionsId]);
+
   function add(place: City) {
     // Legacy preview areas use short IDs (e.g. "guwahati") whereas new
     // geocoding creates area:country:region:town IDs. Match exact place names
@@ -192,12 +209,12 @@ export function LocalSnapshots({ cities, watchlist, setWatchlist, stats, issues,
       <div className="snapshot-side-head">
         <div className="snapshot-side-title">
           <h2>{copy.watchlist.placesHeading}</h2>
+          <button type="button" className="snapshot-add-button" onClick={() => setAdding((v) => !v)}
+            aria-label={adding ? "Close add town" : copy.watchlist.addTown}
+            title={adding ? "Close add town" : copy.watchlist.addTown} aria-expanded={adding}>
+            {adding ? <X size={19} aria-hidden="true"/> : <Plus size={19} aria-hidden="true"/>}
+          </button>
         </div>
-        <button type="button" className="snapshot-add-button" onClick={() => setAdding((v) => !v)}
-          aria-label={adding ? "Close add town" : copy.watchlist.addTown}
-          title={adding ? "Close add town" : copy.watchlist.addTown} aria-expanded={adding}>
-          {adding ? <X size={19} aria-hidden="true"/> : <Plus size={19} aria-hidden="true"/>}
-        </button>
       </div>
       <div className="snapshot-inline-summary" role="group" aria-label="Combined totals across watched towns">
         <div className="snapshot-inline-metrics" aria-live="polite">
@@ -220,7 +237,7 @@ export function LocalSnapshots({ cities, watchlist, setWatchlist, stats, issues,
         {watchlist.map((city, index) => {
           const cityStats = stats.cities[city.id] ?? summarizeIssues(issues.filter((issue) => issue.cityId === city.id));
           const actionsOpen = openActionsId === city.id;
-          return <div key={city.id} className="snapshot-watch-entry">
+          return <div key={city.id} className={`snapshot-watch-entry ${actionsOpen ? "menu-open" : ""}`}>
             <div data-watch-id={city.id} className={`snapshot-watch-row ${selectedKey === city.id ? "selected" : ""} ${draggingId === city.id ? "dragging" : ""} ${dragTargetId === city.id ? "drag-target" : ""}`}>
               {watchlist.length > 1 && <button className="snapshot-drag-handle" type="button" aria-label={`Drag ${city.name} to reorder, or press the up and down arrow keys`} title="Drag to reorder · arrow keys also work"
                 onPointerDown={(event) => startDrag(event, city.id)} onPointerMove={updateDrag} onPointerUp={finishDrag} onPointerCancel={clearDrag}
@@ -232,16 +249,11 @@ export function LocalSnapshots({ cities, watchlist, setWatchlist, stats, issues,
                 <span className="snapshot-watch-open"><b>{cityStats.open.toLocaleString()}</b><small>open</small></span>
               </button>
               <button className="snapshot-watch-menu-trigger" type="button"
-                aria-label={`Manage ${city.name}`} aria-expanded={actionsOpen}
+                aria-label={`Manage ${city.name}`} aria-haspopup="menu" aria-expanded={actionsOpen}
                 onClick={() => setOpenActionsId(actionsOpen ? null : city.id)}><MoreHorizontal size={18} aria-hidden="true"/></button>
             </div>
-            {actionsOpen && <div className="snapshot-watch-menu" role="group" aria-label={`Manage ${city.name}`}
-              onKeyDown={(event) => { if (event.key === "Escape") setOpenActionsId(null); }}>
-              {watchlist.length > 1 && <>
-                <button type="button" disabled={index === 0} onClick={() => move(index, -1)}>Move up</button>
-                <button type="button" disabled={index === watchlist.length - 1} onClick={() => move(index, 1)}>Move down</button>
-              </>}
-              <button type="button" className="snapshot-watch-remove" onClick={() => remove(city.id)}>Remove town</button>
+            {actionsOpen && <div className={`snapshot-watch-menu ${index > 0 ? "open-up" : ""}`} role="menu" aria-label={`Manage ${city.name}`}>
+              <button type="button" role="menuitem" className="snapshot-watch-remove" onClick={() => remove(city.id)}>Remove town</button>
             </div>}
           </div>;
         })}
