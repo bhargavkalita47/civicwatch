@@ -291,7 +291,14 @@
     align-self: center;
     margin-bottom: 0;
   }
-  #root .snapshot-detail-header,
+  /* The detail header intentionally stacks on phones: retain full-width
+     content and center its CTA rather than shrinking the heading column. */
+  #root .snapshot-detail-header {
+    align-items: stretch;
+  }
+  #root .snapshot-detail-header > .button {
+    align-self: center;
+  }
   #root .snapshot-side-head {
     align-items: center;
   }
@@ -303,7 +310,9 @@
   }
 }
 @media (max-width: 480px) {
-  #root .snapshot-detail-header,
+  #root .snapshot-detail-header {
+    align-items: stretch;
+  }
   #root .snapshot-side-head {
     align-items: center;
   }
