@@ -55,11 +55,14 @@ afterEach(async () => {
   vi.unstubAllGlobals();
 });
 
-it("prioritizes the town list and compact totals without a competing heading or metric icons", async () => {
+it("integrates subtle, icon-free totals into the town list without another dashboard", async () => {
   await mount();
-  expect(container.querySelector(".snapshot-watch-summary-compact")).not.toBeNull();
-  expect(container.querySelectorAll(".snapshot-summary-metric")).toHaveLength(4);
-  expect(container.querySelectorAll(".snapshot-summary-metric svg")).toHaveLength(0);
+  const list = container.querySelector(".snapshot-watchlist");
+  expect(list?.querySelector(".snapshot-inline-summary")).not.toBeNull();
+  expect(container.querySelector(".snapshot-watch-summary-compact")).toBeNull();
+  expect(list?.querySelectorAll(".snapshot-inline-stat")).toHaveLength(4);
+  expect(list?.querySelectorAll(".snapshot-inline-summary svg")).toHaveLength(0);
+  expect(list?.textContent).toContain("Across your towns. The backlog gets around.");
   expect(container.textContent).not.toContain("The usual problems. Your chosen places.");
   expect(container.querySelectorAll(".snapshot-watch-entry")).toHaveLength(2);
   expect(container.textContent).toContain("7open");
