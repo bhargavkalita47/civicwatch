@@ -200,8 +200,6 @@
   }
   .site-header .theme-control { display: grid; grid-template-columns: 1fr 1fr; width: 100%; }
   .site-header .theme-control button span { display: inline; }
-  .site-header .header-actions .help-button { display: flex; justify-content: flex-start; }
-  .site-header .header-actions .help-button span { display: inline; }
   .site-header .header-actions .account { width: 100%; max-width: none; padding: 7px 9px; }
   .site-header .header-actions .account > span:nth-child(2) { display: inline; }
   .site-header .header-actions > .sign-in { width: 100%; justify-content: space-between; min-height: 43px; font-size: 12px; }
