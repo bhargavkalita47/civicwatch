@@ -723,7 +723,7 @@ useEffect(() => {
         </div>
       </header>
       <main id="main" inert={isMobile && menuOpen}>
-        <section className={tab === "overview" ? "intro intro-overview" : "intro"}>
+        <section className={tab === "overview" ? "intro intro-overview" : tab === "snapshots" ? "intro intro-watchlist" : "intro"}>
           <div>
             <h1>
               {copy.pages[tab].title}
