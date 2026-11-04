@@ -98,6 +98,9 @@
   min-width: 0;
 }
 #root .snapshot-inline-kicker {
+  /* Close the gap below "Your towns" without shifting the totals below. */
+  position: relative;
+  top: -12px;
   margin: 0 0 8px;
   color: var(--cw-muted);
   font-family: "Public Sans", system-ui, sans-serif;
