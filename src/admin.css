@@ -82,11 +82,13 @@
 .admin-section-tabs > button span { min-width: 0; display: grid; gap: 5px; }
 .admin-section-tabs > button strong {
   color: var(--cw-heading);
-  font: 700 13px/1.3 "Public Sans", system-ui, sans-serif;
+  font: 650 13px/1.4 "Public Sans", system-ui, sans-serif;
+  letter-spacing: -.008em;
 }
 .admin-section-tabs > button small {
   color: var(--cw-muted);
-  font: 450 11px/1.45 "Public Sans", system-ui, sans-serif;
+  font: 450 11px/1.55 "Public Sans", system-ui, sans-serif;
+  letter-spacing: 0;
   overflow-wrap: anywhere;
 }
 .admin-section-tabs > button:hover { border-color: var(--cw-border-strong); }

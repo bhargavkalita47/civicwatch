@@ -80,10 +80,10 @@ body { min-width: 0; }
 #root .ranked-line strong,
 #root .empty-discussion b {
   font-family: "Public Sans", system-ui, sans-serif;
-  font-weight: 650;
+  font-weight: 600;
   font-synthesis: none;
-  letter-spacing: -.02em;
-  line-height: 1.35;
+  letter-spacing: -.012em;
+  line-height: 1.38;
 }
 #root h2 { font-size: clamp(20px, 2vw, 25px); }
 #root h3, .modal h3 { font-size: 18px; }
@@ -91,7 +91,7 @@ body { min-width: 0; }
 #root .intro p {
   font-family: "Public Sans", system-ui, sans-serif;
   font-size: clamp(14px, 1.1vw, 16px);
-  font-weight: 400; letter-spacing: 0; line-height: 1.65;
+  font-weight: 400; letter-spacing: 0; line-height: 1.68;
   max-width: 65ch;
 }
 
@@ -105,9 +105,9 @@ body { min-width: 0; }
 
 #root .overview-stats-title h2 {
   font-family: "Public Sans", system-ui, sans-serif;
-  font-weight: 700;
+  font-weight: 650;
   font-synthesis: none;
-  letter-spacing: -.035em;
+  letter-spacing: -.02em;
   line-height: 1.18;
 }
 
@@ -124,16 +124,16 @@ body { min-width: 0; }
 
 #root .brand .header-clock-date {
   font-size: 10px;
-  font-weight: 650;
-  letter-spacing: .06em;
+  font-weight: 600;
+  letter-spacing: .045em;
   color: var(--cw-muted);
   white-space: nowrap;
 }
 
 #root .brand .header-clock-time {
   font-size: 19px;
-  font-weight: 700;
-  letter-spacing: -.03em;
+  font-weight: 650;
+  letter-spacing: -.015em;
   color: var(--cw-heading);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
@@ -352,7 +352,7 @@ dialog.modal[data-step-scroll] > .modal-header {
 .map-report-focus > svg { flex-shrink: 0; color: var(--cw-accent); }
 .map-report-focus > div { flex: 1; min-width: 0; }
 .map-report-focus strong, .map-report-focus span { display: block; overflow-wrap: anywhere; }
-.map-report-focus strong { font: 650 14px/1.5 "Public Sans", system-ui, sans-serif; }
+.map-report-focus strong { font: 600 14px/1.5 "Public Sans", system-ui, sans-serif; letter-spacing: -.005em; }
 .map-report-focus span { color: var(--cw-muted); font-size: 12px; }
 .map-report-focus > button { flex-shrink: 0; min-height: 44px; }
 .map-shell .civic-marker-highlighted .pin-body,

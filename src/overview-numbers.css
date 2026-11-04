@@ -58,17 +58,17 @@
 }
 .cw-overview-total-label {
   font-size: 13px;
-  font-weight: 750;
-  letter-spacing: .012em;
+  font-weight: 650;
+  letter-spacing: .008em;
   color: var(--cw-heading);
 }
 .cw-overview-total strong {
   display: block;
   font-family: "Public Sans", system-ui, sans-serif;
   font-size: clamp(70px, 8vw, 132px);
-  font-weight: 800;
-  line-height: 1;
-  letter-spacing: -.085em;
+  font-weight: 750;
+  line-height: 1.03;
+  letter-spacing: -.058em;
   font-variant-numeric: tabular-nums;
   overflow-wrap: anywhere;
   color: var(--cw-heading);
@@ -110,8 +110,8 @@
   gap: 6px;
   color: var(--cw-muted);
   font-size: 12px;
-  font-weight: 650;
-  line-height: 1.4;
+  font-weight: 600;
+  line-height: 1.45;
 }
 .cw-overview-stat-head svg { color: var(--cw-muted); flex: 0 0 auto; }
 .cw-overview-stat strong {
@@ -120,9 +120,9 @@
   display: block;
   font-family: "Public Sans", system-ui, sans-serif;
   font-size: clamp(35px, 3.3vw, 61px);
-  line-height: 1;
-  font-weight: 800;
-  letter-spacing: -.065em;
+  line-height: 1.04;
+  font-weight: 750;
+  letter-spacing: -.045em;
   font-variant-numeric: tabular-nums;
   color: var(--cw-heading);
   overflow-wrap: anywhere;
@@ -161,9 +161,9 @@
 .cw-overview-resolution-copy > strong {
   font-family: "Public Sans", system-ui, sans-serif;
   font-size: clamp(32px, 4vw, 54px);
-  font-weight: 800;
-  line-height: 1;
-  letter-spacing: -.06em;
+  font-weight: 750;
+  line-height: 1.04;
+  letter-spacing: -.045em;
   color: var(--cw-heading);
   font-variant-numeric: tabular-nums;
 }
