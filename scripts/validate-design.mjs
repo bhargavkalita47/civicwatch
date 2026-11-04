@@ -129,6 +129,10 @@ assert.doesNotMatch(app, /Community-submitted · Not officially verified|classNa
 assert.doesNotMatch(app, /className="panel-footer"|\{reportCount\(visible\.length\)\} in view/, 'Do not duplicate counts beneath the Explore report list');
 assert.doesNotMatch(app, /setAbout\(|aria-label="About CivicWatch"/, 'Remove redundant About entry points from the page bottom');
 assert.match(app, /footer-copyright/, 'Keep the site footer and legal attribution');
+assert.match(app, /"workspace workspace-explore"/, 'Explore gets scoped spacing without changing Reports');
+assert.match(exploreCSS, /\.workspace-explore\s*\{\s*padding-bottom:\s*18px;/, 'Keep subtle whitespace below Explore map on desktop');
+assert.match(exploreCSS, /\.workspace-explore\s*\{\s*padding-bottom:\s*12px;/, 'Keep subtle whitespace below Explore map on mobile');
+assert.match(exploreCSS, /\.map-workspace \.report-list\s*\{[^}]*padding:\s*0 14px 20px;/, 'Keep report-list breathing room after removing footer text');
 assert.match(app, /setHelp\(true\)/, 'Keep the Help action and its disclosure accessible');
 
 assert.doesNotMatch(watchlist, /snapshot-summary-heading|THE USUAL PROBLEMS/, "No duplicate watchlist headline");
