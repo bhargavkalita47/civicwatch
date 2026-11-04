@@ -86,6 +86,13 @@ assert.match(watchlistCleanupCSS, /\.snapshot-detail-topline\s*\{[^}]*flex-direc
 assert.match(watchlist, /snapshot-town-resolution/, "Resolution should be muted metadata");
 assert.doesNotMatch(watchlist, /snapshot-town-metrics|snapshot-resolution-track|snapshot-watch-foot/, "No duplicate stats grid, progress bar or list limit footer");
 assert.match(watchlistCleanupCSS, /snapshot-town-inline-metrics/, "Inline town metadata has responsive styling");
+const mobileWatchlistCSS = watchlistCleanupCSS.slice(watchlistCleanupCSS.indexOf('@media (max-width: 790px)'));
+assert.match(watchlistCleanupCSS, /grid-template-columns: minmax\(310px, \.88fr\) minmax\(0, 1\.12fr\)/, 'Desktop keeps the two-column watchlist');
+assert.match(mobileWatchlistCSS, /\.local-snapshots\s*\{[^}]*gap:\s*0;/, 'Mobile sections must form a continuous workspace');
+assert.match(mobileWatchlistCSS, /\.snapshot-watchlist,\s*#root \.local-snapshots-page \.snapshot-detail\s*\{[^}]*background:\s*transparent;[^}]*border:\s*0;[^}]*border-radius:\s*0;[^}]*box-shadow:\s*none;/, 'Remove floating-card surfaces only on mobile');
+assert.match(mobileWatchlistCSS, /\.snapshot-detail\s*\{[^}]*border-top:\s*1px solid var\(--cw-border\);/, 'A thin separator replaces card gutters');
+assert.match(mobileWatchlistCSS, /\.snapshot-detail-map\s*\{[^}]*border-radius:\s*12px;/, 'The embedded map retains its own rounded frame');
+assert.match(mobileWatchlistCSS, /\.snapshot-side-head,\s*#root \.local-snapshots-page \.snapshot-detail-header\s*\{[^}]*backdrop-filter:\s*none;/, 'Mobile headers must not float on glass surfaces');
 assert.doesNotMatch(watchlist, /snapshot-summary-heading|THE USUAL PROBLEMS/, "No duplicate watchlist headline");
 assert.match(watchlistLogic, /summarizeWatchlist/);
 assert.match(watchlistLogic, /new Set\(relevantIssues\.flatMap/, 'Do not double-count people in multiple towns');
