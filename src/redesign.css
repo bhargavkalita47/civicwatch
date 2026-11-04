@@ -13,13 +13,13 @@
   --blue-hover: #1c44bf;
   --blue-soft: #eef3ff;
   --shadow: 0 10px 28px rgba(24,39,64,.045),0 2px 6px rgba(24,39,64,.025);
-  font-family: "DM Sans", "Segoe UI", sans-serif;
+  font-family: var(--cw-font-ui, "Public Sans"), "Segoe UI", sans-serif;
   color: var(--ink);
   background: var(--page);
   font-size: 14px;
 }
 body { background:var(--page); color:var(--ink); }
-h1,h2,h3,h4 { color: var(--ink-strong); font-family:"Manrope","Segoe UI",sans-serif; }
+h1,h2,h3,h4 { color: var(--ink-strong); font-family:var(--cw-font-ui, "Public Sans"),"Segoe UI",sans-serif; }
 button { transition: background .17s ease, color .17s ease, border-color .17s ease, box-shadow .17s ease, transform .17s ease; }
 button:focus-visible,a:focus-visible { outline: 3px solid #87a5ff; outline-offset: 3px; }
 input:focus-visible,textarea:focus-visible,select:focus-visible {outline-color:#6e95ff;}
@@ -97,7 +97,7 @@ main { max-width: 1800px; padding: 0 clamp(24px,4vw,70px); }
 .map-shell { min-height:600px; background:#e9eef5; }
 .leaflet-host { background:#eef2f7; }
 .leaflet-tile-pane { filter:saturate(.72) contrast(.98); }
-.leaflet-container { font-family:"DM Sans","Segoe UI",sans-serif; }
+.leaflet-container { font-family:var(--cw-font-ui, "Public Sans"),"Segoe UI",sans-serif; }
 .leaflet-control-attribution { font-size:9px!important; color:#6d7c91!important; background:#ffffffcf!important; }
 .leaflet-control-attribution a { color:#4e6d9b!important; }
 .map-location { top:19px; left:20px; border:1px solid #e4e9f2; box-shadow:0 4px 16px #1d304018; border-radius:8px; padding:11px 13px; gap:9px; font-size:12px; font-weight:700; color:#293c57; }
