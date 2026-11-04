@@ -174,8 +174,15 @@ export function ColorLab() {
     document.querySelector<HTMLButtonElement>('.theme-control button[aria-label="' + label + '"]')?.click();
   }
   async function copyCss() {
+    const exported: Record<Field, string> = {
+      page: "--cw-page", panel: "--cw-panel", nav: "--cw-nav",
+      ink: "--cw-ink", muted: "--cw-muted", border: "--cw-border",
+      soft: "--cw-soft", accent: "--cw-accent", accentInk: "--cw-accent-ink",
+      secondary: "--cw-teal", highlight: "--cw-lavender",
+    };
     const scheme = (values: Colors, selector: string) =>
-      selector + " {\n" + FIELDS.map(f => "  --design-" + f.id + ": " + values[f.id] + ";").join("\n") + "\n}";
+      selector + " {\n" + FIELDS.map(f => "  " + exported[f.id] + ": " + values[f.id] + ";").join("\n") +
+      "\n  --cw-nav-selected-gradient: linear-gradient(110deg, var(--cw-accent), var(--cw-lavender));\n}";
     const result = [
       "/* CivicWatch Design Lab colors — reference values only. */",
       "/* Never merge the debug lab into main. */",
@@ -238,7 +245,7 @@ export function ColorLab() {
           <span>Text / panel <strong>{ratio(colors.ink, colors.panel)}:1</strong></span>
           <span>Accent text <strong>{ratio(colors.accentInk, colors.accent)}:1</strong></span>
         </div>
-        <small>Aim for 4.5:1 for normal text. Check both light and dark.</small>
+        <small>{Number(ratio(colors.ink, colors.panel)) < 4.5 || Number(ratio(colors.accentInk, colors.accent)) < 4.5 ? "Some text is below 4.5:1. Adjust your colors before choosing this palette." : "Both sampled text combinations exceed 4.5:1. Check other UI elements too."}</small>
       </div>
       <div className="cw-font-lab-footer cw-colors-footer">
         <button type="button" onClick={() => choosePreset("original")}>Reset production colors</button>
