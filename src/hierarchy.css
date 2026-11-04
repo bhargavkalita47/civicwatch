@@ -34,7 +34,7 @@
 
 /* Consistent readable baseline and a strict serif/sans division. */
 body, button, input, textarea, select {
-  font-family: "Public Sans", system-ui, sans-serif;
+  font-family: var(--cw-font-ui, "Public Sans"), system-ui, sans-serif;
 }
 body { font-size: var(--type-body); font-weight: 400; letter-spacing: 0; line-height: 1.62; }
 p { line-height: 1.62; }
@@ -66,7 +66,7 @@ button, input, textarea, select { line-height: 1.45; letter-spacing: 0; }
 .admin-console-grid h3,
 .overview-loading h2,
 .overview-loading h3 {
-  font-family: "Instrument Serif", Georgia, serif;
+  font-family: var(--cw-font-display, "Instrument Serif"), Georgia, serif;
   font-synthesis: none;
   font-weight: 400;
   color: var(--cw-heading);
@@ -86,7 +86,7 @@ button, input, textarea, select { line-height: 1.45; letter-spacing: 0; }
   display: inline-flex;
   align-items: center;
   flex-wrap: wrap;
-  font-family: "Public Sans", system-ui, sans-serif;
+  font-family: var(--cw-font-ui, "Public Sans"), system-ui, sans-serif;
   font-size: var(--type-label);
   font-weight: 700;
   letter-spacing: .085em;
@@ -166,7 +166,7 @@ button, input, textarea, select { line-height: 1.45; letter-spacing: 0; }
 
 /* Section / panel titles: the map is the feature, not an army of H1-sized cards. */
 .section-kicker {
-  font-family: "Public Sans", system-ui, sans-serif;
+  font-family: var(--cw-font-ui, "Public Sans"), system-ui, sans-serif;
   font-size: var(--type-label);
   font-weight: 700;
   letter-spacing: .09em;
@@ -260,7 +260,7 @@ button, input, textarea, select { line-height: 1.45; letter-spacing: 0; }
 .overview-metric strong,
 .metric-featured strong {
   margin: 15px 0 5px;
-  font-family: "Public Sans", system-ui, sans-serif;
+  font-family: var(--cw-font-ui, "Public Sans"), system-ui, sans-serif;
   font-size: clamp(34px, 2.7vw, 40px);
   font-weight: 750;
   line-height: 1.1;
@@ -338,7 +338,7 @@ button, input, textarea, select { line-height: 1.45; letter-spacing: 0; }
 .reports-panel-heading { padding: 21px 19px; }
 .reports-panel h3,
 .reports-panel-heading h3 {
-  font-family: "Public Sans", system-ui, sans-serif;
+  font-family: var(--cw-font-ui, "Public Sans"), system-ui, sans-serif;
   font-size: 16px;
   font-weight: 700;
   line-height: 1.35;
@@ -349,7 +349,7 @@ button, input, textarea, select { line-height: 1.45; letter-spacing: 0; }
 .reports-panel-heading select { font-size: 12px; }
 .issue-card { padding: 18px; }
 .issue-card h3 {
-  font-family: "Public Sans", system-ui, sans-serif;
+  font-family: var(--cw-font-ui, "Public Sans"), system-ui, sans-serif;
   font-size: 15px;
   line-height: 1.5;
   font-weight: 650;
@@ -382,9 +382,9 @@ button, input, textarea, select { line-height: 1.45; letter-spacing: 0; }
 .thread-title { font-size: clamp(30px, 2.8vw, 41px); line-height: 1.12; }
 .thread-address { font-size: 13px; }
 .location-heading h3 { font-size: 27px; line-height: 1.15; }
-.location-issues h4 { font-family: "Public Sans", system-ui, sans-serif; font-size: 14px; line-height: 1.45; }
+.location-issues h4 { font-family: var(--cw-font-ui, "Public Sans"), system-ui, sans-serif; font-size: 14px; line-height: 1.45; }
 .discussion-heading h3 { font-size: 27px; line-height: 1.15; }
-.discussion-heading h3 span { font-family: "Public Sans", system-ui, sans-serif; font-size: 12px; letter-spacing: 0; }
+.discussion-heading h3 span { font-family: var(--cw-font-ui, "Public Sans"), system-ui, sans-serif; font-size: 12px; letter-spacing: 0; }
 .comment-meta { font-size: 12px; }
 .how-it-works > div h3 { font-size: 25px; line-height: 1.15; }
 .how-it-works > div p { font-size: 13px; line-height: 1.6; }
@@ -418,7 +418,7 @@ button:disabled { opacity: .55; }
 footer, footer p, .preview-label { font-size: 12px; line-height: 1.55; }
 footer .footer-brand { font-size: 13px; font-weight: 650; letter-spacing: -.008em; }
 footer .footer-brand > span { font-size: 12px; font-weight: 450; }
-.filter-catalogue h3 { font-family: "Public Sans", system-ui, sans-serif; font-size: 14px; font-weight: 650; letter-spacing: -.01em; }
+.filter-catalogue h3 { font-family: var(--cw-font-ui, "Public Sans"), system-ui, sans-serif; font-size: 14px; font-weight: 650; letter-spacing: -.01em; }
 .filter-catalogue label { font-size: 13px; line-height: 1.5; }
 
 /* Tablet navigation wraps horizontally; typography still follows same ladder. */
@@ -600,7 +600,7 @@ body { background: var(--cw-atmosphere-page); }
 }
 .snapshot-summary-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 22px; }
 .snapshot-summary-heading h2 {
-  font-family: "Public Sans", system-ui, sans-serif;
+  font-family: var(--cw-font-ui, "Public Sans"), system-ui, sans-serif;
   font-size: var(--type-section);
   font-weight: 750;
   font-synthesis: none;
@@ -613,7 +613,7 @@ body { background: var(--cw-atmosphere-page); }
 .snapshot-summary-count {
   flex-shrink: 0;
   white-space: nowrap;
-  font-family: "Public Sans", system-ui, sans-serif;
+  font-family: var(--cw-font-ui, "Public Sans"), system-ui, sans-serif;
   font-size: 12px;
   font-weight: 600;
   color: var(--cw-ink);
@@ -641,15 +641,15 @@ body { background: var(--cw-atmosphere-page); }
 .snapshot-summary-metric:nth-child(2) { --snapshot-metric-accent: var(--cw-accent); }
 .snapshot-summary-metric:nth-child(3) { --snapshot-metric-accent: var(--cw-teal); }
 .snapshot-summary-metric:nth-child(4) { --snapshot-metric-accent: var(--cw-lavender); }
-.snapshot-summary-metric-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; color: var(--cw-muted); font: 600 var(--type-meta)/1.45 "Public Sans", system-ui, sans-serif; }
+.snapshot-summary-metric-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; color: var(--cw-muted); font: 600 var(--type-meta)/1.45 var(--cw-font-ui, "Public Sans"), system-ui, sans-serif; }
 .snapshot-summary-metric-top svg { flex-shrink: 0; color: var(--cw-teal); }
-.snapshot-summary-metric > strong { margin: 13px 0 5px; color: var(--cw-heading); font: 750 clamp(33px, 2.7vw, 40px)/1.12 "Public Sans", system-ui, sans-serif; letter-spacing: -.035em; font-variant-numeric: tabular-nums; }
-.snapshot-summary-metric > small { display: block; color: var(--cw-muted); font: 400 var(--type-meta)/1.5 "Public Sans", system-ui, sans-serif; }
+.snapshot-summary-metric > strong { margin: 13px 0 5px; color: var(--cw-heading); font: 750 clamp(33px, 2.7vw, 40px)/1.12 var(--cw-font-ui, "Public Sans"), system-ui, sans-serif; letter-spacing: -.035em; font-variant-numeric: tabular-nums; }
+.snapshot-summary-metric > small { display: block; color: var(--cw-muted); font: 400 var(--type-meta)/1.5 var(--cw-font-ui, "Public Sans"), system-ui, sans-serif; }
 .snapshot-summary-note { margin: 13px 2px 0; color: var(--cw-muted); font-size: var(--type-meta); line-height: 1.55; }
 
 .local-snapshots { padding-bottom: 0; }
 .snapshot-side-head h3 {
-  font-family: "Instrument Serif", Georgia, serif;
+  font-family: var(--cw-font-display, "Instrument Serif"), Georgia, serif;
   font-size: clamp(25px, 2vw, 29px);
   font-weight: 400;
   font-synthesis: none;
@@ -686,14 +686,14 @@ body { background: var(--cw-atmosphere-page); }
 .snapshot-detail-map { height: clamp(340px, 37vw, 470px); }
 .snapshot-town-section { padding: 25px 20px 0; }
 .snapshot-town-section-head { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin: 0 0 14px; }
-.snapshot-town-section-head h3 { font: 650 16px/1.4 "Public Sans", system-ui, sans-serif; letter-spacing: -.01em; color: var(--cw-heading); }
+.snapshot-town-section-head h3 { font: 650 16px/1.4 var(--cw-font-ui, "Public Sans"), system-ui, sans-serif; letter-spacing: -.01em; color: var(--cw-heading); }
 .snapshot-town-section-head span { font-size: var(--type-meta); color: var(--cw-muted); }
 .snapshot-town-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; margin: 0; padding: 16px 0; border-top: 1px solid var(--cw-border); border-bottom: 1px solid var(--cw-border); }
 .snapshot-town-metrics > div { min-width: 0; padding: 4px 16px; border-right: 1px solid var(--cw-border); }
 .snapshot-town-metrics > div:first-child { padding-left: 2px; }
 .snapshot-town-metrics > div:last-child { border-right: 0; }
-.snapshot-town-metrics dt { color: var(--cw-muted); font: 500 var(--type-meta)/1.4 "Public Sans", system-ui, sans-serif; }
-.snapshot-town-metrics dd { margin: 7px 0 0; color: var(--cw-heading); font: 700 clamp(22px, 2vw, 28px)/1.15 "Public Sans", system-ui, sans-serif; font-variant-numeric: tabular-nums; letter-spacing: -.025em; }
+.snapshot-town-metrics dt { color: var(--cw-muted); font: 500 var(--type-meta)/1.4 var(--cw-font-ui, "Public Sans"), system-ui, sans-serif; }
+.snapshot-town-metrics dd { margin: 7px 0 0; color: var(--cw-heading); font: 700 clamp(22px, 2vw, 28px)/1.15 var(--cw-font-ui, "Public Sans"), system-ui, sans-serif; font-variant-numeric: tabular-nums; letter-spacing: -.025em; }
 .snapshot-town-section .snapshot-resolution { border: none; padding: 18px 0 15px; margin: 0; }
 .snapshot-town-section .snapshot-resolution > div:first-child { font-size: 13px; }
 .snapshot-activity { padding-top: 22px; }
@@ -754,7 +754,7 @@ body { background: var(--cw-atmosphere-page); }
 .watch-reports-total > strong {
   display: block;
   color: var(--cw-heading);
-  font: 725 clamp(44px, 5vw, 66px)/1.06 "Public Sans", system-ui, sans-serif;
+  font: 725 clamp(44px, 5vw, 66px)/1.06 var(--cw-font-ui, "Public Sans"), system-ui, sans-serif;
   font-variant-numeric: tabular-nums;
   letter-spacing: -.04em;
 }
@@ -769,7 +769,7 @@ body { background: var(--cw-atmosphere-page); }
   border: 0;
   background: transparent;
   color: var(--cw-heading);
-  font: 600 13px/1.45 "Public Sans", system-ui, sans-serif;
+  font: 600 13px/1.45 var(--cw-font-ui, "Public Sans"), system-ui, sans-serif;
   cursor: pointer;
   text-decoration: underline;
   text-decoration-color: var(--cw-border-strong);
@@ -811,7 +811,7 @@ body { background: var(--cw-atmosphere-page); }
   grid-template-columns: 9px auto;
   column-gap: 10px;
   align-items: center;
-  font: 650 14px/1.35 "Public Sans", system-ui, sans-serif;
+  font: 650 14px/1.35 var(--cw-font-ui, "Public Sans"), system-ui, sans-serif;
 }
 .watch-reports-status-dot {
   display: inline-block;
@@ -824,11 +824,11 @@ body { background: var(--cw-atmosphere-page); }
 .watch-reports-sections small {
   grid-column: 2;
   color: var(--cw-muted);
-  font: 450 12px/1.5 "Public Sans", system-ui, sans-serif;
+  font: 450 12px/1.5 var(--cw-font-ui, "Public Sans"), system-ui, sans-serif;
 }
 .watch-reports-sections strong {
   color: var(--cw-heading);
-  font: 700 clamp(24px, 2.5vw, 32px)/1.05 "Public Sans", system-ui, sans-serif;
+  font: 700 clamp(24px, 2.5vw, 32px)/1.05 var(--cw-font-ui, "Public Sans"), system-ui, sans-serif;
   letter-spacing: -.025em;
   font-variant-numeric: tabular-nums;
 }
