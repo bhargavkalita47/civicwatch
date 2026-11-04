@@ -47,7 +47,6 @@ export function Overview({ stats, loading, error, onReload, onOpenMap }: Props) 
   return <section className="overview-page cw-overview-numbers" aria-label="Community reporting totals">
     <div className="cw-overview-eyebrow">
       <span className="section-kicker">PLATFORM TOTALS</span>
-      <span className="cw-overview-scope">All towns · Not just your watchlist.</span>
     </div>
 
     <div className="cw-overview-figures" aria-label="CivicWatch platform statistics">
@@ -94,9 +93,5 @@ export function Overview({ stats, loading, error, onReload, onOpenMap }: Props) 
       </button>
     </section>
 
-    <div className="overview-disclaimer">
-      <span>Community-submitted reports are not officially verified. CivicWatch is not a government service.</span>
-      <span>Not for emergencies</span>
-    </div>
   </section>;
 }
