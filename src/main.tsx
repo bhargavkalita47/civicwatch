@@ -1,6 +1,7 @@
 import { StrictMode, Component, type ReactNode } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App";
+import { FontLab } from "./components/FontLab";
 import { AuthProvider } from "./services/auth";
 import "./styles.css";
 import "./redesign.css";
@@ -16,6 +17,7 @@ import "./admin.css";
 import "./thread-polish.css";
 import "./overview-numbers.css";
 import "./ux-progressive.css";
+import "./font-lab.css";
 class ErrorBoundary extends Component<
   { children: ReactNode },
   { failed: boolean }
@@ -45,6 +47,7 @@ createRoot(document.getElementById("root")!).render(
     <ErrorBoundary>
       <AuthProvider>
         <App />
+        <FontLab />
       </AuthProvider>
     </ErrorBoundary>
   </StrictMode>,
