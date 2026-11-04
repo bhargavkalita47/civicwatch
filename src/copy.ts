@@ -27,10 +27,10 @@ export const copy = {
     statsError: "The numbers could not be loaded.",
   },
   watchlist: {
-    totalsHeading: "The usual problems. Your chosen places.", placesHeading: "Your towns",
+    placesHeading: "Your towns",
     addTown: "Add a town", searchLabel: "Search for a city or town",
     suggestions: "Places with reports already on file",
-    townTotals: "The local situation", recent: "Recently reported",
+    recent: "Recently reported",
     mapAction: "View full map", resolutionRate: "Resolution rate",
     resolutionCaption: "Proof that occasionally, something happens.", noData: "Not enough data",
     emptyTitle: "Pick a place to keep sighing about.", emptyText: "Add a city or town to follow its reports.",
