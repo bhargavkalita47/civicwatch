@@ -1,24 +1,104 @@
-/* CivicWatch v2.5.5 — authentic supplied C-and-eye symbol.
-   The existing coral tile ties the mark into both app themes; the dark ink
-   silhouette provides stronger contrast than a white-on-coral treatment. */
-.site-header .brand-mark,
-.mobile-topbar .mobile-brand .brand-mark {
-  background: var(--cw-accent);
-  color: var(--cw-accent-ink);
-  border-radius: 12px;
-  display: grid;
-  place-items: center;
-  padding: 0;
-  overflow: hidden;
+/* CivicWatch C-and-eye mark: unframed coral symbol. The mark's
+   tall optical silhouette is intentionally larger than the clock cap height. */
+#root .site-header .brand,
+#root .mobile-topbar .mobile-brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
 }
-.site-header .brand-mark > svg.civicwatch-logo-symbol,
-.mobile-topbar .mobile-brand .brand-mark > svg.civicwatch-logo-symbol {
+#root .site-header .brand {
+  padding: 0 2px 0 5px;
+  min-height: 60px;
+}
+#root .site-header .brand-mark,
+#root .mobile-topbar .mobile-brand .brand-mark {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 48px;
+  width: 48px;
+  height: 60px;
+  min-width: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--cw-accent);
+  box-shadow: none;
+  padding: 0;
+  overflow: visible;
+}
+#root .site-header .brand-mark > svg.civicwatch-logo-symbol,
+#root .mobile-topbar .mobile-brand .brand-mark > svg.civicwatch-logo-symbol {
   display: block;
-  width: 70%;
-  height: 70%;
-  flex: none;
+  width: 42px;
+  height: 56px;
+  max-width: none;
+  flex: 0 0 auto;
   fill: none;
-  color: var(--cw-accent-ink);
+  color: var(--cw-accent);
+  /* The open right edge of the C has less mass than the left side. */
+  transform: translate(2px, -1px);
+}
+@media (max-width: 1050px) and (min-width: 791px) {
+  #root .site-header .brand {
+    gap: 10px;
+    padding-inline: 2px 0;
+  }
+  #root .site-header .brand-mark {
+    width: 43px;
+    flex-basis: 43px;
+    height: 56px;
+  }
+  #root .site-header .brand-mark > svg.civicwatch-logo-symbol {
+    width: 39px;
+    height: 52px;
+  }
+  #root .site-header .brand .header-clock-date {
+    font-size: 9px;
+    letter-spacing: .02em;
+  }
+}
+@media (max-width: 790px) {
+  #root .site-header .brand {
+    min-height: 58px;
+    padding: 0 42px 0 3px;
+    gap: 13px;
+  }
+  #root .site-header .brand-mark {
+    flex-basis: 45px;
+    width: 45px;
+    height: 57px;
+  }
+  #root .site-header .brand-mark > svg.civicwatch-logo-symbol {
+    width: 41px;
+    height: 54px;
+  }
+  #root .mobile-topbar .mobile-brand {
+    gap: 11px;
+    min-width: 0;
+    flex-shrink: 1;
+  }
+  #root .mobile-topbar .mobile-brand .brand-mark {
+    width: 39px;
+    height: 49px;
+    flex: 0 0 39px;
+  }
+  #root .mobile-topbar .mobile-brand .brand-mark > svg.civicwatch-logo-symbol {
+    width: 36px;
+    height: 47px;
+  }
+}
+@media (max-width: 370px) {
+  #root .mobile-topbar .mobile-brand { gap: 9px; }
+  #root .mobile-topbar .mobile-brand .brand-mark {
+    width: 36px;
+    flex-basis: 36px;
+  }
+  #root .mobile-topbar .mobile-brand .brand-mark > svg.civicwatch-logo-symbol {
+    width: 33px;
+    height: 44px;
+  }
 }
 
 
@@ -138,10 +218,14 @@ body { min-width: 0; }
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+  justify-content: center;
   gap: 3px;
   min-width: 0;
+  flex: 0 1 auto;
   font-family: "Public Sans", system-ui, sans-serif;
   line-height: 1.2;
+  /* Optical centering: move the text block slightly above the SVG midpoint. */
+  transform: translateY(-1px);
 }
 
 #root .brand .header-clock-date {
