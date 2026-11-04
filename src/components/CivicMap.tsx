@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { LocateFixed, Minus, Plus, Layers, RotateCcw } from "lucide-react";
+import { LocateFixed, Minus, Plus, Layers, RotateCcw, Hand } from "lucide-react";
 import type { Category, Coordinate, LocationCluster } from "../domain/types";
 import { normalizedPoint, type MapBounds } from "../domain/geography";
 import { markerColor, peopleCount } from "../domain/logic";
@@ -51,6 +51,8 @@ export interface MapProps {
   pick?: Coordinate;
   focus?: Coordinate;
   compact?: boolean;
+  /** When enabled, a one-finger swipe scrolls the page until Move map is selected. */
+  scrollFriendly?: boolean;
   onCenter?: (point: Coordinate) => void;
   onBounds?: (bounds: MapBounds) => void;
   onError?: (message: string) => void;
@@ -67,6 +69,7 @@ export function CivicMap({
   pick,
   focus,
   compact = false,
+  scrollFriendly = false,
   onCenter,
   onBounds,
   onError,
@@ -76,6 +79,7 @@ export function CivicMap({
     markers = useRef<L.LayerGroup | null>(null);
   const callbacks = useRef({ onSelect, onPick, onCenter, onBounds, onError });
   callbacks.current = { onSelect, onPick, onCenter, onBounds, onError };
+  const [panEnabled, setPanEnabled] = useState(false);
   const [legend, setLegend] = useState(false),
     [tileError, setTileError] = useState(false),
     [locating, setLocating] = useState(false),
@@ -87,7 +91,8 @@ export function CivicMap({
       center: [center.lat, center.lng],
       zoom: 13,
       zoomControl: false,
-      scrollWheelZoom: !compact,
+      dragging: !scrollFriendly,
+      scrollWheelZoom: !compact && !scrollFriendly,
       attributionControl: true,
     });
     map.current = instance;
@@ -129,6 +134,22 @@ export function CivicMap({
       map.current = null;
     };
   }, [compact]);
+
+  // Mobile map defaults to normal document scrolling. A deliberate toggle
+  // temporarily unlocks dragging; marker taps and zoom controls always work.
+  useEffect(() => {
+    const instance = map.current;
+    if (!instance) return;
+    if (!scrollFriendly || panEnabled) instance.dragging.enable();
+    else instance.dragging.disable();
+    if (!compact && !scrollFriendly) instance.scrollWheelZoom.enable();
+    else instance.scrollWheelZoom.disable();
+  }, [scrollFriendly, panEnabled, compact]);
+
+  useEffect(() => {
+    if (!scrollFriendly) setPanEnabled(false);
+  }, [scrollFriendly]);
+
   useEffect(() => {
     const group = markers.current;
     group?.clearLayers();
@@ -241,7 +262,7 @@ export function CivicMap({
     );
   }
   return (
-    <div className={`map-shell ${compact ? "compact-map" : "explore-map"} ${!compact && mapZoom <= 12 ? "map-zoom-dense" : ""}`}>
+    <div className={`map-shell ${compact ? "compact-map" : "explore-map"} ${!compact && mapZoom <= 12 ? "map-zoom-dense" : ""} ${scrollFriendly ? panEnabled ? "map-pan-enabled" : "map-scroll-friendly" : ""}`}>
       <div
         className="leaflet-host"
         ref={container}
@@ -280,6 +301,13 @@ export function CivicMap({
           </>}
         </div>
       </div>
+      {scrollFriendly && !compact && <button type="button" className="map-pan-toggle"
+        aria-pressed={panEnabled}
+        title={panEnabled ? "Return to page scrolling" : "Allow one-finger map dragging"}
+        onClick={() => setPanEnabled(value => !value)}>
+        <Hand size={16} aria-hidden="true"/>
+        <span>{panEnabled ? "Scroll page" : "Move map"}</span>
+      </button>}
       {!compact && legend && (
         <div className="map-key" role="region" aria-label="Issue types">
           <div className="map-key-heading">
