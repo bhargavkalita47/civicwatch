@@ -8,7 +8,6 @@ import {
   ArrowUpRight,
   CheckCircle2,
   ChevronDown,
-  CircleHelp,
   ClipboardList,
   Compass,
   BarChart3,
@@ -16,7 +15,6 @@ import {
   MapPin,
   ListFilter,
   MessageSquare,
-  Plus,
   Search,
   ShieldCheck,
   SlidersHorizontal,
@@ -621,7 +619,7 @@ useEffect(() => {
         </a>
         <div className="mobile-topbar-actions">
           <button type="button" className="mobile-report-action" onClick={() => startReport()} disabled={auth.loading} aria-label={copy.actions.report} title={copy.actions.report}>
-            <Plus size={18} /><span>Report</span>
+            <span>Report</span>
           </button>
           <button type="button" ref={menuButtonRef} className="mobile-menu-trigger" aria-label="Open menu" aria-expanded={menuOpen} aria-controls="civicwatch-navigation" onClick={() => setMenuOpen(true)}>
             <Menu size={22} />
@@ -691,10 +689,6 @@ useEffect(() => {
             <button type="button" aria-label="Use Lavender and Coral light theme" aria-pressed={theme === "light"} className={theme === "light" ? "selected" : ""} onClick={() => setTheme("light")} title="Lavender / Coral light theme"><Sun size={17} /><span>Light</span></button>
             <button type="button" aria-label="Use Teal and Coral dark theme" aria-pressed={theme === "dark"} className={theme === "dark" ? "selected" : ""} onClick={() => setTheme("dark")} title="Teal / Coral dark theme"><Moon size={17} /><span>Dark</span></button>
           </div>
-          <button className="help-button" aria-label="How it works" onClick={() => { closeMenu(); setHelp(true); }}>
-            <CircleHelp size={17} />
-            <span>{copy.nav.help}</span>
-          </button>
           {auth.session ? (
             <div className="account">
               <button className="profile-account-button" aria-label="Open your profile" onClick={() => { setTab("mine"); closeMenu(); }}>
@@ -742,7 +736,6 @@ useEffect(() => {
             disabled={auth.loading}
             onClick={() => startReport()}
           >
-            <Plus size={19} />
             {copy.actions.report}
           </button>
         </section>
@@ -1074,7 +1067,10 @@ useEffect(() => {
       </main>
       <footer className="site-footer">
         <span className="footer-copyright">© {new Date().getFullYear()} CivicWatch{config.uiCleanupDemo && <span className="footer-demo-label" title="Fictional reports; changes are saved in this browser only"> · Demo preview</span>}</span>
-        <button type="button" className="footer-about" onClick={() => setAbout(true)} aria-label="About CivicWatch">About</button>
+        <nav className="footer-links" aria-label="Footer">
+          <button type="button" className="footer-link" onClick={() => setHelp(true)}>{copy.nav.help}</button>
+          <button type="button" className="footer-link" onClick={() => setAbout(true)} aria-label="About CivicWatch">About</button>
+        </nav>
       </footer>
       {filterOpen && (
         <Modal
