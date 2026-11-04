@@ -256,7 +256,7 @@
 }
 
 .profile-page h2 {
-  font-family: "Instrument Serif", Georgia, serif;
+  font-family: var(--cw-font-display, "Instrument Serif"), Georgia, serif;
   font-weight: 400;
 }
 
@@ -354,7 +354,7 @@
   text-underline-offset: 3px;
 }
 .resident-profile .profile-report-card h3 {
-  font-family: Inter, system-ui, sans-serif;
+  font-family: var(--cw-font-ui, "Inter"), system-ui, sans-serif;
   font-size: 17px;
   font-weight: 750;
   overflow-wrap: anywhere;
