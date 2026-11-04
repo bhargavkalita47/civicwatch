@@ -1,5 +1,5 @@
 :root {
-  font-family: "DM Sans", "Segoe UI", sans-serif;
+  font-family: var(--cw-font-ui, "Public Sans"), "Segoe UI", sans-serif;
   color: #273e36;
   background: #f7f8f6;
   font-synthesis: none;
@@ -58,7 +58,7 @@ h1,
 h2,
 h3,
 h4 {
-  font-family: "Manrope", "Segoe UI", sans-serif;
+  font-family: var(--cw-font-ui, "Public Sans"), "Segoe UI", sans-serif;
 }
 svg {
   flex-shrink: 0;
@@ -130,7 +130,7 @@ svg {
   flex-shrink: 0;
 }
 .brand > span:last-child {
-  font-family: "Manrope", sans-serif;
+  font-family: var(--cw-font-ui, "Public Sans"), sans-serif;
   font-size: 24px;
   font-weight: 800;
   letter-spacing: -1px;
@@ -141,7 +141,7 @@ svg {
 }
 .brand small {
   display: block;
-  font-family: "DM Sans", sans-serif;
+  font-family: var(--cw-font-ui, "Public Sans"), sans-serif;
   font-size: 7px;
   letter-spacing: 2.1px;
   font-weight: 600;
@@ -366,7 +366,7 @@ main {
 .stats b {
   display: block;
   margin-top: 6px;
-  font-family: "Manrope", sans-serif;
+  font-family: var(--cw-font-ui, "Public Sans"), sans-serif;
   font-size: 28px;
   line-height: 1;
   font-weight: 800;
@@ -549,7 +549,7 @@ main {
   z-index: 0;
 }
 .leaflet-container {
-  font-family: "DM Sans", sans-serif;
+  font-family: var(--cw-font-ui, "Public Sans"), sans-serif;
 }
 .leaflet-tile-pane {
   filter: saturate(0.65);
@@ -1596,7 +1596,7 @@ textarea {
 .support-number {
   font-size: 29px;
   font-weight: 800;
-  font-family: "Manrope", sans-serif;
+  font-family: var(--cw-font-ui, "Public Sans"), sans-serif;
   color: #416038;
   letter-spacing: -1px;
 }
@@ -1922,7 +1922,7 @@ textarea {
 }
 .how-it-works > div > i {
   font-size: 20px;
-  font-family: "Manrope", sans-serif;
+  font-family: var(--cw-font-ui, "Public Sans"), sans-serif;
   color: #b5c4a6;
   font-style: normal;
   font-weight: 600;
