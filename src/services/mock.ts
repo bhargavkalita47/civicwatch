@@ -4,7 +4,7 @@ import { config } from "../config";
 import { preparePhoto, photoDataUrl, photoTypes } from "./photos";
 import { categories } from "../data/categories";
 import { cities } from "../data/cities";
-import { createSeed } from "../data/seed";
+import { createDesignLabSeed, DEMO_RESIDENT_EMAIL, DEMO_RESIDENT_ID } from "../data/designLabSeed";
 import { cityForCoordinate, statsByCity, summarizeIssues, validateIssue } from "../domain/logic";
 import { reportingArea } from "../domain/geography";
 import {
@@ -56,7 +56,7 @@ function read(): Dataset {
       return data;
     }
     const data: Dataset = config.seedDemo
-      ? createSeed()
+      ? createDesignLabSeed()
       : { version: 1, users: [], issues: [], comments: [] };
     save(data);
     return data;
@@ -123,7 +123,26 @@ export const mockService: CivicService = {
   },
   async getSession() {
     await delay();
-    const current = session();
+    let current = session();
+    // Test branch only: show a seeded resident's My Reports without real authentication.
+    // The one-time marker prevents re-signing in after an intentional sign-out.
+    if (!current && config.seedDemo) {
+      try {
+        const flag = "civicwatch.design-lab.initial-session.v2";
+        if (localStorage.getItem(flag) === null) {
+          const demo: Session = {
+            user: {
+              id: DEMO_RESIDENT_ID, displayName: "Demo Resident", email: DEMO_RESIDENT_EMAIL,
+              role: "resident", createdAt: now(),
+            },
+            expiresAt: new Date(Date.now() + 7 * 86400000).toISOString(),
+          };
+          localStorage.setItem(config.sessionKey, JSON.stringify(demo));
+          localStorage.setItem(flag, "initialized");
+          current = demo;
+        }
+      } catch { /* storage can be disabled */ }
+    }
     if (!current) return null;
     const profile = read().profiles?.find((p) => p.userId === current.user.id);
     return profile ? { ...current, user: { ...current.user, displayName: profile.displayName || "CivicWatch member", avatarUrl: profile.avatarUrl } } : current;
