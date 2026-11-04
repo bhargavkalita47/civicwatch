@@ -97,10 +97,10 @@
 }
 * {scrollbar-color:var(--cw-scroll) transparent;}
 html{background:var(--cw-page);scroll-behavior:smooth;}
-body{background:var(--cw-page);color:var(--cw-ink);font-family:"Inter",system-ui,sans-serif; min-width:320px;}
-body,button,input,textarea,select{font-family:"Inter",system-ui,sans-serif;}
-h1,h2,.city-card h3,.overview-panel-heading h2,.admin-console h2,.modal-header h2{font-family:"Instrument Serif", Georgia,serif; font-weight:400;color:var(--cw-heading);letter-spacing:-.035em;}
-h3,h4,.brand>span:last-child,.button,.main-nav button,.overview-metric strong{font-family:"Inter",system-ui,sans-serif;}
+body{background:var(--cw-page);color:var(--cw-ink);font-family:var(--cw-font-ui, "Inter"),system-ui,sans-serif; min-width:320px;}
+body,button,input,textarea,select{font-family:var(--cw-font-ui, "Inter"),system-ui,sans-serif;}
+h1,h2,.city-card h3,.overview-panel-heading h2,.admin-console h2,.modal-header h2{font-family:var(--cw-font-display, "Instrument Serif"), Georgia,serif; font-weight:400;color:var(--cw-heading);letter-spacing:-.035em;}
+h3,h4,.brand>span:last-child,.button,.main-nav button,.overview-metric strong{font-family:var(--cw-font-ui, "Inter"),system-ui,sans-serif;}
 h3,h4,p,div,button,label{overflow-wrap:break-word;}
 ::selection{background:var(--cw-accent);color:var(--cw-accent-ink);}
 button:focus-visible,a:focus-visible{outline:3px solid var(--cw-accent);outline-offset:3px;}
@@ -116,7 +116,7 @@ input:focus-visible,textarea:focus-visible,select:focus-visible{outline-color:va
 .site-header .brand{padding:0 13px 0 10px; gap:11px;min-height:49px;}
 .site-header .brand-mark{background:var(--cw-accent); color:var(--cw-accent-ink);width:39px;height:39px;border-radius:13px;box-shadow:none;}
 .site-header .brand-mark>svg:first-child,.site-header .brand-check{color:var(--cw-accent-ink);background:transparent;}
-.site-header .brand>span:last-child{font-family:"Instrument Serif",Georgia,serif; font-weight:400;font-size:28px;letter-spacing:-.045em;color:var(--cw-heading);}
+.site-header .brand>span:last-child{font-family:var(--cw-font-display, "Instrument Serif"),Georgia,serif; font-weight:400;font-size:28px;letter-spacing:-.045em;color:var(--cw-heading);}
 .brand-light{font-weight:400;}
 .brand small{display:none;}
 .navigation-caption{display:block;margin:45px 14px 13px;font-size:10px;letter-spacing:.18em;font-weight:800;color:var(--cw-faint);}
@@ -157,7 +157,7 @@ footer .footer-brand>span{color:var(--cw-muted);}
 .intro{padding:38px 2px 27px;gap:25px;align-items:flex-end;}
 .intro .eyebrow{font-size:10px;letter-spacing:.2em;color:var(--cw-muted);font-weight:800;}
 .intro .eyebrow>i{background:var(--cw-accent);box-shadow:0 0 0 4px color-mix(in srgb,var(--cw-accent) 16%,transparent);}
-.intro h1{font-family:"Instrument Serif",Georgia,serif;font-size:clamp(41px,4.3vw,72px);font-weight:400;line-height:1.01;letter-spacing:-.045em;margin:11px 0 12px;max-width:19ch;color:var(--cw-heading);}
+.intro h1{font-family:var(--cw-font-display, "Instrument Serif"),Georgia,serif;font-size:clamp(41px,4.3vw,72px);font-weight:400;line-height:1.01;letter-spacing:-.045em;margin:11px 0 12px;max-width:19ch;color:var(--cw-heading);}
 .intro h1 em{display:inline;font-weight:400;font-style:italic;color:var(--cw-heading);background:linear-gradient(transparent 55%, color-mix(in srgb,var(--cw-accent) 70%, transparent) 55%);}
 .intro p{color:var(--cw-muted);font-size:13px;max-width:650px;line-height:1.7;}
 .button{border-radius:12px;min-height:43px;font-size:12px;font-weight:700;}
@@ -170,7 +170,7 @@ footer .footer-brand>span{color:var(--cw-muted);}
 /* Shared light/dark surfaces for the Explore map and other destinations */
 .workspace,.admin-console{background:var(--cw-panel);border:1px solid var(--cw-border);border-radius:20px;box-shadow:var(--cw-shadow);}
 .workspace-heading{padding:25px 25px 16px;}
-.workspace-heading h2{font-family:"Instrument Serif",Georgia,serif;font-size:33px;font-weight:400;letter-spacing:-.03em;color:var(--cw-heading);}
+.workspace-heading h2{font-family:var(--cw-font-display, "Instrument Serif"),Georgia,serif;font-size:33px;font-weight:400;letter-spacing:-.03em;color:var(--cw-heading);}
 .section-kicker{color:var(--cw-muted);letter-spacing:.17em;font-size:10px;}
 .filter-bar{padding:0 25px 20px;gap:9px;}
 .search-field,.location-picker{background:var(--cw-soft);border:1px solid var(--cw-border);color:var(--cw-ink);}
@@ -220,7 +220,7 @@ footer .footer-brand>span{color:var(--cw-muted);}
 .overview-metric{background:var(--cw-panel);border:1px solid var(--cw-border);border-radius:16px;padding:20px 21px;min-height:151px;box-shadow:none;}
 .overview-metric-top{font-size:12px;font-weight:650;color:var(--cw-muted);}
 .overview-metric-top svg{color:var(--cw-lavender);}
-.overview-metric strong{font-family:"Inter",system-ui,sans-serif;font-size:clamp(31px,2.8vw,44px);line-height:1.2;font-weight:800;letter-spacing:-.065em;margin:15px 0 2px;color:var(--cw-heading);}
+.overview-metric strong{font-family:var(--cw-font-ui, "Inter"),system-ui,sans-serif;font-size:clamp(31px,2.8vw,44px);line-height:1.2;font-weight:800;letter-spacing:-.065em;margin:15px 0 2px;color:var(--cw-heading);}
 .overview-metric small{color:var(--cw-muted);font-size:11px;line-height:1.55;margin:0;}
 .overview-metric.metric-featured{background:var(--cw-coral-card);border-color:transparent;}
 .metric-featured .overview-metric-top,.metric-featured .overview-metric-top svg,.metric-featured strong,.metric-featured small{color:var(--cw-coral-text);}
@@ -248,7 +248,7 @@ footer .footer-brand>span{color:var(--cw-muted);}
 .ranked-number{display:grid;place-items:center;flex:0 0 31px;height:31px;border-radius:50%;background:var(--cw-soft);font-size:11px;font-weight:700;color:var(--cw-muted);}
 .ranked-main{min-width:0;flex:1;}
 .ranked-line{display:flex;justify-content:space-between;align-items:baseline;gap:6px;font-size:12px;line-height:1.35;color:var(--cw-heading);}
-.ranked-line strong{font-family:"Instrument Serif", Georgia,serif;font-size:20px;font-weight:400;letter-spacing:-.025em;}
+.ranked-line strong{font-family:var(--cw-font-display, "Instrument Serif"), Georgia,serif;font-size:20px;font-weight:400;letter-spacing:-.025em;}
 .ranked-line span{white-space:nowrap;font-weight:700;}
 .ranked-main>small,.ranked-line small{color:var(--cw-muted);font-size:10px;font-weight:400;}
 .ranked-bar{height:4px;border-radius:99px;overflow:hidden;background:var(--cw-soft-2);margin:9px 0 6px;}
@@ -259,7 +259,7 @@ footer .footer-brand>span{color:var(--cw-muted);}
 .overview-view-locations:hover{background:var(--cw-soft);}
 .overview-empty-locations{display:grid;place-items:center;gap:12px;text-align:center;flex:1;color:var(--cw-muted);padding:25px;}
 .overview-section-title{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;margin:37px 1px 17px;scroll-margin-top:24px;}
-.overview-section-title h2{font-family:"Instrument Serif",Georgia,serif;font-size:35px;font-weight:400;margin-top:4px;color:var(--cw-heading);}
+.overview-section-title h2{font-family:var(--cw-font-display, "Instrument Serif"),Georgia,serif;font-size:35px;font-weight:400;margin-top:4px;color:var(--cw-heading);}
 .overview-section-title>span{color:var(--cw-muted);font-size:11px;line-height:1.5;}
 .city-directory{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px;}
 .city-card{text-align:left;background:var(--cw-panel);border:1px solid var(--cw-border);border-radius:17px;min-height:245px;padding:19px;box-shadow:none;}
@@ -267,10 +267,10 @@ footer .footer-brand>span{color:var(--cw-muted);}
 .city-card-top{margin-bottom:10px;}
 .city-index{color:var(--cw-faint);}
 .city-card-open{background:var(--cw-soft);color:var(--cw-teal);}
-.city-card h3{font-family:"Instrument Serif",Georgia,serif;font-size:30px;line-height:1.1;font-weight:400;letter-spacing:-.035em;color:var(--cw-heading);}
+.city-card h3{font-family:var(--cw-font-display, "Instrument Serif"),Georgia,serif;font-size:30px;line-height:1.1;font-weight:400;letter-spacing:-.035em;color:var(--cw-heading);}
 .city-card p{font-size:11px;color:var(--cw-muted);}
 .city-card-count{margin-top:18px;}
-.city-card-count strong{font-size:29px;font-family:"Inter",sans-serif;letter-spacing:-.055em;color:var(--cw-heading);font-weight:800;}
+.city-card-count strong{font-size:29px;font-family:var(--cw-font-ui, "Inter"),sans-serif;letter-spacing:-.055em;color:var(--cw-heading);font-weight:800;}
 .city-card-count>span{color:var(--cw-muted);font-size:10px;}
 .city-bar{background:var(--cw-soft-2);height:5px;}
 .city-bar span{background:var(--cw-accent);}
@@ -286,7 +286,7 @@ footer .footer-brand>span{color:var(--cw-muted);}
 .modal,.drawer,.modal-card,.modal-header,.form-body,.thread-body{color:var(--cw-ink);}
 .modal-card,.drawer{background:var(--cw-panel);border:1px solid var(--cw-border);color:var(--cw-ink);box-shadow:var(--cw-shadow-float);}
 .modal-header{background:var(--cw-panel);border-bottom:1px solid var(--cw-border);}
-.modal-header h2{font-family:"Instrument Serif",Georgia,serif;font-size:27px;font-weight:400;color:var(--cw-heading);}
+.modal-header h2{font-family:var(--cw-font-display, "Instrument Serif"),Georgia,serif;font-size:27px;font-weight:400;color:var(--cw-heading);}
 .form-body label,.form-body p,.form-body h3{color:var(--cw-ink);}
 .form-body input,.form-body textarea,.form-body select,.comment-form textarea,.board-toolbar select,.filter-catalogue{color:var(--cw-ink);background:var(--cw-elevated);border-color:var(--cw-border);}
 .form-body input::placeholder,.form-body textarea::placeholder{color:var(--cw-faint);}
@@ -430,7 +430,7 @@ label>input::placeholder,textarea::placeholder{color:var(--cw-faint);}
 .loading-workspace{background:var(--cw-soft);}
 .skeleton-map{background:linear-gradient(110deg,var(--cw-soft) 30%,var(--cw-surface) 45%,var(--cw-soft) 60%);background-size:200% 100%;}
 .filter-catalogue input{accent-color:var(--cw-accent);}
-.how-it-works>div>i{font-family:"Instrument Serif",Georgia,serif;color:var(--cw-accent);}
+.how-it-works>div>i{font-family:var(--cw-font-display, "Instrument Serif"),Georgia,serif;color:var(--cw-accent);}
 .admin-console-grid article{border-color:var(--cw-border);}
 /* Avoid dark theme buttons with dark-on-dark legacy inherit rules. */
 :root[data-theme="dark"] .modal button.primary,:root[data-theme="dark"] .modal button.danger{color:var(--cw-accent-ink);}
@@ -451,7 +451,7 @@ label>input::placeholder,textarea::placeholder{color:var(--cw-faint);}
 @media(max-width:480px){.intro h1:has(.headline-second-line){font-size:clamp(33px,9vw,38px);}}
 
 /* Final typography ownership: do not load the legacy DM Sans / Manrope families. */
-.support-number,.brand,.footer-brand,.how-it-works>div>i{font-family:"Inter",system-ui,sans-serif;}
+.support-number,.brand,.footer-brand,.how-it-works>div>i{font-family:var(--cw-font-ui, "Inter"),system-ui,sans-serif;}
 
 /* v1.7 — Map-first overview. No metrics or local ranking above/beside the map. */
 .overview-map-first .overview-map-full{width:100%;display:block;}
