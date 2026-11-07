@@ -4,9 +4,9 @@
   <p><strong>Infrastructure ages. The complaints stay fresh.</strong></p>
   <p>A community civic reporting app for documenting neighbourhood problems,<br />sharing photo evidence, and following the conversation around them.</p>
   <p>
-    <a href="https://civicwatch.bhargavkalita1327.workers.dev/">Live frontend</a> ·
+    <a href="https://civicwatch.bhargavkalita1327.workers.dev/">Live pilot</a> ·
     <a href="DEPLOYMENT.md">Deployment</a> ·
-    <a href="docs/BACKEND.md">Backend roadmap</a> ·
+    <a href="docs/BACKEND.md">Backend notes</a> ·
     <a href="CHANGELOG.md">Changelog</a>
   </p>
   <p>
@@ -23,7 +23,21 @@ CivicWatch gives everyday infrastructure problems a place on the map: potholes, 
 
 The interface pairs plain controls with a dry, satirical “neighbourhood doomer” voice. CivicWatch is an independent community project; reports are not automatically sent to municipal authorities.
 
-> **Current stage: backend private pilot on `dev/backend`, public `main` remains frontend-only.** The production URL still runs the existing browser-backed frontend. Cloudflare preview branches use Supabase Auth, PostgreSQL and private Storage for shared accounts, reports, discussion and uploads. Live backend administration is available on the preview. Password recovery and social sign-in are deliberately deferred. The public release is **not security-approved**; see [Backend security audit](docs/BACKEND_SECURITY_AUDIT.md) for verified fixes and remaining launch work.
+> **Current stage: controlled backend pilot on `main`.** The Cloudflare Worker and Supabase support shared accounts, reports, discussions, media and moderation. The browser-local adapter remains available for development. See the [backend audit](docs/BACKEND_SECURITY_AUDIT.md) for the pilot’s scope and outstanding release work.
+
+## Project timeline
+
+| Phase | What changed |
+| --- | --- |
+| October 2026 · Initial idea | Give residents a shared map for potholes, waterlogging and other local issues, with a report thread and photo evidence for each location. Early builds kept data in the browser. |
+| 1–2 November · Frontend iteration | Added town watchlists, grouped filters, a two-step report flow, multiple photos, map navigation from reports and profile-based report management. |
+| 3 November · [Backend pilot](https://github.com/bhargavkalita47/civicwatch/commit/c6f86bf5) | Merged the Cloudflare Worker and Supabase integration to `main`. Introduced shared accounts, report and discussion persistence, private media, moderation and server-side paging. |
+| 3 November · Production and geocoding fixes | Restored live account access by [correcting production backend configuration](https://github.com/bhargavkalita47/civicwatch/commit/fd957f93). Simplified [reverse geocoding](https://github.com/bhargavkalita47/civicwatch/commit/bec47c47) to fall back to county when a provider omits city. |
+| November · Discussion controls | Added [author-only comment editing, photo removal and reply-safe deletion](https://github.com/bhargavkalita47/civicwatch/commit/9a22b215). |
+
+**Engineering problems.** Overview and report browsing used to depend on loading the full archive. PostgreSQL summaries and ten-record report pages now handle those views, while map and thread screens load their archive separately. For mobile reporting, the file picker and report form now manage their own dismissal so cancelling a photo selection preserves the draft.
+
+See the [changelog](CHANGELOG.md) for earlier frontend releases.
 
 ## Features
 
@@ -101,7 +115,7 @@ React components call the typed `CivicService` interface. The service entry poin
 | `supabase/migrations/` | Versioned PostgreSQL schema, security, moderation and performance migrations for the live backend. |
 | `scripts/` | Configuration, design, copy, navigation, release, and schema checks. |
 
-The `dev/backend` Worker uses the dedicated CivicWatch Supabase project with HttpOnly sessions, PostgreSQL, private media, and role-checked moderation. `main` remains the separately released frontend.
+The Cloudflare Worker on `main` connects to the CivicWatch Supabase project. It handles HttpOnly sessions, access to private media and server-side role checks. PostgreSQL stores reports and discussions.
 
 ### Live backend performance
 
@@ -111,13 +125,13 @@ The `dev/backend` Worker uses the dedicated CivicWatch Supabase project with Htt
 - SQL paging and aggregation functions are `SECURITY INVOKER` with `service_role`-only execution. Migrations were applied to the dedicated CivicWatch Supabase pilot project.
 - The map archive is **still a scaling limit** until viewport-based map fetching and on-demand discussion hydration are introduced. This is a controlled backend pilot, not a high-traffic release claim.
 
-See [Scaling architecture](docs/SCALING.md) and the [Backend security audit](docs/BACKEND_SECURITY_AUDIT.md) before promoting the backend.
+See [Scaling architecture](docs/SCALING.md) and the [Backend security audit](docs/BACKEND_SECURITY_AUDIT.md) for current pilot limits.
 
 ## Configuration
 
 | Variable | Default | Purpose |
 | --- | --- | --- |
-| `VITE_SERVICE_MODE` | `mock` | Local adapter; use `api` only after implementing and verifying the backend. |
+| `VITE_SERVICE_MODE` | `mock` | Local adapter for development. The production build uses `api`. |
 | `VITE_API_BASE_URL` | `/api/v1` | API adapter base URL. |
 | `VITE_SEED_DEMO` | `false` | Opt in to fictional reports on an empty local dataset. |
 | `VITE_DEFAULT_CITY` | `Guwahati` | Initial map label. |
@@ -143,18 +157,16 @@ The current target is **Cloudflare Workers with Static Assets**, configured in `
 | Build output | `dist/`, read by Wrangler |
 | Node.js | `22` |
 
-The live frontend is at [civicwatch.bhargavkalita1327.workers.dev](https://civicwatch.bhargavkalita1327.workers.dev/). The checked-in Worker name is `civicwatch-community`; check the intended Worker target before a standalone CLI deploy. See [DEPLOYMENT.md](DEPLOYMENT.md) for setup, preview builds, and verification.
+The live pilot is at [civicwatch.bhargavkalita1327.workers.dev](https://civicwatch.bhargavkalita1327.workers.dev/). The checked-in Worker name is `civicwatch`. See [DEPLOYMENT.md](DEPLOYMENT.md) for the original hosting setup and [wrangler.jsonc](wrangler.jsonc) for the current Worker configuration.
 
-A `vercel.json` file is included for static frontend hosting. The Cloudflare Worker API and D1/R2 bindings do not move with that frontend configuration.
+A `vercel.json` file is included for static frontend hosting. The API and Supabase runtime configuration are handled by the Cloudflare Worker.
 
-## Design and project history
+## Design
 
-CivicWatch uses the C-and-eye mark, Instrument Serif for selected editorial highlights, and Inter for interface text. Lavender/coral light and deep teal/coral dark themes share pastel report markers and an always-light map.
-
-The latest merged work includes photo and camera support, location and form improvements, “View on map,” responsive spacing and card fixes, stronger glass effects, navigation gradients, scroll resets, and the date/time header. Details live in [CHANGELOG.md](CHANGELOG.md); earlier design decisions remain in [DESIGN_HIERARCHY.md](DESIGN_HIERARCHY.md) and the [copy guide](docs/COPY_GUIDE.md).
+CivicWatch pairs the C-and-eye mark and editorial headlines with pastel category markers and a light map in both interface themes. See the [design hierarchy](DESIGN_HIERARCHY.md) and [copy guide](docs/COPY_GUIDE.md).
 
 ## Contributing
 
-Use focused pull requests. Production frontend work targets `main` after review; ongoing backend work starts from `dev/backend`, runs `npm run verify`, checks the Cloudflare preview, and merges back into `dev/backend` first.
+Use focused pull requests against `main`. Run `npm run verify` and check the Cloudflare preview when changing frontend or backend behaviour.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md). Bug reports should include reproduction steps, expected/actual behaviour, browser and device details, and screenshots where useful, without private information.
