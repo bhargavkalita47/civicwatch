@@ -1,8 +1,8 @@
 <div align="center">
   <img src="public/civicwatch-mark.svg" alt="CivicWatch C-and-eye logo" width="72" />
   <h1>CivicWatch</h1>
-  <p><strong>Infrastructure ages. The complaints stay fresh.</strong></p>
-  <p>A community civic reporting app for documenting neighbourhood problems,<br />sharing photo evidence, and following the conversation around them.</p>
+  <p><strong>Community infrastructure reporting and resolution tracking</strong></p>
+  <p>A location-based platform for reporting neighbourhood infrastructure issues,<br />sharing evidence, discussing updates and tracking resolutions.</p>
   <p>
     <a href="https://civicwatch.bhargavkalita1327.workers.dev/">Open CivicWatch</a> ·
     <a href="DEPLOYMENT.md">Deployment</a> ·
@@ -17,13 +17,23 @@
   </p>
 </div>
 
-## What it does
+## Product overview
 
 CivicWatch gives everyday infrastructure problems a place on the map: potholes, broken streetlights, waterlogging, garbage dumps, blocked drains, accessibility barriers, and more. Residents can mark an exact location, describe the issue, attach evidence, confirm an existing report, and discuss updates in a thread.
 
 The interface pairs plain controls with a dry, satirical “neighbourhood doomer” voice. CivicWatch is an independent community project; reports are not automatically sent to municipal authorities.
 
 Use the town watchlist to follow the places you care about and check report resolution status.
+
+## Product capabilities
+
+- Location-based infrastructure reporting with map pins, category filters and photo evidence.
+- Town watchlists, platform totals, report discovery and resolution history.
+- Threaded discussions, community confirmations and author-managed reports.
+- Account profiles, role-based moderation and a shared Supabase-backed report database.
+- Cloudflare Worker API, server-side pagination and access-controlled media.
+
+**Stack:** React · TypeScript · Cloudflare Workers · Supabase Auth · PostgreSQL · ImageKit
 
 ## Project timeline
 
