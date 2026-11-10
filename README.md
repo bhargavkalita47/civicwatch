@@ -35,7 +35,14 @@ The interface pairs plain controls with a dry, satirical “neighbourhood doomer
 | 3 November · Production and geocoding fixes | Restored live account access by [correcting production backend configuration](https://github.com/bhargavkalita47/civicwatch/commit/fd957f93). Simplified [reverse geocoding](https://github.com/bhargavkalita47/civicwatch/commit/bec47c47) to fall back to county when a provider omits city. |
 | November · Discussion controls | Added [author-only comment editing, photo removal and reply-safe deletion](https://github.com/bhargavkalita47/civicwatch/commit/9a22b215). |
 
-**Engineering problems.** Overview and report browsing used to depend on loading the full archive. PostgreSQL summaries and ten-record report pages now handle those views, while map and thread screens load their archive separately. For mobile reporting, the file picker and report form now manage their own dismissal so cancelling a photo selection preserves the draft.
+**Today:** A hosted civic reporting pilot with map-based discovery, persistent report threads and a moderation workflow.
+
+## Engineering challenges and solutions
+
+- **Production login.** The backend merge exposed a deployment configuration gap. The Worker gained the public Supabase settings and production builds were made to [require the real API auth path](https://github.com/bhargavkalita47/civicwatch/commit/a9628561).
+- **Incomplete map addresses.** Reverse geocoding sometimes returned a county without a city. The [normalizer falls back to county](https://github.com/bhargavkalita47/civicwatch/commit/bec47c47), and the form still accepts manual city and locality input.
+- **Archive-sized requests.** [Database summaries and ten-record report pages](https://github.com/bhargavkalita47/civicwatch/commit/b24ff267) replaced full-archive reads for overview and browsing. Map and discussion views load their own data.
+- **Mobile drafts and threaded replies.** Dismissing the photo picker preserves the report draft. [Discussion controls](https://github.com/bhargavkalita47/civicwatch/commit/9a22b215) scope editing and photo removal to the author and keep replies usable after a parent comment is deleted.
 
 See the [changelog](CHANGELOG.md) for earlier frontend releases.
 
