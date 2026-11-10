@@ -4,7 +4,7 @@
   <p><strong>Infrastructure ages. The complaints stay fresh.</strong></p>
   <p>A community civic reporting app for documenting neighbourhood problems,<br />sharing photo evidence, and following the conversation around them.</p>
   <p>
-    <a href="https://civicwatch.bhargavkalita1327.workers.dev/">Live pilot</a> ·
+    <a href="https://civicwatch.bhargavkalita1327.workers.dev/">Live on Cloudflare Workers</a> ·
     <a href="DEPLOYMENT.md">Deployment</a> ·
     <a href="docs/BACKEND.md">Backend notes</a> ·
     <a href="CHANGELOG.md">Changelog</a>
