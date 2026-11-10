@@ -4,7 +4,7 @@
   <p><strong>Infrastructure ages. The complaints stay fresh.</strong></p>
   <p>A community civic reporting app for documenting neighbourhood problems,<br />sharing photo evidence, and following the conversation around them.</p>
   <p>
-    <a href="https://civicwatch.bhargavkalita1327.workers.dev/">Live on Cloudflare Workers</a> ·
+    <a href="https://civicwatch.bhargavkalita1327.workers.dev/">Open CivicWatch</a> ·
     <a href="DEPLOYMENT.md">Deployment</a> ·
     <a href="docs/BACKEND.md">Backend notes</a> ·
     <a href="CHANGELOG.md">Changelog</a>
@@ -23,7 +23,7 @@ CivicWatch gives everyday infrastructure problems a place on the map: potholes, 
 
 The interface pairs plain controls with a dry, satirical “neighbourhood doomer” voice. CivicWatch is an independent community project; reports are not automatically sent to municipal authorities.
 
-> **Current stage: controlled backend pilot on `main`.** The Cloudflare Worker and Supabase support shared accounts, reports, discussions, media and moderation. The browser-local adapter remains available for development. See the [backend audit](docs/BACKEND_SECURITY_AUDIT.md) for the pilot’s scope and outstanding release work.
+Use the town watchlist to follow the places you care about and check report resolution status.
 
 ## Project timeline
 
@@ -35,7 +35,7 @@ The interface pairs plain controls with a dry, satirical “neighbourhood doomer
 | 3 November · Production and geocoding fixes | Restored live account access by [correcting production backend configuration](https://github.com/bhargavkalita47/civicwatch/commit/fd957f93). Simplified [reverse geocoding](https://github.com/bhargavkalita47/civicwatch/commit/bec47c47) to fall back to county when a provider omits city. |
 | November · Discussion controls | Added [author-only comment editing, photo removal and reply-safe deletion](https://github.com/bhargavkalita47/civicwatch/commit/9a22b215). |
 
-**Today:** A hosted civic reporting pilot with map-based discovery, persistent report threads and a moderation workflow.
+**Today:** Residents can browse, report and discuss infrastructure issues, follow activity in watched towns and track resolutions.
 
 ## Engineering challenges and solutions
 
@@ -106,6 +106,8 @@ New browser datasets are empty by default. To explore fictional example reports,
 GitHub Actions runs `npm run verify` and the schema check on pushes to `main` and pull requests. See [verification guidance](docs/VERIFICATION.md) for the manual checks.
 
 ## Architecture
+
+See the [backend audit](docs/BACKEND_SECURITY_AUDIT.md) for deployment scope and release work.
 
 React components call the typed `CivicService` interface. The service entry point selects either the asynchronous local adapter or the HTTP adapter, keeping report data and storage behaviour outside page components.
 
