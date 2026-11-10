@@ -1,4 +1,4 @@
-import { ArrowUpRight, CheckCircle2, ClipboardList, MapPinned, Users } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 import type { OverviewSnapshot } from "../domain/types";
 import { copy } from "../copy";
 
@@ -31,25 +31,20 @@ export function Overview({ stats, loading, error, onReload, onOpenMap }: Props) 
     : 0;
   const metrics = [
     {
-      label: "Still open", value: total.open, icon: ClipboardList,
+      label: "Still open", value: total.open,
       description: copy.overview.captions.open, tone: "open",
     },
     {
-      label: "Resolved", value: total.resolved, icon: CheckCircle2,
+      label: "Resolved", value: total.resolved,
       description: copy.overview.captions.resolved, tone: "resolved",
     },
     {
-      label: "People involved", value: total.people, icon: Users,
+      label: "People involved", value: total.people,
       description: copy.overview.captions.people, tone: "people",
     },
   ];
 
   return <section className="overview-page cw-overview-numbers" aria-label="Community reporting totals">
-    <div className="cw-overview-eyebrow">
-      <span className="section-kicker">PLATFORM TOTALS</span>
-      <span className="cw-overview-scope">Every reported town. Not just your watchlist.</span>
-    </div>
-
     <div className="cw-overview-figures" aria-label="CivicWatch platform statistics">
       <article className="cw-overview-total">
         <div className="cw-overview-total-label">Total reports</div>
@@ -57,9 +52,9 @@ export function Overview({ stats, loading, error, onReload, onOpenMap }: Props) 
         <p>{copy.overview.captions.reports}</p>
       </article>
       <div className="cw-overview-stat-grid">
-        {metrics.map(({ label, value, icon: Icon, description, tone }) =>
+        {metrics.map(({ label, value, description, tone }) =>
           <article className={`cw-overview-stat cw-overview-stat-${tone}`} key={label}>
-            <div className="cw-overview-stat-head"><span>{label}</span><Icon size={20} aria-hidden="true"/></div>
+            <div className="cw-overview-stat-head"><span>{label}</span></div>
             <strong>{value.toLocaleString()}</strong>
             <p>{description}</p>
           </article>)}
@@ -68,8 +63,10 @@ export function Overview({ stats, loading, error, onReload, onOpenMap }: Props) 
 
     <section className="cw-overview-resolution" aria-label="Share of reports resolved">
       <div className="cw-overview-resolution-copy">
-        <div><span className="section-kicker">THE OCCASIONAL PLOT TWIST</span>
-          <h2>How much has actually been fixed?</h2></div>
+        <div className="cw-overview-resolution-label">
+          <h2>Resolution rate</h2>
+          <span>Occasionally, a plot twist.</span>
+        </div>
         <strong aria-label={`${resolutionRate} percent resolved`}>{resolutionRate}%</strong>
       </div>
       <div className="cw-overview-progress" role="progressbar" aria-valuemin={0}
@@ -83,20 +80,14 @@ export function Overview({ stats, loading, error, onReload, onOpenMap }: Props) 
 
     <section className="cw-overview-explore" aria-label="Explore reported problems on the map">
       <div className="cw-overview-explore-copy">
-        <span className="section-kicker">THE WHERE</span>
-        <h2>Every number has a location.</h2>
-        <p>See the reports behind these totals, right where they were pinned.</p>
+        <h2>Behind the numbers</h2>
+        <p>Every report has coordinates. Repairs, less reliably.</p>
       </div>
       <button className="button primary cw-overview-explore-button" type="button" onClick={onOpenMap}>
-        <MapPinned size={18} aria-hidden="true" />
         Explore map
         <ArrowUpRight size={17} aria-hidden="true" />
       </button>
     </section>
 
-    <div className="overview-disclaimer">
-      <span>Community-submitted reports are not officially verified. CivicWatch is not a government service.</span>
-      <span>Not for emergencies</span>
-    </div>
   </section>;
 }

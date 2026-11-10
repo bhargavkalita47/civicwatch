@@ -6,9 +6,6 @@
  */
 export const copy = {
   brand: {
-    eyebrow: "THE COMPLAINT DEPARTMENT",
-    navCaption: "THE COMPLAINT DESK",
-    tagline: "Infrastructure ages. The complaints stay fresh.",
     aboutTitle: "Some problems become landmarks. We’d rather they stayed complaints.",
     aboutBody: "CivicWatch maps potholes, broken lights, blocked drains, and other civic problems people are tired of navigating around. Report what you see, confirm what others have reported, and keep the record updated.",
     aboutEnding: "We provide the map and the paper trail. The repair crew remains conspicuously absent.",
@@ -26,15 +23,15 @@ export const copy = {
   actions: { report: "Report an issue", clearFilters: "Clear filters", signIn: "Sign in", search: "Search", about: "About CivicWatch" },
   nav: { overview: "Overview", snapshots: "Town watchlist", explore: "Explore map", reports: "Reports", mine: "Profile", help: "How it works" },
   overview: {
-    captions: { reports: "The list grows. Naturally.", open: "Still part of the scenery.", resolved: "We also document plot twists.", people: "So it wasn’t just you." },
+    captions: { reports: "The list grows. Naturally.", open: "Still part of the scenery.", resolved: "We also document plot twists.", people: "Reported or confirmed. Still waiting." },
     statsError: "The numbers could not be loaded.",
   },
   watchlist: {
-    totalsHeading: "The usual problems. Your chosen places.", placesHeading: "Your towns",
+    placesHeading: "Your towns",
     addTown: "Add a town", searchLabel: "Search for a city or town",
     suggestions: "Places with reports already on file",
-    townTotals: "The local situation", recent: "Recently reported",
-    mapAction: "Open town map", resolutionRate: "Resolution rate",
+    recent: "Recently reported",
+    mapAction: "View full map", resolutionRate: "Resolution rate",
     resolutionCaption: "Proof that occasionally, something happens.", noData: "Not enough data",
     emptyTitle: "Pick a place to keep sighing about.", emptyText: "Add a city or town to follow its reports.",
     emptyAction: "Add your first town", noReports: "Nothing reported here yet.",

@@ -23,7 +23,7 @@ assert.doesNotMatch(live, /await req\.json\(/,
 assert.match(live, /env\.GOOGLE_OAUTH_ENABLED === "true"/);
 assert.match(live, /env\.FACEBOOK_OAUTH_ENABLED === "true"/);
 assert.match(workerRouter, /GOOGLE_OAUTH_ENABLED, FACEBOOK_OAUTH_ENABLED/);
-assert.match(config, /googleOAuthEnabled: env\.VITE_GOOGLE_OAUTH_ENABLED === "true"/);
+assert.match(config, /googleOAuthEnabled: !uiCleanupDemo && env\.VITE_GOOGLE_OAUTH_ENABLED === "true"/);
 assert.match(form, /config\.googleOAuthEnabled &&/);
 assert.doesNotMatch(wrangler, /SUPABASE_SERVICE_ROLE_KEY|sb_secret_\w+/,
   "Keep privileged credentials out of committed Wrangler configuration");

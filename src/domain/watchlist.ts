@@ -1,4 +1,6 @@
 import type { AreaStats, City, Issue, OverviewSnapshot } from "./types";
+import { config } from "../config";
+import { cities as sampleTowns } from "../data/cities";
 import { activeIssues, historicalIssues, summarizeIssues } from "./logic";
 
 /** Keep saved towns in the user's chosen order, without cloning or losing an entry. */
@@ -42,13 +44,17 @@ export function summarizeWatchlist(watchlist: City[], issues: Issue[], snapshot:
 
 
 /** One storage key shared by Local Snapshot and Reports. */
-export const WATCHLIST_KEY = "civicwatch.local-watchlist.v1";
+export const WATCHLIST_KEY = config.uiCleanupDemo ? "civicwatch.ui-cleanup-demo.watchlist.v1" : "civicwatch.local-watchlist.v1";
 export const MAX_WATCHED_TOWNS = 30;
 
 /** Read old watchlists without assuming every browser permits storage access. */
 export function restoreWatchlist(): City[] {
   try {
-    const value: unknown = JSON.parse(localStorage.getItem(WATCHLIST_KEY) || "[]");
+    const stored = localStorage.getItem(WATCHLIST_KEY);
+    // Only first-time visitors to the isolated UI preview receive a demo watchlist.
+    // An intentionally cleared list stays cleared on the next visit.
+    if (stored === null && config.uiCleanupDemo) return [...sampleTowns];
+    const value: unknown = JSON.parse(stored || "[]");
     if (!Array.isArray(value)) return [];
     const seen = new Set<string>();
     return value.filter((v): v is City => {

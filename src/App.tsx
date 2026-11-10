@@ -8,7 +8,7 @@ import {
   ArrowUpRight,
   CheckCircle2,
   ChevronDown,
-  CircleHelp,
+  ChevronUp,
   ClipboardList,
   Compass,
   BarChart3,
@@ -46,7 +46,6 @@ import {
   activeIssues,
   filterIssues,
   peopleCount,
-  summarizeIssues,
   relativeTime,
   statusLabels,
 } from "./domain/logic";
@@ -74,6 +73,7 @@ import { restoreWatchlist, WATCHLIST_KEY, watchlistReportGroups } from "./domain
 type Tab = "explore" | "overview" | "snapshots" | "reports" | "mine" | "member" | "admin";
 type ThreadSelection = { cluster: LocationCluster; issueId?: string };
 type ReportSection = "active" | "inactive";
+type ExploreSheetState = "collapsed" | "half" | "full";
 type Theme = "light" | "dark";
 const THEME_STORAGE_KEY = "civicwatch.theme.v1";
 const GROUP_COLORS: Record<CategoryGroup, string> = {
@@ -178,13 +178,29 @@ export default function App() {
     [status, setStatus] = useState<IssueFilters["status"]>("all"),
     [sort, setSort] = useState<IssueFilters["sort"]>("recent");
   const [isMobile, setIsMobile] = useState(() => window.matchMedia("(max-width: 790px)").matches);
+  const [exploreSheet, setExploreSheet] = useState<ExploreSheetState>("collapsed");
+  const [reportHerePoint, setReportHerePoint] = useState<Coordinate | null>(null);
+  // A fully expanded mobile reports sheet occupies the viewport; prevent the
+  // underlying page from scrolling until the visitor collapses it again.
+  useEffect(() => {
+    if (!isMobile || tab !== "explore" || exploreSheet !== "full") return;
+    const bodyOverflow = document.body.style.overflow;
+    const htmlOverflow = document.documentElement.style.overflow;
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = bodyOverflow;
+      document.documentElement.style.overflow = htmlOverflow;
+    };
+  }, [isMobile, tab, exploreSheet]);
+  const [hoveredIssueId, setHoveredIssueId] = useState<string | null>(null);
+  const sheetDrag = useRef<{ startY: number } | null>(null);
+  const suppressSheetClick = useRef(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const drawerRef = useRef<HTMLElement>(null);
-  const drawerCloseRef = useRef<HTMLButtonElement>(null);
   const [filterOpen, setFilterOpen] = useState(false),
     [help, setHelp] = useState(false),
-    [about, setAbout] = useState(false),
     [signIn, setSignIn] = useState(false),
     [reportPoint, setReportPoint] = useState<Coordinate | null>(null),
     [selection, setSelection] = useState<ThreadSelection | null>(null),
@@ -202,6 +218,13 @@ useEffect(() => {
   });
 }, [tab, reportSection]);
 
+  useEffect(() => {
+    if (tab !== "explore") {
+      setExploreSheet("collapsed");
+      setReportHerePoint(null);
+      setHoveredIssueId(null);
+    }
+  }, [tab]);
   const mapWorkspaceRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (tab !== "explore" || !mapIssueId) return;
@@ -229,7 +252,7 @@ useEffect(() => {
     const originalRootOverflow = document.documentElement.style.overflow;
     document.body.style.overflow = "hidden";
     document.documentElement.style.overflow = "hidden";
-    drawerCloseRef.current?.focus();
+    drawerRef.current?.querySelector<HTMLButtonElement>(".main-nav button")?.focus();
     const handleKeys = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         event.preventDefault();
@@ -339,6 +362,7 @@ useEffect(() => {
     setSignIn(true);
   }
   function startReport(point: Coordinate = center.current) {
+    setReportHerePoint(null);
     ensureSession(() => {
       setSelection(null);
       if (config.serviceMode === "api" && !data) {
@@ -427,12 +451,14 @@ useEffect(() => {
   const scopedIssues = useMemo(() => tab === "explore" && mapBounds
     ? cityIssues.filter((i) => inMapBounds(i.location, mapBounds))
     : cityIssues, [cityIssues, mapBounds, tab]);
-  const citySummary = useMemo(() => summarizeIssues(scopedIssues), [scopedIssues]);
   const reportGroups = useMemo(() => watchlistReportGroups(watchlist, cityIssues), [watchlist, cityIssues]);
   const reportCounts = {total: reportGroups.all.length, active: reportGroups.active.length, inactive: reportGroups.inactive.length};
   function openResidentProfile(userId: string) {
-    // Only UUIDs produced by the issue/comment data may enter the profile route.
-    if (!/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(userId)) return;
+    // Live accounts require UUIDs; the isolated preview also supports its
+    // known fictional reporter IDs so sample profile links remain interactive.
+    const isLiveId = /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(userId);
+    const isDemoReporter = config.uiCleanupDemo && Boolean(data?.users.some(person => person.id === userId));
+    if (!isLiveId && !isDemoReporter) return;
     setMemberReturn({ tab, selection });
     setMemberId(userId);
     setSelection(null);
@@ -448,6 +474,8 @@ useEffect(() => {
       : location.pathname + location.search);
   }
   function viewIssueOnMap(issue: Issue) {
+    setReportHerePoint(null);
+    setExploreSheet("collapsed");
     setSelection(null);
     setMapIssueId(issue.id);
     setQuery("");
@@ -461,6 +489,8 @@ useEffect(() => {
     history.replaceState(null, "", location.pathname + location.search);
   }
   function exploreWatchCity(next: City) {
+    setReportHerePoint(null);
+    setExploreSheet("collapsed");
     setMapIssueId(null);
     const id = next.id;
     setCityId(cities.some((city) => city.id === id) ? id : "");
@@ -508,7 +538,6 @@ useEffect(() => {
   const exploreClusters = useMemo(() => mapIssue?.status === "resolved"
     ? [...clusters, { id: "historical:" + mapIssue.id, location: mapIssue.location, issues: [mapIssue], totalPeople: peopleCount(mapIssue) }]
     : clusters, [clusters, mapIssue]);
-  const issueCount = citySummary.open;
   const hasFilters = categoryIds.length > 0 || (status !== "all" && tab !== "explore" && (tab !== "reports" || reportSection === "active"));
   function changeReportSection(next: ReportSection) {
     setReportSection(next);
@@ -571,6 +600,11 @@ useEffect(() => {
       notify("Report saved. Latest totals could not be loaded; refresh to update them.");
     }
   }
+  function shiftExploreSheet(direction: "up" | "down") {
+    setExploreSheet((current) => direction === "up"
+      ? current === "collapsed" ? "half" : "full"
+      : current === "full" ? "half" : "collapsed");
+  }
   function issueCard(issue: Issue, large = false) {
     const c = categories.find((c) => c.id === issue.categoryId);
     if (!c) return null;
@@ -579,9 +613,21 @@ useEffect(() => {
       : data?.comments.filter((comment) => comment.issueId === issue.id).length || 0;
     return (
       <button
-        className={`issue-card ${large ? "large-card" : ""}`}
+        className={`issue-card ${large ? "large-card" : ""} ${tab === "explore" && mapIssueId === issue.id ? "on-map" : ""}`}
         key={issue.id}
-        onClick={() => openIssue(issue)}
+        onPointerEnter={() => { if (tab === "explore") setHoveredIssueId(issue.id); }}
+        onPointerLeave={() => { if (tab === "explore") setHoveredIssueId(null); }}
+        onFocus={() => { if (tab === "explore") setHoveredIssueId(issue.id); }}
+        onBlur={() => { if (tab === "explore") setHoveredIssueId(null); }}
+        onClick={() => {
+          if (tab === "explore") {
+            setMapIssueId(issue.id);
+            setFocus({ ...issue.location });
+            setReportHerePoint(null);
+            if (isMobile) setExploreSheet("collapsed");
+          }
+          openIssue(issue);
+        }}
       >
         <div className="issue-card-top">
           <CategoryBadge category={c} />
@@ -629,7 +675,6 @@ useEffect(() => {
       <header ref={drawerRef} id="civicwatch-navigation" className={`site-header${menuOpen ? " mobile-drawer-open" : ""}`}
         role={isMobile ? "dialog" : undefined} aria-modal={isMobile && menuOpen ? true : undefined}
         aria-label={isMobile ? "Navigation menu" : undefined} inert={isMobile && !menuOpen}>
-        <button type="button" className="mobile-drawer-close" ref={drawerCloseRef} aria-label="Close menu" onClick={closeMenu}><X size={21} /></button>
         <a
           href="#"
           className="brand"
@@ -645,7 +690,6 @@ useEffect(() => {
           </span>
           <HeaderClock />
         </a>
-        <span className="navigation-caption">{copy.brand.navCaption}</span>
         <nav className="main-nav" aria-label="Main navigation">
           <button
             className={tab === "overview" ? "active" : ""} aria-current={tab === "overview" ? "page" : undefined}
@@ -689,10 +733,6 @@ useEffect(() => {
             <button type="button" aria-label="Use Lavender and Coral light theme" aria-pressed={theme === "light"} className={theme === "light" ? "selected" : ""} onClick={() => setTheme("light")} title="Lavender / Coral light theme"><Sun size={17} /><span>Light</span></button>
             <button type="button" aria-label="Use Teal and Coral dark theme" aria-pressed={theme === "dark"} className={theme === "dark" ? "selected" : ""} onClick={() => setTheme("dark")} title="Teal / Coral dark theme"><Moon size={17} /><span>Dark</span></button>
           </div>
-          <button className="help-button" aria-label="How it works" onClick={() => { closeMenu(); setHelp(true); }}>
-            <CircleHelp size={17} />
-            <span>{copy.nav.help}</span>
-          </button>
           {auth.session ? (
             <div className="account">
               <button className="profile-account-button" aria-label="Open your profile" onClick={() => { setTab("mine"); closeMenu(); }}>
@@ -726,12 +766,8 @@ useEffect(() => {
         </div>
       </header>
       <main id="main" inert={isMobile && menuOpen}>
-        <section className="intro">
+        <section className={tab === "overview" ? "intro intro-overview" : tab === "snapshots" ? "intro intro-watchlist" : tab === "explore" ? "intro intro-explore" : "intro"}>
           <div>
-            <span className="eyebrow">
-              <i />
-              {copy.brand.eyebrow}
-            </span>
             <h1>
               {copy.pages[tab].title}
             </h1>
@@ -744,7 +780,6 @@ useEffect(() => {
             disabled={auth.loading}
             onClick={() => startReport()}
           >
-            <Plus size={19} />
             {copy.actions.report}
           </button>
         </section>
@@ -782,7 +817,7 @@ useEffect(() => {
             loading={loading || datasetLoading || (config.serviceMode === "api" && !data)}
             error={error || datasetError} onReload={() => { setDatasetAttempt(n => n + 1); void load(); }}
             onExplore={exploreWatchCity} onReport={(city) => startReport(city.center)} onSelectCluster={(cluster) => setSelection({ cluster })} />
-        ) : <section className="workspace" aria-label="Report workspace">
+        ) : <section className={tab === "explore" ? "workspace workspace-explore" : "workspace"} aria-label="Report workspace">
           <h2 className="sr-only">{tab === "explore" ? "Explore reports" : tab === "reports" ? "Watched town reports" : "My reports"}</h2>
           {tab === "reports" && (
             <section className="watch-reports-summary compact" aria-labelledby="watch-reports-heading">
@@ -823,6 +858,8 @@ useEffect(() => {
                 setFocus({ ...place.point });
                 setMapBounds(null);
                 setQuery("");
+                setReportHerePoint(null);
+                setExploreSheet("collapsed");
               }}
             /> : <label className="search-field">
               <Search size={17} />
@@ -916,7 +953,7 @@ useEffect(() => {
               <button className="button primary" onClick={() => setTab("snapshots")}>{copy.watchlist.addTown} <ArrowRight size={16}/></button>
             </div>
           ) : tab === "explore" ? (
-            <div className="map-workspace" ref={mapWorkspaceRef} tabIndex={-1} aria-label="Explore report map">
+            <div className={`map-workspace ${isMobile && exploreSheet === "full" ? "sheet-viewport-full" : ""}`} ref={mapWorkspaceRef} tabIndex={-1} aria-label="Explore report map">
               {mapIssue && <div className="map-report-focus" role="status">
                 <MapPin size={18} aria-hidden="true" />
                 <div><strong>{mapIssue.title}</strong><span>{mapIssue.status === "resolved" ? "Resolved report — location only" : "Highlighted on the map"}</span></div>
@@ -928,10 +965,15 @@ useEffect(() => {
                 center={activeCity?.center || center.current}
                 cityName={activeCity?.name ?? "current area"}
                 showLocationBadge={false}
+                scrollFriendly={isMobile}
                 clusters={exploreClusters}
-                highlightedIssueId={mapIssue?.id}
+                highlightedIssueId={mapIssue?.id ?? hoveredIssueId ?? undefined}
+                pick={reportHerePoint ?? undefined}
                 onSelect={(cluster) => {
+                  setReportHerePoint(null);
+                  setMapIssueId(null);
                   setSelection({ cluster });
+                  if (isMobile) setExploreSheet("collapsed");
                   if (cluster.issues.length === 1)
                     history.replaceState(
                       null,
@@ -939,7 +981,11 @@ useEffect(() => {
                       `#issue=${encodeURIComponent(cluster.issues[0].id)}`,
                     );
                 }}
-                onPick={(point) => startReport(point)}
+                onPick={(point) => {
+                  setReportHerePoint(point);
+                  setMapIssueId(null);
+                  if (isMobile) setExploreSheet("collapsed");
+                }}
                 focus={focus}
                 onCenter={(point) => {
                   center.current = point;
@@ -947,28 +993,55 @@ useEffect(() => {
                 onBounds={setMapBounds}
                 onError={notify}
               />
-              <aside className="reports-panel">
+              {reportHerePoint && <div className="explore-map-prompt" role="group" aria-label="Report at selected map location">
+                <div><strong>Report an issue here?</strong><span>This location will be filled in for you.</span></div>
+                <button type="button" className="button primary" onClick={() => startReport(reportHerePoint)}>Report here</button>
+                <button type="button" className="icon-button" aria-label="Dismiss map reporting prompt" onClick={() => setReportHerePoint(null)}><X size={17} /></button>
+              </div>}
+              <aside className={`reports-panel explore-reports-sheet sheet-${exploreSheet}`} aria-label="Reports in the map view">
                 <div className="reports-panel-heading">
-                  <div>
-                    <h3>
-                      {copy.map.results} <span>{visible.length}</span>
-                    </h3>
-                    <p>{copy.map.resultsCaption}</p>
+                  <button type="button" className="explore-sheet-toggle"
+                    aria-label={`${visible.length} reports in view. ${exploreSheet === "collapsed" ? "Show reports" : exploreSheet === "half" ? "Expand reports" : "Collapse reports"}`}
+                    aria-controls="explore-reports-list" aria-expanded={exploreSheet !== "collapsed"}
+                    onPointerDown={(event) => {
+                      if (!isMobile || event.button !== 0) return;
+                      sheetDrag.current = { startY: event.clientY };
+                      event.currentTarget.setPointerCapture(event.pointerId);
+                    }}
+                    onPointerUp={(event) => {
+                      const start = sheetDrag.current;
+                      sheetDrag.current = null;
+                      if (!start || !isMobile) return;
+                      const delta = event.clientY - start.startY;
+                      if (Math.abs(delta) > 34) {
+                        suppressSheetClick.current = true;
+                        shiftExploreSheet(delta < 0 ? "up" : "down");
+                      }
+                      if (event.currentTarget.hasPointerCapture(event.pointerId))
+                        event.currentTarget.releasePointerCapture(event.pointerId);
+                    }}
+                    onPointerCancel={() => { sheetDrag.current = null; suppressSheetClick.current = false; }}
+                    onClick={() => {
+                      if (suppressSheetClick.current) { suppressSheetClick.current = false; return; }
+                      setExploreSheet((current) => current === "collapsed" ? "half" : current === "half" ? "full" : "collapsed");
+                    }}>
+                    <span className="explore-sheet-grip" aria-hidden="true"/>
+                    <span className="explore-sheet-label">{copy.map.results} <strong>{visible.length}</strong></span>
+                    <ChevronUp size={18} aria-hidden="true"/>
+                  </button>
+                  <div className="reports-panel-heading-main">
+                    <h3>{copy.map.results} <span>{visible.length}</span></h3>
+                    <label className="sort-label">
+                      <ArrowDownUp size={13} />
+                      <select aria-label="Sort reports" value={sort} onChange={(event) => setSort(event.target.value as typeof sort)}>
+                        <option value="recent">Latest</option>
+                        <option value="supported">Most supported</option>
+                      </select>
+                      <ChevronDown size={12} />
+                    </label>
                   </div>
-                  <label className="sort-label">
-                    <ArrowDownUp size={13} />
-                    <select
-                      aria-label="Sort reports"
-                      value={sort}
-                      onChange={(e) => setSort(e.target.value as typeof sort)}
-                    >
-                      <option value="recent">Latest</option>
-                      <option value="supported">Most supported</option>
-                    </select>
-                    <ChevronDown size={12} />
-                  </label>
                 </div>
-                <div className="report-list">
+                <div className="report-list" id="explore-reports-list" inert={isMobile && exploreSheet === "collapsed"} aria-hidden={isMobile && exploreSheet === "collapsed" ? true : undefined}>
                   {visible.length ? (
                     visible.map((i) => issueCard(i))
                   ) : (
@@ -987,9 +1060,6 @@ useEffect(() => {
                       </button>
                     </div>
                   )}
-                </div>
-                <div className="panel-footer">
-                  {reportCount(visible.length)} in view · {reportCount(issueCount)} open overall
                 </div>
               </aside>
             </div>
@@ -1063,22 +1133,13 @@ useEffect(() => {
               )}
             </>
           )}
-          <div className="workspace-footnote">
-            <span>
-              <ShieldCheck size={14} />Community-submitted · Not officially verified
-            </span>
-            <button onClick={() => setAbout(true)}>
-              {copy.actions.about}
-              <ArrowRight size={14} />
-            </button>
-          </div>
         </section>}
       </main>
-      <footer>
-        <div className="footer-brand">
-          CivicWatch<span>{copy.brand.tagline}</span>
-        </div>
-        <p>{copy.brand.disclosure}</p>
+      <footer className="site-footer">
+        <span className="footer-copyright">© {new Date().getFullYear()} CivicWatch{config.uiCleanupDemo && <span className="footer-demo-label" title="Fictional reports; changes are saved in this browser only"> · Demo preview</span>}</span>
+        <nav className="footer-links" aria-label="Footer">
+          <button type="button" className="footer-link" onClick={() => setHelp(true)}>{copy.nav.help}</button>
+        </nav>
       </footer>
       {filterOpen && (
         <Modal
@@ -1173,16 +1234,6 @@ useEffect(() => {
               Explore the map
               <ArrowRight size={16} />
             </button>
-          </div>
-        </Modal>
-      )}
-      {about && (
-        <Modal title={copy.brand.aboutTitle} onClose={() => setAbout(false)}>
-          <div className="form-body">
-            <p>{copy.brand.aboutBody}</p>
-            <p>{copy.brand.aboutEnding}</p>
-            <div className="info-note"><p>{copy.brand.disclosure}</p>
-            </div>
           </div>
         </Modal>
       )}

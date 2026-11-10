@@ -24,8 +24,12 @@ assert.deepEqual(lock.packages[''].devDependencies, pkg.devDependencies);
 assert.ok(existsSync('dist/index.html'), 'Build must create dist before validation');
 assert.ok(existsSync('dist/_headers'), 'Vite must copy security headers to dist');
 const mapConfig = readFileSync('src/config.ts', 'utf8');
-assert.match(mapConfig, /serviceMode: import\.meta\.env\.PROD \? "api"/,
-  'Production builds must never authorize local mock identities');
+assert.match(mapConfig, /serviceMode: uiCleanupDemo \? "mock" : import\.meta\.env\.PROD \? "api"/,
+  'Live production must retain API authentication; only opted-in previews may use isolated demo data');
+assert.match(mapConfig, /new URLSearchParams\(window\.location\.search\)\.get\("demo"\) === "1"/,
+  'Demo mode must require an explicit preview URL or demo flag');
+assert.match(mapConfig, /storageKey: uiCleanupDemo \? "civicwatch\.ui-cleanup-demo\.dataset\.v1"/,
+  'Demo browser data must use a separate storage namespace');
 assert.ok(wrangler.vars?.SUPABASE_URL?.includes('caacglqvyfwatnazhjie.supabase.co'),
   'Production must target only the dedicated CivicWatch Supabase project');
 assert.equal(wrangler.vars?.SUPABASE_URL, wrangler.previews?.vars?.SUPABASE_URL,

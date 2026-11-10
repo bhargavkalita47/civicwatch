@@ -8,6 +8,27 @@ import { markerColor, peopleCount } from "../domain/logic";
 import { categoryMarkerColor, markerIconColor, markerRgb } from "../domain/markerPalette";
 import { config } from "../config";
 import { copy } from "../copy";
+/* Merge nearby marker groups at wider zoom levels in projected pixel space.
+ * The underlying reports remain unchanged, with deduplicated people counts. */
+function groupMapClusters(clusters: LocationCluster[], instance: L.Map, compact: boolean): LocationCluster[] {
+  const zoom = instance.getZoom();
+  if (compact || zoom >= 14 || clusters.length < 2) return clusters;
+  const cell = zoom <= 11 ? 54 : 46;
+  const grouped = new Map<string, LocationCluster>();
+  for (const cluster of clusters) {
+    const pixel = instance.project([cluster.location.lat, cluster.location.lng], zoom);
+    const key = `${Math.round(pixel.x / cell)}:${Math.round(pixel.y / cell)}`;
+    const previous = grouped.get(key);
+    if (!previous) {
+      grouped.set(key, { ...cluster, issues: [...cluster.issues] });
+    } else {
+      previous.issues.push(...cluster.issues);
+      previous.totalPeople = new Set(previous.issues.flatMap(issue =>
+        [issue.authorId, ...issue.confirmationUserIds])).size;
+    }
+  }
+  return Array.from(grouped.values());
+}
 const paths: Record<string, string> = {
   road: "M3 18 7 6h10l4 12M9 18l1-4m1-4 1-4m1 12 1-4",
   water: "M12 3C9 7 5 11 5 15a7 7 0 0 0 14 0c0-4-4-8-7-12Z",
@@ -30,6 +51,8 @@ export interface MapProps {
   pick?: Coordinate;
   focus?: Coordinate;
   compact?: boolean;
+  /** On mobile a map tap unlocks dragging; tapping outside restores page scrolling. */
+  scrollFriendly?: boolean;
   onCenter?: (point: Coordinate) => void;
   onBounds?: (bounds: MapBounds) => void;
   onError?: (message: string) => void;
@@ -46,6 +69,7 @@ export function CivicMap({
   pick,
   focus,
   compact = false,
+  scrollFriendly = false,
   onCenter,
   onBounds,
   onError,
@@ -55,17 +79,24 @@ export function CivicMap({
     markers = useRef<L.LayerGroup | null>(null);
   const callbacks = useRef({ onSelect, onPick, onCenter, onBounds, onError });
   callbacks.current = { onSelect, onPick, onCenter, onBounds, onError };
+  const [panEnabled, setPanEnabled] = useState(false);
+  const panEnabledRef = useRef(false);
+  panEnabledRef.current = panEnabled;
+  const scrollFriendlyRef = useRef(scrollFriendly);
+  scrollFriendlyRef.current = scrollFriendly;
   const [legend, setLegend] = useState(false),
     [tileError, setTileError] = useState(false),
     [locating, setLocating] = useState(false),
-    [locatedPoint, setLocatedPoint] = useState<Coordinate | null>(null);
+    [locatedPoint, setLocatedPoint] = useState<Coordinate | null>(null),
+    [mapZoom, setMapZoom] = useState(13);
   useEffect(() => {
     if (!container.current) return;
     const instance = L.map(container.current, {
       center: [center.lat, center.lng],
       zoom: 13,
       zoomControl: false,
-      scrollWheelZoom: !compact,
+      dragging: !scrollFriendly,
+      scrollWheelZoom: !compact && !scrollFriendly,
       attributionControl: true,
     });
     map.current = instance;
@@ -84,12 +115,18 @@ export function CivicMap({
       .on("load", () => setTileError(false))
       .addTo(instance);
     markers.current = L.layerGroup().addTo(instance);
-    instance.on("click", (event: L.LeafletMouseEvent) =>
+    instance.on("click", (event: L.LeafletMouseEvent) => {
+      // On mobile, the first empty-map tap activates browsing instead of
+      // unexpectedly placing a report pin; a subsequent tap picks a point.
+      if (scrollFriendlyRef.current && !panEnabledRef.current) {
+        setPanEnabled(true);
+        return;
+      }
       callbacks.current.onPick?.(normalizedPoint({
         lat: event.latlng.lat,
         lng: event.latlng.lng,
-      })),
-    );
+      }));
+    });
     const updateViewport = () => {
       const c = instance.getCenter();
       const b = instance.getBounds();
@@ -97,6 +134,7 @@ export function CivicMap({
       callbacks.current.onBounds?.({ north: b.getNorth(), south: b.getSouth(), east: b.getEast(), west: b.getWest() });
     };
     instance.on("moveend", updateViewport);
+    instance.on("zoomend", () => setMapZoom(instance.getZoom()));
     instance.whenReady(updateViewport);
     const observer = new ResizeObserver(() => instance.invalidateSize());
     observer.observe(container.current);
@@ -106,11 +144,38 @@ export function CivicMap({
       map.current = null;
     };
   }, [compact]);
+
+  // Mobile map defaults to page scrolling, activates on the first empty-map
+  // tap and deactivates on a tap outside the map shell.
+  useEffect(() => {
+    const instance = map.current;
+    if (!instance) return;
+    if (!scrollFriendly || panEnabled) instance.dragging.enable();
+    else instance.dragging.disable();
+    if (!compact && !scrollFriendly) instance.scrollWheelZoom.enable();
+    else instance.scrollWheelZoom.disable();
+  }, [scrollFriendly, panEnabled, compact]);
+
+  useEffect(() => {
+    if (!scrollFriendly) setPanEnabled(false);
+  }, [scrollFriendly]);
+
+  useEffect(() => {
+    if (!scrollFriendly || !panEnabled) return;
+    const onOutsideTap = (event: PointerEvent) => {
+      const target = event.target;
+      const shell = container.current?.parentElement;
+      if (target instanceof Node && shell && !shell.contains(target)) setPanEnabled(false);
+    };
+    document.addEventListener("pointerdown", onOutsideTap, true);
+    return () => document.removeEventListener("pointerdown", onOutsideTap, true);
+  }, [scrollFriendly, panEnabled]);
+
   useEffect(() => {
     const group = markers.current;
     group?.clearLayers();
     if (!map.current || !group) return;
-    for (const cluster of clusters) {
+    for (const cluster of groupMapClusters(clusters, map.current, compact)) {
       const highlighted = cluster.issues.find((issue) => issue.id === highlightedIssueId);
       const primary = highlighted || [...cluster.issues].sort(
         (a, b) => peopleCount(b) - peopleCount(a),
@@ -176,7 +241,7 @@ export function CivicMap({
         alt: "Selected report location",
         zIndexOffset: 1000,
       }).addTo(group);
-  }, [categories, clusters, highlightedIssueId, pick, locatedPoint, compact, onPick]);
+  }, [categories, clusters, highlightedIssueId, pick, locatedPoint, compact, onPick, mapZoom]);
   useEffect(() => {
     if (focus && map.current) {
       if (compact)
@@ -218,14 +283,16 @@ export function CivicMap({
     );
   }
   return (
-    <div className={`map-shell ${compact ? "compact-map" : ""}`}>
+    <div className={`map-shell ${compact ? "compact-map" : "explore-map"} ${!compact && mapZoom <= 12 ? "map-zoom-dense" : ""} ${scrollFriendly ? panEnabled ? "map-pan-enabled" : "map-scroll-friendly" : ""}`}>
       <div
         className="leaflet-host"
         ref={container}
         aria-label={
           compact && onPick
             ? "Choose the issue location on the map"
-            : "Interactive civic issue map"
+            : scrollFriendly
+              ? "Civic issue map. Tap to activate map dragging; tap outside the map to scroll the page."
+              : "Interactive civic issue map"
         }
       />
       {!compact && showLocationBadge && (
@@ -235,42 +302,27 @@ export function CivicMap({
 
         </div>
       )}
-      <div className="map-controls">
-        <button type="button" onClick={() => map.current?.zoomIn()} aria-label="Zoom in">
-          <Plus size={19} />
-        </button>
-        <button type="button" onClick={() => map.current?.zoomOut()} aria-label="Zoom out">
-          <Minus size={19} />
-        </button>
-        <span />
-        <button type="button" onClick={() => void locate()} aria-label={copy.map.locate} disabled={locating} aria-busy={locating}>
-          {locating ? (
-            <span className="locating-dot" />
-          ) : (
-            <LocateFixed size={18} />
-          )}
-        </button>
-        {!compact && (
-          <>
-            <button
-              type="button"
-              onClick={() =>
-                map.current?.flyTo([center.lat, center.lng], 13)
-              }
-              aria-label={`${copy.map.reset} to ${cityName}`}
-            >
-              <RotateCcw size={17} />
-            </button>
-            <button
-              type="button"
-              onClick={() => setLegend((v) => !v)}
-              aria-label="Show issue types"
-              aria-expanded={legend}
-            >
-              <Layers size={18} />
-            </button>
-          </>
-        )}
+      <div className={`map-controls ${compact ? "" : "explore-map-controls"}`}>
+        <div className="map-control-group map-control-zoom">
+          <button type="button" onClick={() => map.current?.zoomIn()} aria-label="Zoom in">
+            <Plus size={19} />
+          </button>
+          <button type="button" onClick={() => map.current?.zoomOut()} aria-label="Zoom out">
+            <Minus size={19} />
+          </button>
+        </div>
+        {compact && <span aria-hidden="true"/>}
+        <div className="map-control-group map-control-actions">
+          <button type="button" onClick={() => void locate()} aria-label={copy.map.locate} disabled={locating} aria-busy={locating}>
+            {locating ? <span className="locating-dot" /> : <LocateFixed size={18} />}
+          </button>
+          {!compact && <>
+            <button type="button" onClick={() => map.current?.flyTo([center.lat, center.lng], 13)}
+              aria-label={`${copy.map.reset} to ${cityName}`}><RotateCcw size={17} /></button>
+            <button type="button" onClick={() => setLegend((v) => !v)}
+              aria-label="Show issue types" aria-expanded={legend}><Layers size={18} /></button>
+          </>}
+        </div>
       </div>
       {!compact && legend && (
         <div className="map-key" role="region" aria-label="Issue types">

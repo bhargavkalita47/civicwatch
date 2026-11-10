@@ -63,14 +63,16 @@ export function ExploreSearch({ value, onChange, onSelectPlace }: Props) {
           type="search"
           autoComplete="off"
           maxLength={140}
-          aria-label="Search reports, city, town or landmark"
-          placeholder="Search reports, towns or landmarks"
+          aria-label="Filter reports or find a city, town or landmark"
+          aria-describedby="explore-search-instructions"
+          placeholder="Filter reports or find a place"
         />
         {value && <button className="explore-search-clear" type="button" onClick={() => change("")} aria-label="Clear search"><X size={15}/></button>}
         <button className="explore-search-place" type="submit" disabled={busy || value.trim().length < 3} title="Find this town or landmark on the map">
           {busy ? "Finding…" : "Find place"}<ArrowRight size={14} aria-hidden="true" />
         </button>
       </form>
+      <span id="explore-search-instructions" className="sr-only">Typing filters report titles and locations. Choose Find place to move the map to a town or landmark.</span>
       {error && <p className="explore-search-error" role="alert">{error}</p>}
       {places.length > 0 && <div className="explore-search-results" role="list" aria-label="Matching places">
         {places.map((place) => <button type="button" role="listitem" key={place.id} onClick={() => {

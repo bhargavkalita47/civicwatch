@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import type { PointerEvent as ReactPointerEvent, KeyboardEvent as ReactKeyboardEvent } from "react";
-import { ArrowDown, ArrowRight, ArrowUp, CheckCircle2, ClipboardList, GripVertical, MapPin, Plus, Trash2, Users } from "lucide-react";
+import { ArrowUpRight, GripVertical, MoreHorizontal, Plus, X } from "lucide-react";
 import type { Category, City, Issue, LocationCluster, OverviewSnapshot } from "../domain/types";
 import { activeIssues, clusterIssues, relativeTime, summarizeIssues } from "../domain/logic";
 import { PlaceSearch } from "./PlaceSearch";
 import { CivicMap } from "./CivicMap";
 import { MAX_WATCHED_TOWNS, reorderWatchlist, summarizeWatchlist } from "../domain/watchlist";
-import { copy, countNoun } from "../copy";
+import { copy } from "../copy";
 
 const SELECTED_KEY = "civicwatch.local-selected.v1";
 const EMPTY = { reports: 0, open: 0, resolved: 0, people: 0 };
@@ -35,6 +35,8 @@ export function LocalSnapshots({ cities, watchlist, setWatchlist, stats, issues,
   });
   const [adding, setAdding] = useState(false);
   const [note, setNote] = useState("");
+  const [openActionsId, setOpenActionsId] = useState<string | null>(null);
+  const [removedTown, setRemovedTown] = useState<{ city: City; index: number; wasSelected: boolean } | null>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dragTargetId, setDragTargetId] = useState<string | null>(null);
   const drag = useRef<{ id: string; x: number; y: number; moved: boolean } | null>(null);
@@ -42,6 +44,23 @@ export function LocalSnapshots({ cities, watchlist, setWatchlist, stats, issues,
   const selectedKey = selected?.id ?? "";
 
   useEffect(() => { try { localStorage.setItem(SELECTED_KEY, selectedKey); } catch { /* Storage may be disabled. */ } }, [selectedKey]);
+
+  useEffect(() => {
+    if (!openActionsId) return;
+    const closeOutside = (event: PointerEvent) => {
+      const target = event.target;
+      if (target instanceof Element && !target.closest(".snapshot-watch-entry.menu-open")) setOpenActionsId(null);
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpenActionsId(null);
+    };
+    document.addEventListener("pointerdown", closeOutside);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("pointerdown", closeOutside);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [openActionsId]);
 
   function add(place: City) {
     // Legacy preview areas use short IDs (e.g. "guwahati") whereas new
@@ -60,20 +79,41 @@ export function LocalSnapshots({ cities, watchlist, setWatchlist, stats, issues,
     }
     if (watchlist.length >= MAX_PLACES) { setNote(`Maximum ${MAX_PLACES} towns per watchlist. Even disappointment needs a limit.`); return; }
     setWatchlist((items) => [...items, city]);
+    setRemovedTown(null);
+    setOpenActionsId(null);
     setSelectedId(city.id);
     setAdding(false);
     setNote("Added to your watchlist.");
   }
   function remove(id: string) {
-    const next = watchlist.filter((city) => city.id !== id);
+    const index = watchlist.findIndex((city) => city.id === id);
+    if (index < 0) return;
+    const city = watchlist[index];
+    const next = watchlist.filter((item) => item.id !== id);
+    setRemovedTown({ city, index, wasSelected: selectedKey === id });
     setWatchlist(next);
     if (selectedKey === id) setSelectedId(next[0]?.id || "");
+    setOpenActionsId(null);
+    setNote("");
+  }
+  function undoRemove() {
+    if (!removedTown) return;
+    const { city, index, wasSelected } = removedTown;
+    setWatchlist((items) => {
+      if (items.some((item) => item.id === city.id)) return items;
+      const next = [...items];
+      next.splice(Math.min(index, next.length), 0, city);
+      return next;
+    });
+    if (wasSelected) setSelectedId(city.id);
+    setRemovedTown(null);
     setNote("");
   }
   function move(index: number, direction: -1 | 1) {
     const destination = index + direction;
     if (destination < 0 || destination >= watchlist.length) return;
     setWatchlist((items) => reorderWatchlist(items, items[index].id, items[destination].id));
+    setOpenActionsId(null);
   }
 
   // One pointer interaction works with mouse, touch and stylus. Only the grip
@@ -81,6 +121,7 @@ export function LocalSnapshots({ cities, watchlist, setWatchlist, stats, issues,
   function startDrag(event: ReactPointerEvent<HTMLButtonElement>, id: string) {
     if (event.button !== 0 || watchlist.length < 2) return;
     drag.current = { id, x: event.clientX, y: event.clientY, moved: false };
+    setOpenActionsId(null);
     event.currentTarget.setPointerCapture(event.pointerId);
   }
   function updateDrag(event: ReactPointerEvent<HTMLButtonElement>) {
@@ -129,13 +170,6 @@ export function LocalSnapshots({ cities, watchlist, setWatchlist, stats, issues,
   if (loading) return <section className="overview-loading" role="status">Checking whether anything has changed…</section>;
   if (error || !stats) return <section className="overview-loading"><h2>The numbers have disappeared.</h2><p>{error || "Local reporting data is unavailable."}</p><button className="button primary" onClick={onReload}>Try again</button></section>;
 
-  const watchMetrics = [
-    { label: "Total reports", value: watchTotals.reports, icon: MapPin, description: copy.overview.captions.reports },
-    { label: "Open", value: watchTotals.open, icon: ClipboardList, description: copy.overview.captions.open },
-    { label: "Resolved", value: watchTotals.resolved, icon: CheckCircle2, description: copy.overview.captions.resolved },
-    { label: "People involved", value: watchTotals.people, icon: Users, description: "Unique residents across your watchlist." },
-  ];
-
   // The same search flow is used for both first-time setup and adding more
   // towns. Only one instance renders at a time; no duplicate onboarding CTA.
   function townSearch() {
@@ -156,69 +190,94 @@ export function LocalSnapshots({ cities, watchlist, setWatchlist, stats, issues,
   // duplicate empty-state cards. The place search IS the only start action.
   if (!watchlist.length) return <section className="local-snapshots-page snapshot-is-empty" aria-label="Town watchlist">
     <div className="snapshot-onboarding">
-      <div className="snapshot-onboarding-icon" aria-hidden="true"><MapPin size={23}/></div>
       <div className="snapshot-onboarding-copy">
-        <span className="section-kicker">START YOUR WATCHLIST</span>
         <h2>Choose your first town.</h2>
         <p>Search for a city or town to follow its civic reports.</p>
       </div>
       <div className="snapshot-onboarding-search">{townSearch()}</div>
       {note && <p className="snapshot-note" role="status">{note}</p>}
+      {removedTown && <div className="snapshot-undo" role="status">
+        <span>{removedTown.city.name} removed from your watchlist.</span>
+        <button type="button" onClick={undoRemove}>Undo</button>
+      </div>}
     </div>
   </section>;
 
   return <section className="local-snapshots-page" aria-label="Local reporting watchlist">
-    <section className="snapshot-watch-summary" aria-labelledby="watchlist-numbers-heading">
-      <div className="snapshot-summary-heading">
-        <div>
-          <span className="section-kicker">YOUR WATCHLIST / COMBINED TOTALS</span>
-          <h2 id="watchlist-numbers-heading">{copy.watchlist.totalsHeading}</h2>
-        </div>
-        <span className="snapshot-summary-count">{countNoun(watchlist.length, "town")} watched</span>
-      </div>
-      <div className="snapshot-summary-metrics" aria-label="Combined totals across towns in your watchlist" aria-live="polite">
-        {watchMetrics.map(({ label, value, icon: Icon, description }) => <article className="snapshot-summary-metric" key={label}>
-          <div className="snapshot-summary-metric-top"><span>{label}</span><Icon size={19} aria-hidden="true"/></div>
-          <strong>{value.toLocaleString()}</strong><small>{description}</small>
-        </article>)}
-      </div>
-    </section>
     <div className="local-snapshots">
     <div className="snapshot-watchlist">
-      <div className="snapshot-side-head"><div><span className="section-kicker">WATCHLIST</span><h3>{copy.watchlist.placesHeading}</h3></div><button type="button" className="snapshot-add-button" onClick={() => setAdding((v) => !v)} aria-label={adding ? "Close add town" : copy.watchlist.addTown} aria-expanded={adding}><Plus size={16}/><span>{adding ? "Close" : "Add town"}</span></button></div>
+      <div className="snapshot-side-head">
+        <div className="snapshot-side-title">
+          <h2>{copy.watchlist.placesHeading}</h2>
+          <button type="button" className="snapshot-add-button" onClick={() => setAdding((v) => !v)}
+            aria-label={adding ? "Close add town" : copy.watchlist.addTown}
+            title={adding ? "Close add town" : copy.watchlist.addTown} aria-expanded={adding}>
+            {adding ? <X size={19} aria-hidden="true"/> : <Plus size={19} aria-hidden="true"/>}
+          </button>
+        </div>
+      </div>
+      <div className="snapshot-inline-summary" role="group" aria-label="Combined totals across watched towns">
+        <div className="snapshot-inline-metrics" aria-live="polite">
+          <span className="snapshot-inline-stat"><strong>{watchTotals.reports.toLocaleString()}</strong> reports</span>
+          <span className="snapshot-inline-stat"><strong>{watchTotals.open.toLocaleString()}</strong> open</span>
+          <span className="snapshot-inline-stat"><strong>{watchTotals.resolved.toLocaleString()}</strong> resolved</span>
+          <span className="snapshot-inline-stat"><strong>{watchTotals.people.toLocaleString()}</strong> people</span>
+        </div>
+      </div>
       {adding && <div className="snapshot-add-panel">
         <span className="snapshot-field-label">Search for a city or town</span>
         {townSearch()}
       </div>}
       {note && <p className="snapshot-note" role="status">{note}</p>}
+      {removedTown && <div className="snapshot-undo" role="status">
+        <span>{removedTown.city.name} removed from your watchlist.</span>
+        <button type="button" onClick={undoRemove}>Undo</button>
+      </div>}
       <div className="snapshot-watch-rows">
         {watchlist.map((city, index) => {
-            const cityStats = stats.cities[city.id] ?? summarizeIssues(issues.filter((issue) => issue.cityId === city.id));
-            return <div key={city.id} data-watch-id={city.id} className={`snapshot-watch-row ${selectedKey === city.id ? "selected" : ""} ${draggingId === city.id ? "dragging" : ""} ${dragTargetId === city.id ? "drag-target" : ""}`}>
+          const cityStats = stats.cities[city.id] ?? summarizeIssues(issues.filter((issue) => issue.cityId === city.id));
+          const actionsOpen = openActionsId === city.id;
+          return <div key={city.id} className={`snapshot-watch-entry ${actionsOpen ? "menu-open" : ""}`}>
+            <div data-watch-id={city.id} className={`snapshot-watch-row ${selectedKey === city.id ? "selected" : ""} ${draggingId === city.id ? "dragging" : ""} ${dragTargetId === city.id ? "drag-target" : ""}`}>
               {watchlist.length > 1 && <button className="snapshot-drag-handle" type="button" aria-label={`Drag ${city.name} to reorder, or press the up and down arrow keys`} title="Drag to reorder · arrow keys also work"
                 onPointerDown={(event) => startDrag(event, city.id)} onPointerMove={updateDrag} onPointerUp={finishDrag} onPointerCancel={clearDrag}
-                onKeyDown={(event) => onGripKeyDown(event, index)}><GripVertical size={17}/></button>}
-              <button className="snapshot-watch-select" onClick={() => setSelectedId(city.id)} aria-current={selectedKey === city.id ? "true" : undefined}><MapPin size={15}/><span><strong>{city.name}</strong><small>{city.region}, {city.country}</small></span><b>{cityStats.open}</b></button>
-              <div className="snapshot-watch-actions">{watchlist.length > 1 && <><button aria-label={`Move ${city.name} up`} disabled={index === 0} onClick={() => move(index, -1)}><ArrowUp size={13}/></button><button aria-label={`Move ${city.name} down`} disabled={index === watchlist.length - 1} onClick={() => move(index, 1)}><ArrowDown size={13}/></button></>}<button aria-label={`Remove ${city.name}`} onClick={() => remove(city.id)}><Trash2 size={13}/></button></div>
-            </div>;
-          })}
+                onKeyDown={(event) => onGripKeyDown(event, index)}><GripVertical size={17} aria-hidden="true"/></button>}
+              <button className="snapshot-watch-select" type="button" onClick={() => { setSelectedId(city.id); setOpenActionsId(null); }}
+                aria-current={selectedKey === city.id ? "true" : undefined}
+                aria-label={`Select ${city.name}, ${cityStats.open} open reports`}>
+                <span className="snapshot-watch-place"><strong>{city.name}</strong><small>{city.region}, {city.country}</small></span>
+                <span className="snapshot-watch-open"><b>{cityStats.open.toLocaleString()}</b><small>open</small></span>
+              </button>
+              <button className="snapshot-watch-menu-trigger" type="button"
+                aria-label={`Manage ${city.name}`} aria-haspopup="menu" aria-expanded={actionsOpen}
+                onClick={() => setOpenActionsId(actionsOpen ? null : city.id)}><MoreHorizontal size={18} aria-hidden="true"/></button>
+            </div>
+            {actionsOpen && <div className={`snapshot-watch-menu ${index > 0 ? "open-up" : ""}`} role="menu" aria-label={`Manage ${city.name}`}>
+              <button type="button" role="menuitem" className="snapshot-watch-remove" onClick={() => remove(city.id)}>Remove town</button>
+            </div>}
+          </div>;
+        })}
       </div>
-      <p className="snapshot-watch-foot">{watchlist.length > 1 ? "Drag to reorder · " : ""}{watchlist.length} of {MAX_PLACES} towns</p>
     </div>
     <div className="snapshot-detail">
       {selected ? <>
-        <div className="snapshot-detail-header"><div><span className="section-kicker">SELECTED TOWN · {selected.region.toUpperCase()}</span><h2>{selected.name}<span className="snapshot-muted">, {selected.country}</span></h2></div><button className="button secondary" onClick={() => onExplore(selected)}>{copy.watchlist.mapAction} <ArrowRight size={15}/></button></div>
+        <div className="snapshot-detail-header">
+          <div className="snapshot-detail-topline">
+            <h2>{selected.name}</h2>
+            <button type="button" className="snapshot-full-map-link" aria-label={`View ${selected.name} on full map`} title="View full map" onClick={() => onExplore(selected)}><ArrowUpRight size={18} aria-hidden="true"/></button>
+          </div>
+          <div className="snapshot-detail-heading">
+            <p>{selected.region}, {selected.country}</p>
+            <div className="snapshot-town-inline-metrics" aria-label={`Report totals for ${selected.name}`}>
+              <span><strong>{selectedStats.reports.toLocaleString()}</strong> reports</span>
+              <span><strong>{selectedStats.open.toLocaleString()}</strong> open</span>
+              <span><strong>{selectedStats.resolved.toLocaleString()}</strong> resolved</span>
+              <span><strong>{selectedStats.people.toLocaleString()}</strong> people</span>
+            </div>
+            {selectedStats.reports > 0 && <p className="snapshot-town-resolution">{resolution}% resolved</p>}
+          </div>
+        </div>
         <div className="snapshot-detail-map"><CivicMap key={selected.id} compact center={selected.center} categories={categories} clusters={clusters} onSelect={onSelectCluster}/></div>
-        {selectedStats.reports > 0 && <div className="snapshot-town-section">
-          {watchlist.length > 1 && <><div className="snapshot-town-section-head"><h3>{copy.watchlist.townTotals}</h3></div>
-          <dl className="snapshot-town-metrics">
-            <div><dt>All reports</dt><dd>{selectedStats.reports.toLocaleString()}</dd></div>
-            <div><dt>Still open</dt><dd>{selectedStats.open.toLocaleString()}</dd></div>
-            <div><dt>Resolved</dt><dd>{selectedStats.resolved.toLocaleString()}</dd></div>
-            <div><dt>People involved</dt><dd>{selectedStats.people.toLocaleString()}</dd></div>
-          </dl></>}
-          <div className="snapshot-resolution"><div><strong>{copy.watchlist.resolutionRate}</strong><span>{selectedStats.reports ? `${resolution}%` : copy.watchlist.noData}</span></div><div className="snapshot-resolution-track"><i style={{ width: `${resolution}%` }}/></div>{selectedStats.resolved > 0 && <small>{copy.watchlist.resolutionCaption}</small>}</div>
-        </div>}
         <div className="snapshot-activity">{recent.length ? <><div className="snapshot-activity-heading"><h3>{copy.watchlist.recent}</h3></div>{recent.map((issue) => <article key={issue.id} className="snapshot-activity-row"><span className="snapshot-status-dot"/><div><strong>{issue.title}</strong><p>{issue.status === "resolved" ? "Resolved" : "Open"} · {relativeTime(issue.createdAt)}</p></div></article>)}</> : <div className="snapshot-no-reports"><strong>{copy.watchlist.noReports}</strong><p>{copy.watchlist.noReportsText}</p><button className="button secondary" onClick={() => onReport(selected)}>{copy.actions.report}</button></div>}</div>
       </> : null}
     </div>

@@ -1,0 +1,557 @@
+/*
+ * Town watchlist / approved cleanup.
+ * The user-owned list is the primary workspace. Statistics are supporting data;
+ * the map remains an embedded town preview, never this page's hero.
+ * This stylesheet deliberately follows the legacy CSS layers.
+ */
+#root .intro-watchlist {
+  padding-bottom: clamp(24px, 2.7vw, 36px);
+  gap: clamp(18px, 2vw, 27px);
+}
+#root .intro-watchlist h1 {
+  font-size: clamp(52px, 5.15vw, 76px);
+  line-height: 1.08;
+  margin-bottom: 12px;
+}
+#root .intro-watchlist p {
+  font-size: clamp(14px, 1.2vw, 16px);
+  line-height: 1.55;
+  color: var(--cw-muted);
+  max-width: 62ch;
+}
+
+/* Separate the hero from the monitoring workspace like Overview, without
+ * introducing another editorial heading. */
+#root .local-snapshots-page {
+  gap: 18px;
+  margin-top: 6px;
+  padding-top: clamp(22px, 2.2vw, 30px);
+  border-top: 1px solid var(--cw-border);
+}
+/* Give the editable list more room than the previous 310px rail, while the
+ * town map stays in its existing context panel, not a full-bleed hero. */
+#root .local-snapshots-page .local-snapshots {
+  grid-template-columns: minmax(310px, .88fr) minmax(0, 1.12fr);
+  gap: 18px;
+  align-items: start;
+}
+#root .local-snapshots-page .snapshot-watchlist {
+  position: sticky;
+  top: 18px;
+  min-height: 0;
+}
+#root .local-snapshots-page .snapshot-side-head {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0;
+  padding: 18px 18px 10px;
+  border-bottom: 0;
+}
+#root .snapshot-side-title {
+  min-width: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0;
+}
+#root .snapshot-side-title h2 {
+  margin: 0;
+  font-family: "Public Sans", system-ui, sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: -.015em;
+  color: var(--cw-heading);
+}
+#root .local-snapshots-page .snapshot-add-button {
+  display: grid;
+  flex: 0 0 44px;
+  place-items: center;
+  width: 44px;
+  min-width: 44px;
+  max-width: 44px;
+  height: 44px;
+  min-height: 44px;
+  margin-left: -4px;
+  padding: 0;
+  border: 0;
+  border-radius: 11px;
+  background: transparent;
+  color: var(--cw-accent);
+  box-shadow: none;
+}
+#root .local-snapshots-page .snapshot-add-button:hover,
+#root .local-snapshots-page .snapshot-add-button[aria-expanded="true"] {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+}
+#root .local-snapshots-page .snapshot-add-button:hover {
+  color: var(--cw-heading);
+}
+#root .local-snapshots-page .snapshot-add-button > svg {
+  display: block;
+  flex-shrink: 0;
+}
+
+/* Four contextual facts, not a second dashboard. The flex items keep
+ * numbers and nouns together and wrap as the panel narrows. */
+#root .snapshot-inline-summary {
+  padding: 0 18px 15px;
+  border-bottom: 1px solid var(--cw-border);
+  min-width: 0;
+}
+#root .snapshot-inline-metrics {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: 5px 15px;
+  min-width: 0;
+}
+#root .snapshot-inline-stat {
+  display: inline-block;
+  flex: 0 0 auto;
+  white-space: nowrap;
+  color: var(--cw-muted);
+  font-family: "Public Sans", system-ui, sans-serif;
+  font-size: 12px;
+  line-height: 1.45;
+}
+#root .snapshot-inline-stat > strong {
+  color: var(--cw-heading);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: -.01em;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+/* All management actions live behind one clearly labelled, comfortably
+ * tappable control. The actual reorder handle remains keyboard accessible. */
+#root .local-snapshots-page .snapshot-watch-rows {
+  padding: 9px;
+}
+#root .snapshot-watch-entry {
+  position: relative;
+  min-width: 0;
+  margin-bottom: 5px;
+}
+#root .snapshot-watch-entry.menu-open { z-index: 10; }
+#root .snapshot-watch-entry:last-child { margin-bottom: 0; }
+#root .snapshot-watch-entry .snapshot-watch-row {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  min-height: 69px;
+  margin: 0;
+  border-radius: 10px;
+}
+#root .snapshot-watch-entry .snapshot-watch-row.selected {
+  border-color: var(--cw-border);
+  background: var(--cw-atmosphere-selected);
+}
+#root .snapshot-watch-entry .snapshot-drag-handle {
+  display: grid;
+  flex: 0 0 34px;
+  place-items: center;
+  width: 34px;
+  height: 44px;
+  min-width: 0;
+  padding: 0;
+  margin-left: 1px;
+}
+#root .snapshot-watch-entry .snapshot-watch-select {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  min-width: 0;
+  min-height: 68px;
+  padding: 10px 7px;
+  text-align: left;
+  gap: 9px;
+}
+#root .snapshot-watch-select > .snapshot-watch-place {
+  flex: 1 1 auto;
+  align-items: flex-start;
+  justify-content: center;
+  min-width: 0;
+  gap: 3px;
+}
+#root .snapshot-watch-place strong {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--cw-heading);
+}
+#root .snapshot-watch-place small {
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--cw-muted);
+}
+#root .snapshot-watch-select > .snapshot-watch-open {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: baseline;
+  justify-content: flex-end;
+  flex-direction: row;
+  gap: 4px;
+  min-width: 0;
+  padding-left: 3px;
+  white-space: nowrap;
+}
+#root .snapshot-watch-open b {
+  color: var(--cw-heading);
+  font-size: 14px;
+  font-weight: 700;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+#root .snapshot-watch-open small {
+  color: var(--cw-muted);
+  font-size: 11px;
+}
+#root .snapshot-watch-menu-trigger {
+  display: grid;
+  flex: 0 0 44px;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border-radius: 8px;
+  color: var(--cw-muted);
+}
+#root .snapshot-watch-menu-trigger:hover,
+#root .snapshot-watch-menu-trigger[aria-expanded="true"] {
+  background: var(--cw-soft);
+  color: var(--cw-heading);
+}
+/* The ellipsis opens only a tiny contextual Remove option, not a full
+ * management panel that pushes the watchlist rows down. */
+#root .snapshot-watch-menu {
+  position: absolute;
+  top: calc(100% + 2px);
+  right: 2px;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  width: max-content;
+  min-width: 132px;
+  padding: 4px;
+  background: var(--cw-panel);
+  border: 1px solid var(--cw-border);
+  border-radius: 10px;
+  box-shadow: var(--cw-shadow);
+}
+#root .snapshot-watch-menu.open-up {
+  top: auto;
+  bottom: calc(100% + 2px);
+}
+#root .snapshot-watch-menu button {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--cw-heading);
+  font-family: "Public Sans", system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.3;
+  text-align: left;
+  white-space: nowrap;
+}
+#root .snapshot-watch-menu button:hover {
+  background: var(--cw-soft);
+}
+#root .snapshot-watch-rows:has(> .snapshot-watch-entry:first-child:last-child.menu-open) {
+  padding-bottom: 62px;
+}
+#root .snapshot-watch-menu-trigger:focus-visible,
+#root .snapshot-watch-menu button:focus-visible,
+#root .snapshot-undo button:focus-visible {
+  outline: 2px solid var(--cw-accent);
+  outline-offset: 2px;
+}
+#root .snapshot-undo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  padding: 10px 16px;
+  background: var(--cw-soft);
+  border-bottom: 1px solid var(--cw-border);
+  color: var(--cw-heading);
+  font-size: 12px;
+  line-height: 1.5;
+}
+#root .snapshot-undo button {
+  min-height: 36px;
+  padding: 5px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--cw-border);
+  background: var(--cw-panel);
+  color: var(--cw-heading);
+  font-size: 12px;
+  font-weight: 700;
+}
+#root .snapshot-onboarding .snapshot-undo {
+  width: min(590px, 100%);
+  margin-top: 16px;
+  border: 1px solid var(--cw-border);
+  border-radius: 10px;
+}
+
+/* A town's heading is a functional label, not another Instrument Serif hero. */
+#root .local-snapshots-page .snapshot-detail {
+  min-width: 0;
+  min-height: 0;
+}
+#root .local-snapshots-page .snapshot-detail-header {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 0;
+  padding: 19px 20px 16px;
+}
+#root .snapshot-detail-topline {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 2px;
+  min-width: 0;
+}
+#root .snapshot-detail-heading { min-width: 0; }
+#root .snapshot-detail-topline h2 {
+  margin: 0;
+  font-family: "Public Sans", system-ui, sans-serif;
+  font-size: clamp(19px, 1.8vw, 24px);
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -.015em;
+  color: var(--cw-heading);
+}
+#root .snapshot-detail-heading p {
+  margin: 5px 0 0;
+  color: var(--cw-muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+/* Icon-only map navigation sits directly beside the town name,
+ * with an invisible 44px touch target and no competing button chrome. */
+#root .snapshot-detail-topline > .snapshot-full-map-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 44px;
+  align-self: center;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  margin: 0 0 0 -5px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  box-shadow: none;
+  color: var(--cw-muted);
+  cursor: pointer;
+}
+#root .snapshot-detail-topline > .snapshot-full-map-link svg {
+  display: block;
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+}
+#root .snapshot-detail-topline > .snapshot-full-map-link:hover {
+  color: var(--cw-heading);
+}
+#root .snapshot-detail-topline > .snapshot-full-map-link:focus-visible {
+  outline: 2px solid var(--cw-accent);
+  outline-offset: 2px;
+}
+#root .snapshot-detail-topline h2 {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+/* Selected-town facts are secondary to the town list. Keep numbers and
+ * labels together and let the row wrap, rather than creating a 2x2 dashboard. */
+#root .snapshot-detail-heading {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+#root .snapshot-town-inline-metrics {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 5px 15px;
+  min-width: 0;
+  margin-top: 12px;
+}
+#root .snapshot-town-inline-metrics > span {
+  flex: 0 0 auto;
+  color: var(--cw-muted);
+  font-family: "Public Sans", system-ui, sans-serif;
+  font-size: 12px;
+  line-height: 1.45;
+  white-space: nowrap;
+}
+#root .snapshot-town-inline-metrics strong {
+  color: var(--cw-heading);
+  font-size: inherit;
+  font-weight: 700;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+#root .snapshot-detail-heading .snapshot-town-resolution {
+  margin: 7px 0 0;
+  color: var(--cw-muted);
+  font-family: "Public Sans", system-ui, sans-serif;
+  font-size: 11px;
+  line-height: 1.45;
+}
+#root .snapshot-activity-heading h3 {
+  margin: 0;
+  color: var(--cw-heading);
+  font-family: "Public Sans", system-ui, sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+#root .snapshot-activity { padding: 19px 20px 24px; }
+
+/* New users get a functional start form, not another oversized hero. */
+#root .snapshot-onboarding-copy h2 {
+  margin: 0 0 7px;
+  font-family: "Public Sans", system-ui, sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.35;
+  letter-spacing: -.01em;
+}
+#root .snapshot-onboarding { min-height: 0; }
+#root .snapshot-onboarding-search { margin-top: 19px; }
+
+@media (max-width: 1100px) {
+  #root .local-snapshots-page .local-snapshots {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  #root .local-snapshots-page .snapshot-watchlist {
+    position: static;
+  }
+  #root .local-snapshots-page .snapshot-watch-rows {
+    max-height: none;
+    overflow: visible;
+  }
+}
+@media (max-width: 790px) {
+  #root .intro-watchlist {
+    gap: 15px;
+    padding-top: 25px;
+    padding-bottom: 23px;
+  }
+  #root .intro-watchlist h1 {
+    font-size: clamp(40px, 9.6vw, 56px);
+    line-height: 1.08;
+  }
+  #root .intro-watchlist p {
+    font-size: 14px;
+    line-height: 1.55;
+    max-width: 45ch;
+  }
+  #root .intro-watchlist > .report-button { align-self: center; }
+  #root .local-snapshots-page {
+    margin-top: 3px;
+    padding-top: 20px;
+    gap: 14px;
+  }
+
+  /* Mobile watchlist is a single continuous workspace, not two
+   * independently elevated desktop cards. Preserve the desktop panels. */
+  #root .local-snapshots-page .local-snapshots {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+    background: transparent;
+  }
+  #root .local-snapshots-page .snapshot-watchlist,
+  #root .local-snapshots-page .snapshot-detail {
+    position: static;
+    min-height: 0;
+    overflow: visible;
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+  #root .local-snapshots-page .snapshot-side-head,
+  #root .local-snapshots-page .snapshot-detail-header {
+    background: transparent;
+    box-shadow: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+  #root .local-snapshots-page .snapshot-side-head {
+    padding: 14px 16px 8px;
+  }
+  #root .local-snapshots-page .snapshot-watch-rows {
+    padding: 8px 8px 0;
+  }
+  #root .local-snapshots-page .snapshot-detail {
+    margin-top: 18px;
+    padding-top: 16px;
+    border-top: 1px solid var(--cw-border);
+  }
+  /* The embedded map alone keeps its own soft frame. */
+  #root .local-snapshots-page .snapshot-detail-map {
+    margin-inline: 16px;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  #root .snapshot-inline-summary { padding: 0 16px 14px; }
+  #root .snapshot-inline-metrics { gap: 5px 14px; }
+  #root .snapshot-watch-entry .snapshot-drag-handle {
+    flex-basis: 44px;
+    width: 44px;
+    height: 44px;
+  }
+  #root .snapshot-watch-entry .snapshot-watch-select { min-height: 64px; }
+  #root .snapshot-watch-menu button { min-height: 44px; }
+  #root .snapshot-watch-place strong { font-size: 14px; }
+  #root .local-snapshots-page .snapshot-detail-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    padding: 18px 16px 15px;
+  }
+  #root .snapshot-detail-topline {
+    flex-direction: row;
+    align-items: center;
+    gap: 2px;
+  }
+  #root .snapshot-town-inline-metrics { gap: 5px 13px; margin-top: 10px; }
+  #root .snapshot-town-inline-metrics > span { font-size: 12px; }
+  #root .snapshot-activity { padding: 17px 16px 21px; }
+}
+@media (max-width: 390px) {
+  #root .snapshot-inline-summary { padding-inline: 12px; }
+  #root .snapshot-inline-metrics { column-gap: 11px; }
+  #root .local-snapshots-page .snapshot-side-head {
+    gap: 7px;
+    padding-inline: 12px;
+  }
+  #root .snapshot-side-title h2 { font-size: 16px; }
+  #root .local-snapshots-page .snapshot-add-button { min-width: 44px; max-width: 44px; padding: 0; }
+  #root .snapshot-watch-entry .snapshot-drag-handle { flex-basis: 44px; width: 44px; }
+  #root .snapshot-watch-entry .snapshot-watch-select { gap: 5px; padding-inline: 3px; }
+  #root .snapshot-watch-menu-trigger { flex-basis: 44px; width: 44px; }
+  #root .snapshot-watch-open small { font-size: 10px; }
+  #root .snapshot-town-inline-metrics { column-gap: 11px; }
+  #root .snapshot-detail-topline { gap: 2px; }
+
+}

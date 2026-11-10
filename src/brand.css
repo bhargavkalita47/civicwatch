@@ -1,24 +1,104 @@
-/* CivicWatch v2.5.5 — authentic supplied C-and-eye symbol.
-   The existing coral tile ties the mark into both app themes; the dark ink
-   silhouette provides stronger contrast than a white-on-coral treatment. */
-.site-header .brand-mark,
-.mobile-topbar .mobile-brand .brand-mark {
-  background: var(--cw-accent);
-  color: var(--cw-accent-ink);
-  border-radius: 12px;
-  display: grid;
-  place-items: center;
-  padding: 0;
-  overflow: hidden;
+/* CivicWatch C-and-eye mark: unframed coral symbol. The mark's
+   tall optical silhouette is intentionally larger than the clock cap height. */
+#root .site-header .brand,
+#root .mobile-topbar .mobile-brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
 }
-.site-header .brand-mark > svg.civicwatch-logo-symbol,
-.mobile-topbar .mobile-brand .brand-mark > svg.civicwatch-logo-symbol {
+#root .site-header .brand {
+  padding: 0 2px 0 5px;
+  min-height: 60px;
+}
+#root .site-header .brand-mark,
+#root .mobile-topbar .mobile-brand .brand-mark {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 48px;
+  width: 48px;
+  height: 60px;
+  min-width: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--cw-accent);
+  box-shadow: none;
+  padding: 0;
+  overflow: visible;
+}
+#root .site-header .brand-mark > svg.civicwatch-logo-symbol,
+#root .mobile-topbar .mobile-brand .brand-mark > svg.civicwatch-logo-symbol {
   display: block;
-  width: 70%;
-  height: 70%;
-  flex: none;
+  width: 42px;
+  height: 56px;
+  max-width: none;
+  flex: 0 0 auto;
   fill: none;
-  color: var(--cw-accent-ink);
+  color: var(--cw-accent);
+  /* The open right edge of the C has less mass than the left side. */
+  transform: translate(2px, -1px);
+}
+@media (max-width: 1050px) and (min-width: 791px) {
+  #root .site-header .brand {
+    gap: 10px;
+    padding-inline: 2px 0;
+  }
+  #root .site-header .brand-mark {
+    width: 43px;
+    flex-basis: 43px;
+    height: 56px;
+  }
+  #root .site-header .brand-mark > svg.civicwatch-logo-symbol {
+    width: 39px;
+    height: 52px;
+  }
+  #root .site-header .brand .header-clock-date {
+    font-size: 9px;
+    letter-spacing: .02em;
+  }
+}
+@media (max-width: 790px) {
+  #root .site-header .brand {
+    min-height: 58px;
+    padding: 0 42px 0 3px;
+    gap: 13px;
+  }
+  #root .site-header .brand-mark {
+    flex-basis: 45px;
+    width: 45px;
+    height: 57px;
+  }
+  #root .site-header .brand-mark > svg.civicwatch-logo-symbol {
+    width: 41px;
+    height: 54px;
+  }
+  #root .mobile-topbar .mobile-brand {
+    gap: 11px;
+    min-width: 0;
+    flex-shrink: 1;
+  }
+  #root .mobile-topbar .mobile-brand .brand-mark {
+    width: 39px;
+    height: 49px;
+    flex: 0 0 39px;
+  }
+  #root .mobile-topbar .mobile-brand .brand-mark > svg.civicwatch-logo-symbol {
+    width: 36px;
+    height: 47px;
+  }
+}
+@media (max-width: 370px) {
+  #root .mobile-topbar .mobile-brand { gap: 9px; }
+  #root .mobile-topbar .mobile-brand .brand-mark {
+    width: 36px;
+    flex-basis: 36px;
+  }
+  #root .mobile-topbar .mobile-brand .brand-mark > svg.civicwatch-logo-symbol {
+    width: 33px;
+    height: 44px;
+  }
 }
 
 
@@ -57,21 +137,52 @@ body { min-width: 0; }
   margin-inline: var(--cw-rail) 0; min-width: 0; width: auto; max-width: none; align-self: stretch;
 }
 #root > main { flex: 1 0 auto; margin-block: 0; }
-#root > footer {
+#root > footer.site-footer {
   flex-shrink: 0;
   margin-block: auto 0;
-  padding-block: 24px max(24px, env(safe-area-inset-bottom));
+  padding-block: 18px max(20px, env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-top: 1px solid var(--cw-border);
 }
-#root > footer .footer-brand {
-  display: flex; flex-direction: column; gap: 6px; align-items: flex-start; white-space: normal;
+#root > footer.site-footer .footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  column-gap: 18px;
+  row-gap: 5px;
+  min-width: 0;
 }
-#root > footer .footer-brand > span { display: block; margin: 0; }
-
-#root > footer p {
-  max-width: 65ch;
-  margin: 0 0 0 auto;
-  text-align: right;
+#root > footer.site-footer .footer-copyright {
+  font-family: "Public Sans", system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: var(--cw-muted);
 }
+#root > footer.site-footer .footer-link {
+  background: none;
+  border: 0;
+  border-radius: 3px;
+  padding: 4px 0;
+  color: var(--cw-muted);
+  font-family: "Public Sans", system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+}
+#root > footer.site-footer .footer-link:hover {
+  color: var(--cw-heading);
+}
+#root > footer.site-footer .footer-link:focus-visible {
+  outline: 2px solid var(--cw-accent);
+  outline-offset: 4px;
+}
+#root .intro h1 { margin-top: 0; }
 
 
 /* Reserve the serif for the page hero and headline statistics. */
@@ -116,10 +227,14 @@ body { min-width: 0; }
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+  justify-content: center;
   gap: 3px;
   min-width: 0;
+  flex: 0 1 auto;
   font-family: "Public Sans", system-ui, sans-serif;
   line-height: 1.2;
+  /* Optical centering: move the text block slightly above the SVG midpoint. */
+  transform: translateY(-1px);
 }
 
 #root .brand .header-clock-date {
@@ -137,6 +252,16 @@ body { min-width: 0; }
   color: var(--cw-heading);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
+}
+
+/* In the opened mobile navigation drawer, make the C-and-eye mark
+   use the same ink as the clock. The closed mobile topbar logo stays coral. */
+@media (max-width: 790px) {
+  #root #civicwatch-navigation.site-header .brand-mark,
+  #root #civicwatch-navigation.site-header .brand-mark > svg.civicwatch-logo-symbol {
+    color: var(--cw-heading);
+    background: transparent;
+  }
 }
 
 @media (max-width: 790px) {
@@ -291,16 +416,15 @@ dialog.modal[data-step-scroll] > .modal-header {
 @media (max-width: 790px) {
   :root { --cw-rail: 0px; }
   #root > main { padding-inline: 16px; padding-bottom: 28px; }
-  #root > footer {
-    margin-inline: 0; padding-inline: 20px;
-    display: flex; flex-direction: column; align-items: center;
-    gap: 14px; text-align: center;
+  #root > footer.site-footer {
+    margin-inline: 0;
+    padding-inline: 20px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    text-align: left;
   }
-   #root > footer p {
-  margin: 0 auto;
-  text-align: center;
-}
-  #root > footer .footer-brand { align-items: center; }
   #root .intro { gap: 20px; padding-block: 28px 24px; }
   #root .intro h1 { font-size: clamp(38px, 9vw, 54px); }
   #root .intro > .button { align-self: center; justify-content: center; }
@@ -405,3 +529,36 @@ dialog.modal[data-step-scroll] > .modal-header {
 }
 
 
+
+/* UI cleanup: visually separate the clock/logo identity from the navigation.
+   The divider and breathing room work in the desktop rail and mobile drawer. */
+#root .site-header .main-nav {
+  margin-top: 25px;
+  border-top: 1px solid var(--cw-border);
+  padding-top: 15px;
+}
+
+#root > footer.site-footer .footer-demo-label {
+  color: var(--cw-muted);
+  font-size: 11px;
+  font-weight: 400;
+}
+
+@media (max-width: 790px) {
+  #root .site-header .main-nav {
+    margin-top: 27px;
+    padding-top: 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  /* The links stay together while the footer is free to wrap on small screens. */
+  #root > footer.site-footer {
+    flex-wrap: wrap;
+    row-gap: 9px;
+  }
+  #root > footer.site-footer .footer-links {
+    justify-content: flex-start;
+    gap: 16px;
+  }
+}

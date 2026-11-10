@@ -141,3 +141,53 @@ it("does not show the redundant click-to-place-pin map text", async () => {
   expect(container.querySelector(".picker-hint")).toBeNull();
   expect(onPick).toHaveBeenCalled();
 });
+
+it("groups neighbouring markers when zoomed out and separates them when zoomed in", async () => {
+  const make = (id: string, lat: number, lng: number): Issue => ({
+    id, categoryId: "pothole", cityId: "test", title: id, description: "", address: "Test street",
+    location: {lat, lng}, attachments: [], status: "reported", authorId: id,
+    organizationId: null, confirmationUserIds: [], createdAt: "2026-11-04T00:00:00Z", updatedAt: "2026-11-04T00:00:00Z",
+  });
+  const a = make("first", 26.17, 91.76), b = make("second", 26.17001, 91.76001);
+  const clusters: LocationCluster[] = [a, b].map(issue => ({
+    id: issue.id, location: issue.location, issues: [issue], totalPeople: 1,
+  }));
+  const maps = vi.spyOn(L, "map");
+  await act(async () => { root.render(<CivicMap categories={categories} clusters={clusters} />); });
+  expect(container.querySelectorAll(".civic-marker")).toHaveLength(1);
+  const map = maps.mock.results[0].value as L.Map;
+  await act(async () => { map.setZoom(15); });
+  expect(container.querySelectorAll(".civic-marker")).toHaveLength(2);
+});
+
+it("activates map dragging on a tap and restores page scrolling when tapping outside", async () => {
+  const maps = vi.spyOn(L, "map");
+  await act(async () => { root.render(<CivicMap categories={categories} scrollFriendly onPick={onPick} />); });
+  const instance = maps.mock.results[0].value as L.Map;
+  expect(container.querySelector(".map-pan-toggle")).toBeNull();
+  expect(container.querySelector(".map-scroll-friendly")).not.toBeNull();
+  expect(instance.dragging.enabled()).toBe(false);
+  expect(instance.scrollWheelZoom.enabled()).toBe(false);
+  expect(container.querySelector('[aria-label="Zoom in"]')).not.toBeNull();
+
+  // First empty-map tap activates navigation rather than placing a report pin.
+  await act(async () => { instance.fire("click", { latlng: L.latLng(26.17, 91.76) }); });
+  expect(container.querySelector(".map-pan-enabled")).not.toBeNull();
+  expect(instance.dragging.enabled()).toBe(true);
+  expect(onPick).not.toHaveBeenCalled();
+
+  // Once active, an empty-map tap still supports the existing Report here prompt.
+  await act(async () => { instance.fire("click", { latlng: L.latLng(26.18, 91.75) }); });
+  expect(onPick).toHaveBeenCalledWith({ lat: 26.18, lng: 91.75 });
+
+  await act(async () => {
+    document.body.dispatchEvent(new MouseEvent("pointerdown", { bubbles: true }));
+  });
+  expect(container.querySelector(".map-scroll-friendly")).not.toBeNull();
+  expect(instance.dragging.enabled()).toBe(false);
+
+  // Desktop interaction remains unrestricted without a new map instance.
+  await act(async () => { root.render(<CivicMap categories={categories} scrollFriendly={false} />); });
+  expect(instance.dragging.enabled()).toBe(true);
+  expect(instance.scrollWheelZoom.enabled()).toBe(true);
+});

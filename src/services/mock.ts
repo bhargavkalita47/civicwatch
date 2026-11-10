@@ -71,7 +71,20 @@ function read(): Dataset {
 function session(): Session | null {
   try {
     const raw = localStorage.getItem(config.sessionKey);
-    if (!raw) return null;
+    if (!raw && config.uiCleanupDemo) {
+      // A local example resident lets the Profile and My Reports screens be reviewed.
+      return {
+        user: {
+          id: "seed-user-0",
+          displayName: "Ananya Das",
+          email: "demo@civicwatch.invalid",
+          role: "resident",
+          createdAt: now(),
+        },
+        expiresAt: new Date(Date.now() + 7 * 86400000).toISOString(),
+      };
+    }
+    if (!raw || raw === "signed-out") return null;
     const s = JSON.parse(raw) as Session;
     return s.user?.id && Date.parse(s.expiresAt) > Date.now() ? s : null;
   } catch {
@@ -213,7 +226,8 @@ export const mockService: CivicService = {
   async signOut() {
     await delay();
     try {
-      localStorage.removeItem(config.sessionKey);
+      if (config.uiCleanupDemo) localStorage.setItem(config.sessionKey, "signed-out");
+      else localStorage.removeItem(config.sessionKey);
     } catch {
       throw new ServiceError(
         "The local session could not be cleared.",
