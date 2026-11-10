@@ -33,7 +33,7 @@ Use the town watchlist to follow the places you care about and check report reso
 - Account profiles, role-based moderation and a shared Supabase-backed report database.
 - Cloudflare Worker API, server-side pagination and access-controlled media.
 
-**Stack:** React · TypeScript · Cloudflare Workers · Supabase Auth · PostgreSQL · ImageKit
+**Stack:** React · TypeScript · Cloudflare Workers · Supabase Auth · PostgreSQL · Supabase Storage
 
 ## Project timeline
 
