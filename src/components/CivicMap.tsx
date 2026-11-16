@@ -324,8 +324,8 @@ export function CivicMap({
         icon: L.divIcon({
           className: "chosen-marker",
           html: "<span></span>",
-          iconSize: [26, 26],
-          iconAnchor: [13, 13],
+          iconSize: [32, 32],
+          iconAnchor: [16, 16],
         }),
         keyboard: false,
         title: "Selected report location",
