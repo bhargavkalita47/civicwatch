@@ -174,3 +174,31 @@ main > .intro p {
 :is(.report-list > .issue-card,.profile-report-list > .profile-report-card,.snapshot-watch-rows > .snapshot-watch-entry,.snapshot-activity > .snapshot-activity-row,.people-list > *,.comments > .comment,.admin-report-item):nth-child(10) { --cw-motion-order: 10; }
 :is(.report-list > .issue-card,.profile-report-list > .profile-report-card,.snapshot-watch-rows > .snapshot-watch-entry,.snapshot-activity > .snapshot-activity-row,.people-list > *,.comments > .comment,.admin-report-item):nth-child(11) { --cw-motion-order: 11; }
 :is(.report-list > .issue-card,.profile-report-list > .profile-report-card,.snapshot-watch-rows > .snapshot-watch-entry,.snapshot-activity > .snapshot-activity-row,.people-list > *,.comments > .comment,.admin-report-item):nth-child(12) { --cw-motion-order: 12; }
+
+/* Make compact controls finger-sized on touch hardware. */
+@media (pointer: coarse) {
+  #root .mobile-topbar-actions > button,
+  #root .modal-header .icon-button,
+  #root .snapshot-add-button,
+  #root .snapshot-watch-menu-trigger,
+  #root .snapshot-full-map-link,
+  #root .profile-settings-trigger,
+  #root .category-select-toggle { min-width: 44px; min-height: 44px; }
+  #root .category-chips button,
+  #root .profile-report-tabs button,
+  #root .watch-reports-sections button,
+  #root .admin-section-tabs button { min-height: 44px; }
+}
+.theme-control button {
+  transition: background-color var(--cw-motion-in) var(--cw-motion-enter-ease),
+    color var(--cw-motion-in) var(--cw-motion-enter-ease),
+    box-shadow var(--cw-motion-in) var(--cw-motion-enter-ease),
+    transform var(--cw-motion-out) var(--cw-motion-enter-ease);
+}
+.theme-control button.selected svg {
+  animation: cw-icon-crossfade var(--cw-motion-out) var(--cw-motion-enter-ease) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .theme-control button { transition: none !important; }
+  .theme-control button.selected svg { animation: none !important; }
+}
