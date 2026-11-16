@@ -152,6 +152,8 @@ export function CivicMap({
     let renderer: VectorMap | null = null;
     let timeout: ReturnType<typeof setTimeout> | null = null;
     let finished = false;
+    let atlasCreditAdded = false;
+    const atlasAttribution = '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap contributors</a> · <a href="https://openfreemap.org" target="_blank" rel="noopener noreferrer">OpenFreeMap</a>';
     setTileError(false);
     setAtlasFailed(false);
     const raster = L.tileLayer(config.tileUrl, {
@@ -169,6 +171,9 @@ export function CivicMap({
       finished = true;
       if (timeout) clearTimeout(timeout);
       if (instance.hasLayer(raster)) instance.removeLayer(raster);
+      instance.attributionControl?.addAttribution(atlasAttribution);
+      atlasCreditAdded = true;
+      renderer?.off("error", failed);
       setTileError(false);
       setAtlasFailed(false);
     };
@@ -204,6 +209,7 @@ export function CivicMap({
       renderer?.off("error", failed);
       if (vector && instance.hasLayer(vector)) instance.removeLayer(vector);
       if (instance.hasLayer(raster)) instance.removeLayer(raster);
+      if (atlasCreditAdded) instance.attributionControl?.removeAttribution(atlasAttribution);
     };
   }, [compact, basemapRetry]);
 
