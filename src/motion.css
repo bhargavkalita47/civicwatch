@@ -67,12 +67,12 @@
 :where(.category-chips button,.profile-report-tabs button,
  .watch-reports-sections button,.admin-section-tabs button) { min-height: 40px; }
 
-/* Page headings have their own keys: animate only on a section change. */
-main > .intro h1 {
-  animation: cw-rise var(--cw-motion-in) var(--cw-motion-enter-ease) both;
-}
-main > .intro p {
-  animation: cw-rise var(--cw-motion-in) var(--cw-motion-enter-ease) 35ms both;
+/* The hero copy is ONE keyed DOM subtree. Use opacity only: animating
+ * individual headings with GPU transforms caused visual text ghosting when
+ * navigating quickly between sections. Replacing the subtree removes the
+ * previous title before fading in the next, without moving text layers. */
+main > .intro > .intro-copy {
+  animation: cw-fade var(--cw-motion-in) ease-out both;
 }
 :where(.overview-page,.local-snapshots-page,.profile-page,
  .admin-console,.workspace) {
@@ -151,7 +151,7 @@ main > .intro p {
    .profile-settings,.filter-catalogue,.place-search-results,.snapshot-undo,
    .toast,.toast > svg,.success-icon,.snapshot-add-button svg,
    .overview-page,.local-snapshots-page,.profile-page,.admin-console,.workspace,
-   main > .intro h1,main > .intro p,.issue-card,.profile-report-card,
+   main > .intro > .intro-copy,.issue-card,.profile-report-card,
    .snapshot-activity-row,.snapshot-watch-entry,.people-list > *,
    .comments > .comment,.admin-report-item) {
     animation: none !important;

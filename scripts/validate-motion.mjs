@@ -24,8 +24,11 @@ assert.match(css, /:not\(:disabled\):active/, "Disabled buttons must not press")
 assert.match(css, /transition-duration:\s*0ms\s*!important/, "No tween while held");
 assert.match(css, /@media\s*\(pointer:\s*coarse\)/, "44px touch targets");
 assert.match(app, /data-current-section=\{tab\}/);
-assert.match(app, /<h1 key=\{tab\}>/);
-assert.match(app, /<p key=\{tab\}>/);
+assert.match(app, /<div className="intro-copy" key=\{tab\}>/, "Hero headline and subtitle are one keyed subtree");
+assert.match(app, /<h1>\{copy\.pages\[tab\]\.title\}<\/h1>/);
+assert.match(app, /<p>\{copy\.pages\[tab\]\.subtitle\}<\/p>/);
+assert.match(css, /main > \.intro > \.intro-copy\s*\{\s*animation: cw-fade/, "Fade the whole hero copy, not individual text layers");
+assert.doesNotMatch(css, /main > \.intro h1\s*\{\s*animation:/, "Never transform headline glyph layers");
 assert.match(ui, /--cw-motion-origin-x/, "Trigger-oriented dialogs");
 assert.match(ui, /dialog\.showModal\(\)/, "Keep native dialog behavior");
 console.log("Motion checks: timing, stagger, trigger orientation and accessibility: OK");

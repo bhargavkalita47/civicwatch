@@ -3,6 +3,7 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import App from "./App";
+import { copy } from "./copy";
 import { createSeed } from "./data/seed";
 import { categories } from "./data/categories";
 import { cities } from "./data/cities";
@@ -143,4 +144,32 @@ it("opens the mobile navigation without an X and still dismisses on backdrop tap
   expect(document.activeElement?.textContent).toContain("Overview");
   await act(async () => container.querySelector<HTMLDivElement>(".mobile-nav-backdrop")!.click());
   expect(container.querySelector(".site-header.mobile-drawer-open")).toBeNull();
+});
+
+it("replaces the whole headline and subtitle without retaining earlier section text", async () => {
+  const destinations = [
+    ["Overview", "overview"],
+    ["Town watchlist", "snapshots"],
+    ["Explore map", "explore"],
+    ["Reports", "reports"],
+    ["Profile", "mine"],
+    ["Overview", "overview"],
+  ] as const;
+
+  let previousCopy: HTMLElement | null = null;
+  for (const [navLabel, section] of destinations) {
+    await click(navLabel);
+    const hero = container.querySelector(".intro-copy") as HTMLElement;
+    expect(hero).not.toBeNull();
+    expect(container.querySelectorAll(".intro > .intro-copy")).toHaveLength(1);
+    expect(container.querySelectorAll(".intro h1")).toHaveLength(1);
+    expect(container.querySelectorAll(".intro p")).toHaveLength(1);
+    expect(hero.querySelector("h1")?.textContent).toBe(copy.pages[section].title);
+    expect(hero.querySelector("p")?.textContent).toBe(copy.pages[section].subtitle);
+    if (previousCopy) {
+      expect(previousCopy.isConnected).toBe(false);
+      expect(previousCopy).not.toBe(hero);
+    }
+    previousCopy = hero;
+  }
 });
