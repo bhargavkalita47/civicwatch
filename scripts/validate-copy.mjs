@@ -10,17 +10,17 @@ const form = read('src/components/Forms.tsx');
 const map = read('src/components/CivicMap.tsx');
 const photos = read('src/components/ui.tsx');
 
-// Source-of-truth copy and exact user-selected hero headlines.
+// Current source-of-truth copy and exact page headlines (avoid retired slogans).
 for (const phrase of [
   'The backlog, by the numbers.',
   'Home is where the problems are.',
   'Disappointment has coordinates.',
   'New day. Same complaints.',
   'A face behind the complaints.',
-  'The usual problems. Your chosen places.',
+  'Your towns',
   'Put it on the record.',
   'The collective sigh',
-  'Infrastructure ages. The complaints stay fresh.',
+  'Another problem with a paper trail.',
 ]) assert.ok(copy.includes(phrase), `Missing specified copy: ${phrase}`);
 assert.match(app, /copy\.pages\[tab\]\.title/);
 assert.match(app, /copy\.pages\[tab\]\.subtitle/);
