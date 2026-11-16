@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { readFileSync } from "node:fs";
-const css=readFileSync(new URL("./marker-design.css",import.meta.url),"utf8");
+import css from "./marker-design.css?raw";
 
 describe("minimalist CivicWatch marker geometry",()=>{
   it("uses a 28px visual disc inside a 44px Leaflet touch target",()=>{
