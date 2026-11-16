@@ -267,12 +267,20 @@ export function CivicMap({
       if (!category) continue;
       const base = categoryMarkerColor(category),
         bg = markerColor(base, cluster.totalPeople),
-        n = cluster.issues.length;
+        n = cluster.issues.length,
+        resolved = cluster.issues.every((issue) => issue.status === "resolved");
+      const count = n > 99 ? "99+" : String(n);
       const icon = L.divIcon({
-        className: "civic-marker" + (highlighted ? " civic-marker-highlighted" : ""),
-        html: `<div class="pin-body" style="--pin-color:${bg};--pin-ink:${markerIconColor(bg)};--pin-rgb:${markerRgb(bg)};--pin-ring:${Math.min(0.24, cluster.totalPeople / 100)}"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="${paths[category.symbol] || paths.pin}"/></svg>${n > 1 ? `<sup aria-hidden="true">${n}</sup>` : ""}</div>`,
-        iconSize: [38, 45],
-        iconAnchor: [19, 42],
+        // Preserve Leaflet positioning; animate only the inner artwork.
+        className: [
+          "civic-marker",
+          highlighted ? "civic-marker-highlighted" : "",
+          resolved ? "civic-marker-resolved" : "",
+          n > 1 ? "civic-marker-cluster" : "",
+        ].filter(Boolean).join(" "),
+        html: `<span class="pin-body" style="--pin-color:${bg};--pin-ink:${markerIconColor(bg)};--pin-rgb:${markerRgb(bg)}"><span class="pin-symbol" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="${paths[category.symbol] || paths.pin}"/></svg></span>${n > 1 ? `<span class="pin-count" aria-hidden="true">${count}</span>` : ""}${resolved ? '<span class="pin-resolved" aria-hidden="true"><svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m2 6 2.5 2.5L10 3"/></svg></span>' : ""}</span>`,
+        iconSize: [48, 56],
+        iconAnchor: [24, 53],
       });
       const marker = L.marker([cluster.location.lat, cluster.location.lng], {
         icon,
@@ -290,7 +298,7 @@ export function CivicMap({
         details.textContent = `${cluster.totalPeople} ${cluster.totalPeople === 1 ? "person" : "people"} · ${n} ${n === 1 ? "report" : "reports"}`;
         content.append(label, details);
         return content;
-      }, { className: "civic-tooltip", direction: "top", offset: [0, -19], opacity: 1 });
+      }, { className: "civic-tooltip", direction: "top", offset: [0, -45], opacity: 1 });
       if (highlighted) {
         marker.getElement()?.setAttribute("aria-label", "Highlighted report: " + highlighted.title + (highlighted.status === "resolved" ? ". Resolved. " : ". ") + "Open discussion.");
       }
