@@ -19,6 +19,7 @@ import "./ux-progressive.css";
 import "./optical-alignment.css";
 import "./watchlist-cleanup.css";
 import "./explore-hero.css";
+import "./motion.css";
 class ErrorBoundary extends Component<
   { children: ReactNode },
   { failed: boolean }
