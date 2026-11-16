@@ -3,6 +3,10 @@ import { act, useState } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import L from "leaflet";
+vi.mock("../map/atlasLeaflet", async () => {
+  const leaflet = await import("leaflet");
+  return { createAtlasLeafletLayer: vi.fn(async () => leaflet.layerGroup()) };
+});
 import { CivicMap } from "./CivicMap";
 import { categories } from "../data/categories";
 import type { Coordinate, Issue, LocationCluster } from "../domain/types";

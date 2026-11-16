@@ -86,6 +86,8 @@ export function CivicMap({
   scrollFriendlyRef.current = scrollFriendly;
   const [legend, setLegend] = useState(false),
     [tileError, setTileError] = useState(false),
+    [atlasFailed, setAtlasFailed] = useState(false),
+    [basemapRetry, setBasemapRetry] = useState(0),
     [locating, setLocating] = useState(false),
     [locatedPoint, setLocatedPoint] = useState<Coordinate | null>(null),
     [mapZoom, setMapZoom] = useState(13);
@@ -95,25 +97,13 @@ export function CivicMap({
       center: [center.lat, center.lng],
       zoom: 13,
       zoomControl: false,
+      minZoom: 1,
+      maxZoom: config.tileMaxZoom,
       dragging: !scrollFriendly,
       scrollWheelZoom: !compact && !scrollFriendly,
       attributionControl: true,
     });
     map.current = instance;
-    // The basemap always stays light, regardless of the surrounding UI theme.
-    L.tileLayer(config.tileUrl, {
-      maxZoom: config.tileMaxZoom,
-      // OSM uses a single HTTPS host. A custom provider may use {s}.
-      subdomains: "abcd",
-      // Request only tiles needed for the viewed area; avoid speculative
-      // pan prefetches on public community-funded map infrastructure.
-      updateWhenIdle: true,
-      keepBuffer: 1,
-      attribution: config.tileAttribution,
-    })
-      .on("tileerror", () => setTileError(true))
-      .on("load", () => setTileError(false))
-      .addTo(instance);
     markers.current = L.layerGroup().addTo(instance);
     instance.on("click", (event: L.LeafletMouseEvent) => {
       // On mobile, the first empty-map tap activates browsing instead of
@@ -144,6 +134,78 @@ export function CivicMap({
       map.current = null;
     };
   }, [compact]);
+
+  // Atlas is the identical basemap in light and dark mode. Leaflet retains
+  // existing report pins, grouping, GPS, selection and mobile tap gestures.
+  // Raster OSM remains visible until vector style loads and as a safe fallback.
+  useEffect(() => {
+    const instance = map.current;
+    if (!instance) return;
+    let active = true;
+    let vector: L.Layer | null = null;
+    type VectorMap = {
+      loaded: () => boolean;
+      once: (event: string, fn: () => void) => void;
+      on: (event: string, fn: () => void) => void;
+      off: (event: string, fn: () => void) => void;
+    };
+    let renderer: VectorMap | null = null;
+    let timeout: ReturnType<typeof setTimeout> | null = null;
+    let finished = false;
+    setTileError(false);
+    setAtlasFailed(false);
+    const raster = L.tileLayer(config.tileUrl, {
+      maxZoom: config.tileMaxZoom,
+      subdomains: "abcd",
+      updateWhenIdle: true,
+      keepBuffer: 1,
+      attribution: config.tileAttribution,
+    })
+      .on("tileerror", () => { if (active && !finished) setTileError(true); })
+      .on("load", () => { if (active) setTileError(false); })
+      .addTo(instance);
+    const succeeded = () => {
+      if (!active || finished) return;
+      finished = true;
+      if (timeout) clearTimeout(timeout);
+      if (instance.hasLayer(raster)) instance.removeLayer(raster);
+      setTileError(false);
+      setAtlasFailed(false);
+    };
+    const failed = () => {
+      if (!active || finished) return;
+      finished = true;
+      if (timeout) clearTimeout(timeout);
+      if (vector && instance.hasLayer(vector)) instance.removeLayer(vector);
+      vector = null;
+      setTileError(false);
+      setAtlasFailed(true);
+    };
+    void import("../map/atlasLeaflet")
+      .then(({ createAtlasLeafletLayer }) => createAtlasLeafletLayer())
+      .then(layer => {
+        if (!active) return;
+        vector = layer;
+        layer.addTo(instance);
+        renderer = (layer as L.Layer & {getMaplibreMap?: () => VectorMap}).getMaplibreMap?.() ?? null;
+        if (!renderer || renderer.loaded()) {
+          succeeded();
+        } else {
+          renderer.once("load", succeeded);
+          renderer.on("error", failed);
+          timeout = setTimeout(failed, 15000);
+        }
+      })
+      .catch(failed);
+    return () => {
+      active = false;
+      if (timeout) clearTimeout(timeout);
+      renderer?.off("load", succeeded);
+      renderer?.off("error", failed);
+      if (vector && instance.hasLayer(vector)) instance.removeLayer(vector);
+      if (instance.hasLayer(raster)) instance.removeLayer(raster);
+    };
+  }, [compact, basemapRetry]);
 
   // Mobile map defaults to page scrolling, activates on the first empty-map
   // tap and deactivates on a tap outside the map shell.
@@ -340,18 +402,19 @@ export function CivicMap({
           </div>
         </div>
       )}
-      {tileError && (
+      {(tileError || atlasFailed) && (
         <button
           type="button"
           className="tile-warning"
           onClick={() => {
             setTileError(false);
-            map.current?.eachLayer((l) => {
-              if (l instanceof L.TileLayer) l.redraw();
-            });
+            setAtlasFailed(false);
+            setBasemapRetry(value => value + 1);
           }}
         >
-          Map tiles unavailable. Check connection and retry.
+          {atlasFailed
+            ? "Atlas map unavailable. Basic map shown. Tap to retry."
+            : "Map tiles unavailable. Check connection and retry."}
         </button>
       )}
 

@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { describe, expect, it, vi, afterEach } from "vitest";
 import theme from "./atlas-theme.json";
 import { applyAtlasTheme, loadAtlasThemeStyle, ATLAS_POSITRON_STYLE } from "./atlasStyle";
