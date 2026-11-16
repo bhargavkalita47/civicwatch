@@ -193,7 +193,9 @@ export function CivicMap({
         vector = layer;
         layer.addTo(instance);
         renderer = (layer as L.Layer & {getMaplibreMap?: () => VectorMap}).getMaplibreMap?.() ?? null;
-        if (!renderer || renderer.loaded()) {
+        if (!renderer) {
+          failed(); // Never treat a missing WebGL renderer as a loaded map.
+        } else if (renderer.loaded()) {
           succeeded();
         } else {
           renderer.once("load", succeeded);

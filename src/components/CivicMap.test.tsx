@@ -5,7 +5,13 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import L from "leaflet";
 vi.mock("../map/atlasLeaflet", async () => {
   const leaflet = await import("leaflet");
-  return { createAtlasLeafletLayer: vi.fn(async () => leaflet.layerGroup()) };
+  return {
+    createAtlasLeafletLayer: vi.fn(async () => Object.assign(leaflet.layerGroup(), {
+      getMaplibreMap: () => ({
+        loaded: () => true, on: () => {}, off: () => {}, once: () => {},
+      }),
+    })),
+  };
 });
 import { CivicMap } from "./CivicMap";
 import { categories } from "../data/categories";
