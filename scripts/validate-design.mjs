@@ -165,7 +165,7 @@ assert.doesNotMatch(app, /setAbout\(|aria-label="About CivicWatch"/, 'Remove red
 assert.match(app, /footer-copyright/, 'Keep the site footer and legal attribution');
 assert.match(app, /"workspace workspace-explore"/, 'Explore gets scoped spacing without changing Reports');
 assert.match(exploreCSS, /\.workspace-explore\s*\{\s*padding-bottom:\s*18px;/, 'Keep subtle whitespace below Explore map on desktop');
-assert.match(exploreCSS, /\.workspace-explore\s*\{\s*padding-bottom:\s*12px;/, 'Keep subtle whitespace below Explore map on mobile');
+assert.match(exploreCSS, /\.workspace-explore\s*\{[^}]*padding-bottom:\s*12px;/, 'Keep subtle whitespace below Explore map on mobile');
 assert.match(exploreCSS, /\.map-workspace \.report-list\s*\{[^}]*padding:\s*0 14px 20px;/, 'Keep report-list breathing room after removing footer text');
 assert.match(app, /setHelp\(true\)/, 'Keep the Help action and its disclosure accessible');
 
