@@ -21,6 +21,7 @@ import "./watchlist-cleanup.css";
 import "./explore-hero.css";
 import "./motion.css";
 import "./marker-design.css";
+import "./map-credits.css";
 class ErrorBoundary extends Component<
   { children: ReactNode },
   { failed: boolean }

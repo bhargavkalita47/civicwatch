@@ -10,5 +10,6 @@ setWorkerUrl(workerUrl);
 /** Keep all interactive markers/gestures in Leaflet and paint Atlas behind them. */
 export async function createAtlasLeafletLayer(): Promise<L.Layer> {
   const style = await loadAtlasThemeStyle();
-  return maplibreGL({ style: style as unknown as StyleSpecification }) as L.Layer;
+  // Provider acknowledgements live in MapCredits, not the map canvas.
+  return maplibreGL({ style: style as unknown as StyleSpecification, attributionControl: false }) as L.Layer;
 }

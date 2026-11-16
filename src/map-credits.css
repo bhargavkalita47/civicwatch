@@ -1,0 +1,79 @@
+/* Compact attribution. Full map licences appear initially and can always be
+ * reopened from the small info button after the five-second collapse. */
+#root .map-shell .map-credits {
+  position: absolute;
+  bottom: 9px;
+  left: 9px;
+  z-index: 650;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  max-width: min(370px, calc(100% - 18px));
+  color: #274650;
+  font-family: "DM Sans", sans-serif;
+}
+#root .map-shell .map-credits-content {
+  box-sizing: border-box;
+  max-width: 100%;
+  padding: 9px 11px;
+  border: 1px solid rgba(46,80,85,.17);
+  border-radius: 9px;
+  background: rgba(255,254,251,.97);
+  box-shadow: 0 4px 14px rgba(32,65,68,.12);
+  font-size: 10px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+#root .map-shell .map-credits-content a {
+  color: #266b76;
+  text-decoration: underline;
+  text-decoration-color: rgba(38,107,118,.35);
+  text-underline-offset: 2px;
+}
+#root .map-shell .map-credits-content a:focus-visible {
+  outline: 2px solid #266b76;
+  outline-offset: 2px;
+}
+#root .map-shell .map-credits-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  box-sizing: border-box;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid rgba(46,80,85,.18);
+  border-radius: 9px;
+  background: rgba(255,254,251,.96);
+  color: #31525a;
+  box-shadow: 0 2px 7px rgba(32,65,68,.12);
+  cursor: pointer;
+  transition: background-color 160ms ease, border-color 160ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+#root .map-shell .map-credits.is-expanded .map-credits-toggle {
+  width: auto;
+  padding: 0 9px;
+  font-size: 11px;
+  font-weight: 650;
+}
+#root .map-shell .map-credits-toggle:hover {
+  background: #fff;
+  border-color: #78a5a8;
+}
+#root .map-shell .map-credits-toggle:focus-visible {
+  outline: 2px solid #266b76;
+  outline-offset: 3px;
+}
+@media (max-width: 600px) {
+  #root .map-shell .map-credits {
+    left: 7px;
+    bottom: 7px;
+    max-width: calc(100% - 14px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  #root .map-shell .map-credits-toggle { transition: none; }
+}

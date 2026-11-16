@@ -252,3 +252,21 @@ it("shows a resolved badge only for resolved issue markers", async () => {
   expect(container.querySelector(".chosen-marker")).not.toBeNull();
   expect(selected?.getAttribute("aria-label")).toContain("Resolved.");
 });
+
+
+it("uses a compact disclosure instead of the default Leaflet attribution strip", async () => {
+  await act(async () => { root.render(<CivicMap categories={categories} />); });
+  expect(container.querySelector(".leaflet-control-attribution")).toBeNull();
+  const credits = container.querySelector<HTMLElement>(".map-credits")!;
+  expect(credits).not.toBeNull();
+  expect(credits.textContent).toContain("OpenStreetMap contributors");
+  expect(credits.querySelector('a[href="https://www.openstreetmap.org/copyright"]')).not.toBeNull();
+  const button = container.querySelector<HTMLButtonElement>(".map-credits-toggle")!;
+  expect(button.getAttribute("aria-expanded")).toBe("true");
+  await act(async () => button.click());
+  expect(button.getAttribute("aria-expanded")).toBe("false");
+  expect(credits.textContent).not.toContain("OpenStreetMap contributors");
+  await act(async () => button.click());
+  expect(button.getAttribute("aria-expanded")).toBe("true");
+  expect(credits.textContent).toContain("OpenStreetMap contributors");
+});

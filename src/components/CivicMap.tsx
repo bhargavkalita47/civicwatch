@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { LocateFixed, Minus, Plus, Layers, RotateCcw } from "lucide-react";
+import { MapCredits } from "./MapCredits";
 import type { Category, Coordinate, LocationCluster } from "../domain/types";
 import { normalizedPoint, type MapBounds } from "../domain/geography";
 import { markerColor, peopleCount } from "../domain/logic";
@@ -87,6 +88,7 @@ export function CivicMap({
   const [legend, setLegend] = useState(false),
     [tileError, setTileError] = useState(false),
     [atlasFailed, setAtlasFailed] = useState(false),
+    [atlasReady, setAtlasReady] = useState(false),
     [basemapRetry, setBasemapRetry] = useState(0),
     [locating, setLocating] = useState(false),
     [locatedPoint, setLocatedPoint] = useState<Coordinate | null>(null),
@@ -101,7 +103,8 @@ export function CivicMap({
       maxZoom: config.tileMaxZoom,
       dragging: !scrollFriendly,
       scrollWheelZoom: !compact && !scrollFriendly,
-      attributionControl: true,
+      // The compact MapCredits disclosure retains all provider licence links.
+      attributionControl: false,
     });
     map.current = instance;
     markers.current = L.layerGroup().addTo(instance);
@@ -152,10 +155,9 @@ export function CivicMap({
     let renderer: VectorMap | null = null;
     let timeout: ReturnType<typeof setTimeout> | null = null;
     let finished = false;
-    let atlasCreditAdded = false;
-    const atlasAttribution = '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap contributors</a> · <a href="https://openfreemap.org" target="_blank" rel="noopener noreferrer">OpenFreeMap</a>';
     setTileError(false);
     setAtlasFailed(false);
+    setAtlasReady(false);
     let raster: L.TileLayer | null = null;
     const startRaster = () => {
       if (!active || raster) return;
@@ -181,8 +183,7 @@ export function CivicMap({
       if (timeout) clearTimeout(timeout);
       clearTimeout(rasterDelay);
       if (raster && instance.hasLayer(raster)) instance.removeLayer(raster);
-      instance.attributionControl?.addAttribution(atlasAttribution);
-      atlasCreditAdded = true;
+      setAtlasReady(true);
       renderer?.off("error", failed);
       setTileError(false);
       setAtlasFailed(false);
@@ -196,6 +197,7 @@ export function CivicMap({
       clearTimeout(rasterDelay);
       startRaster();
       setTileError(false);
+      setAtlasReady(false);
       setAtlasFailed(true);
     };
     void import("../map/atlasLeaflet")
@@ -224,7 +226,6 @@ export function CivicMap({
       renderer?.off("error", failed);
       if (vector && instance.hasLayer(vector)) instance.removeLayer(vector);
       if (raster && instance.hasLayer(raster)) instance.removeLayer(raster);
-      if (atlasCreditAdded) instance.attributionControl?.removeAttribution(atlasAttribution);
     };
   }, [compact, basemapRetry]);
 
@@ -431,6 +432,7 @@ export function CivicMap({
           </div>
         </div>
       )}
+      <MapCredits provider={atlasReady ? "atlas" : "raster"} rasterAttribution={config.tileAttribution} />
       {(tileError || atlasFailed) && (
         <button
           type="button"
