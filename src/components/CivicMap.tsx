@@ -156,21 +156,31 @@ export function CivicMap({
     const atlasAttribution = '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap contributors</a> · <a href="https://openfreemap.org" target="_blank" rel="noopener noreferrer">OpenFreeMap</a>';
     setTileError(false);
     setAtlasFailed(false);
-    const raster = L.tileLayer(config.tileUrl, {
-      maxZoom: config.tileMaxZoom,
-      subdomains: "abcd",
-      updateWhenIdle: true,
-      keepBuffer: 1,
-      attribution: config.tileAttribution,
-    })
-      .on("tileerror", () => { if (active && !finished) setTileError(true); })
-      .on("load", () => { if (active) setTileError(false); })
-      .addTo(instance);
+    let raster: L.TileLayer | null = null;
+    const startRaster = () => {
+      if (!active || raster) return;
+      raster = L.tileLayer(config.tileUrl, {
+        maxZoom: config.tileMaxZoom,
+        subdomains: "abcd",
+        updateWhenIdle: true,
+        keepBuffer: 1,
+        attribution: config.tileAttribution,
+      })
+        .on("tileerror", () => { if (active && !finished) setTileError(true); })
+        .on("load", () => { if (active) setTileError(false); })
+        .addTo(instance);
+    };
+    // Avoid hitting two public tile services on every fast Atlas load.
+    // A slow vector response gets the usable raster map after a short delay.
+    const rasterDelay = setTimeout(() => {
+      if (!finished) startRaster();
+    }, 1400);
     const succeeded = () => {
       if (!active || finished) return;
       finished = true;
       if (timeout) clearTimeout(timeout);
-      if (instance.hasLayer(raster)) instance.removeLayer(raster);
+      clearTimeout(rasterDelay);
+      if (raster && instance.hasLayer(raster)) instance.removeLayer(raster);
       instance.attributionControl?.addAttribution(atlasAttribution);
       atlasCreditAdded = true;
       renderer?.off("error", failed);
@@ -183,6 +193,8 @@ export function CivicMap({
       if (timeout) clearTimeout(timeout);
       if (vector && instance.hasLayer(vector)) instance.removeLayer(vector);
       vector = null;
+      clearTimeout(rasterDelay);
+      startRaster();
       setTileError(false);
       setAtlasFailed(true);
     };
@@ -207,10 +219,11 @@ export function CivicMap({
     return () => {
       active = false;
       if (timeout) clearTimeout(timeout);
+      clearTimeout(rasterDelay);
       renderer?.off("load", succeeded);
       renderer?.off("error", failed);
       if (vector && instance.hasLayer(vector)) instance.removeLayer(vector);
-      if (instance.hasLayer(raster)) instance.removeLayer(raster);
+      if (raster && instance.hasLayer(raster)) instance.removeLayer(raster);
       if (atlasCreditAdded) instance.attributionControl?.removeAttribution(atlasAttribution);
     };
   }, [compact, basemapRetry]);
