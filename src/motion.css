@@ -1,0 +1,208 @@
+/*
+ * CivicWatch motion language — subtle motion for hierarchy and feedback.
+ * 220ms ease-out entrances; 175ms (~20% shorter) exits; 30ms capped stagger.
+ * Avoid springs on everyday controls and avoid moving live map geometry.
+ */
+/* Android Chrome/WebView paints a blue rectangle on touch by default.
+ * Remove only that browser tap flash. Keep text selection, :focus-visible
+ * outlines, and our own pressed-state feedback for accessibility. */
+:root {
+  -webkit-tap-highlight-color: transparent;
+  --cw-motion-in: 220ms;
+  --cw-motion-out: 175ms;
+  --cw-motion-menu: 190ms;
+  --cw-motion-stagger: 30ms;
+  --cw-motion-enter-ease: cubic-bezier(.2,.78,.2,1);
+  --cw-motion-move-ease: cubic-bezier(.45,0,.22,1);
+}
+@keyframes cw-rise {
+  from { opacity: 0; transform: translate3d(0,8px,0); }
+  to { opacity: 1; transform: translate3d(0,0,0); }
+}
+@keyframes cw-row {
+  from { opacity: 0; transform: translate3d(0,5px,0); }
+  to { opacity: 1; transform: translate3d(0,0,0); }
+}
+@keyframes cw-pop {
+  from { opacity: 0; transform: translate3d(0,-5px,0) scale(.95); }
+  to { opacity: 1; transform: translate3d(0,0,0) scale(1); }
+}
+@keyframes cw-dialog-enter {
+  from { opacity: 0; transform: translate3d(0,10px,0) scale(.95); }
+  to { opacity: 1; transform: translate3d(0,0,0) scale(1); }
+}
+@keyframes cw-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes cw-confirm {
+  0% { opacity: .72; transform: scale(.94); }
+  60% { opacity: 1; transform: scale(1.06); }
+  100% { opacity: 1; transform: scale(1); }
+}
+@keyframes cw-icon-crossfade {
+  from { opacity: 0; filter: blur(2px); transform: scale(.94); }
+  to { opacity: 1; filter: blur(0); transform: scale(1); }
+}
+/* The pressed shape responds instantly; release settles without a spring. */
+:where(.button,.icon-button,.report-button,.mobile-report-action,
+ .mobile-menu-trigger,.main-nav button,.category-chips button,
+ .profile-report-tabs button,.watch-reports-sections button,
+ .admin-section-tabs button,.filter-button,.snapshot-add-button,
+ .snapshot-watch-menu-trigger,.snapshot-full-map-link,
+ .explore-search-place,.profile-settings-trigger) {
+  transition-timing-function: var(--cw-motion-enter-ease);
+}
+:where(.button,.icon-button,.report-button,.mobile-report-action,
+ .mobile-menu-trigger,.main-nav button,.category-chips button,
+ .profile-report-tabs button,.watch-reports-sections button,
+ .admin-section-tabs button,.filter-button,.snapshot-add-button,
+ .snapshot-watch-menu-trigger,.snapshot-full-map-link,
+ .explore-search-place,.profile-settings-trigger):not(:disabled):active {
+  transform: scale(.97);
+  transition-duration: 0ms !important;
+}
+:where(.mobile-topbar-actions > button,.modal-header .icon-button,
+ .snapshot-add-button,.snapshot-watch-menu-trigger,
+ .snapshot-full-map-link,.profile-settings-trigger) {
+  min-width: 44px;
+  min-height: 44px;
+}
+:where(.category-chips button,.profile-report-tabs button,
+ .watch-reports-sections button,.admin-section-tabs button) { min-height: 40px; }
+
+/* The hero copy is ONE keyed DOM subtree. Use opacity only: animating
+ * individual headings with GPU transforms caused visual text ghosting when
+ * navigating quickly between sections. Replacing the subtree removes the
+ * previous title before fading in the next, without moving text layers. */
+main > .intro > .intro-copy {
+  animation: cw-fade var(--cw-motion-in) ease-out both;
+}
+:where(.overview-page,.local-snapshots-page,.profile-page,
+ .admin-console,.workspace) {
+  animation: cw-rise var(--cw-motion-in) var(--cw-motion-enter-ease) both;
+}
+/* Capped list stagger: long datasets render immediately after the first 12. */
+:is(.report-list > .issue-card,
+    .profile-report-list > .profile-report-card,
+    .snapshot-watch-rows > .snapshot-watch-entry,
+    .snapshot-activity > .snapshot-activity-row,
+    .people-list > *, .comments > .comment, .admin-report-item):nth-child(-n+12) {
+  animation: cw-row var(--cw-motion-in) var(--cw-motion-enter-ease) both;
+  animation-delay: calc((var(--cw-motion-order,1) - 1) * var(--cw-motion-stagger));
+}
+.snapshot-watch-entry:has(.snapshot-watch-row.dragging),
+.snapshot-watch-entry:has(.snapshot-watch-row.drag-target) { animation: none !important; }
+
+/* Popovers expand at their own trigger; list options remain keyboard-accessible. */
+:where(.category-select-options,.explore-search-results,.snapshot-watch-menu,
+ .snapshot-add-panel,.profile-settings,.filter-catalogue,
+ .place-search-results,.snapshot-undo) {
+  transform-origin: 50% 0;
+  animation: cw-pop var(--cw-motion-menu) var(--cw-motion-enter-ease) both;
+}
+.snapshot-watch-menu.open-up { transform-origin: 50% 100%; }
+.category-select-toggle svg {
+  transition: transform var(--cw-motion-menu) var(--cw-motion-move-ease);
+}
+.category-select:has(input[aria-expanded="true"]) .category-select-toggle svg {
+  transform: rotate(180deg);
+}
+.snapshot-add-button svg {
+  animation: cw-icon-crossfade var(--cw-motion-out) var(--cw-motion-enter-ease) both;
+}
+:where(.category-select-option,.snapshot-watch-menu > button,
+ .explore-search-results button) {
+  transition: background-color var(--cw-motion-out) ease, color var(--cw-motion-out) ease;
+}
+
+/* Keep the native dialog focus trap, Escape handling and backdrop semantics. */
+.modal[open] {
+  transform-origin: var(--cw-motion-origin-x,50%) var(--cw-motion-origin-y,25%);
+  animation: cw-dialog-enter var(--cw-motion-in) var(--cw-motion-enter-ease) both;
+}
+.modal[open]::backdrop {
+  animation: cw-fade var(--cw-motion-in) ease-out both;
+}
+.success-icon,.toast > svg:first-child {
+  animation: cw-confirm 300ms var(--cw-motion-enter-ease) both;
+}
+.toast {
+  animation: cw-rise var(--cw-motion-in) var(--cw-motion-enter-ease) both;
+}
+:where(.active-filters > button,.category-chips button,
+ .profile-report-tabs button,.main-nav button) svg {
+  transition: opacity var(--cw-motion-out) ease, color var(--cw-motion-out) ease;
+}
+@media (max-width: 790px) {
+  .site-header {
+    transition: transform var(--cw-motion-out) var(--cw-motion-move-ease),
+      visibility 0s linear var(--cw-motion-out);
+  }
+  .site-header.mobile-drawer-open {
+    transition: transform var(--cw-motion-in) var(--cw-motion-enter-ease), visibility 0s;
+  }
+  .mobile-nav-backdrop { animation: cw-fade var(--cw-motion-in) ease-out both; }
+}
+/* Leaflet and MapLibre position elements through transforms: never animate them. */
+:where(.leaflet-container,.leaflet-pane,.leaflet-marker-icon,.leaflet-tile,
+ .maplibregl-canvas,.maplibregl-marker,.snapshot-watch-row.dragging) {
+  animation: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  :where(.modal[open],.modal[open]::backdrop,.category-select-options,
+   .explore-search-results,.snapshot-watch-menu,.snapshot-add-panel,
+   .profile-settings,.filter-catalogue,.place-search-results,.snapshot-undo,
+   .toast,.toast > svg,.success-icon,.snapshot-add-button svg,
+   .overview-page,.local-snapshots-page,.profile-page,.admin-console,.workspace,
+   main > .intro > .intro-copy,.issue-card,.profile-report-card,
+   .snapshot-activity-row,.snapshot-watch-entry,.people-list > *,
+   .comments > .comment,.admin-report-item) {
+    animation: none !important;
+  }
+  :where(.category-select-toggle svg,.site-header,.button,.icon-button,
+   .category-chips button,.main-nav button) { transition: none !important; }
+  :where(.button,.icon-button,.main-nav button,.category-chips button,
+   .filter-button,.profile-report-tabs button):not(:disabled):active { transform: none; }
+}
+
+:is(.report-list > .issue-card,.profile-report-list > .profile-report-card,.snapshot-watch-rows > .snapshot-watch-entry,.snapshot-activity > .snapshot-activity-row,.people-list > *,.comments > .comment,.admin-report-item):nth-child(1) { --cw-motion-order: 1; }
+:is(.report-list > .issue-card,.profile-report-list > .profile-report-card,.snapshot-watch-rows > .snapshot-watch-entry,.snapshot-activity > .snapshot-activity-row,.people-list > *,.comments > .comment,.admin-report-item):nth-child(2) { --cw-motion-order: 2; }
+:is(.report-list > .issue-card,.profile-report-list > .profile-report-card,.snapshot-watch-rows > .snapshot-watch-entry,.snapshot-activity > .snapshot-activity-row,.people-list > *,.comments > .comment,.admin-report-item):nth-child(3) { --cw-motion-order: 3; }
+:is(.report-list > .issue-card,.profile-report-list > .profile-report-card,.snapshot-watch-rows > .snapshot-watch-entry,.snapshot-activity > .snapshot-activity-row,.people-list > *,.comments > .comment,.admin-report-item):nth-child(4) { --cw-motion-order: 4; }
+:is(.report-list > .issue-card,.profile-report-list > .profile-report-card,.snapshot-watch-rows > .snapshot-watch-entry,.snapshot-activity > .snapshot-activity-row,.people-list > *,.comments > .comment,.admin-report-item):nth-child(5) { --cw-motion-order: 5; }
+:is(.report-list > .issue-card,.profile-report-list > .profile-report-card,.snapshot-watch-rows > .snapshot-watch-entry,.snapshot-activity > .snapshot-activity-row,.people-list > *,.comments > .comment,.admin-report-item):nth-child(6) { --cw-motion-order: 6; }
+:is(.report-list > .issue-card,.profile-report-list > .profile-report-card,.snapshot-watch-rows > .snapshot-watch-entry,.snapshot-activity > .snapshot-activity-row,.people-list > *,.comments > .comment,.admin-report-item):nth-child(7) { --cw-motion-order: 7; }
+:is(.report-list > .issue-card,.profile-report-list > .profile-report-card,.snapshot-watch-rows > .snapshot-watch-entry,.snapshot-activity > .snapshot-activity-row,.people-list > *,.comments > .comment,.admin-report-item):nth-child(8) { --cw-motion-order: 8; }
+:is(.report-list > .issue-card,.profile-report-list > .profile-report-card,.snapshot-watch-rows > .snapshot-watch-entry,.snapshot-activity > .snapshot-activity-row,.people-list > *,.comments > .comment,.admin-report-item):nth-child(9) { --cw-motion-order: 9; }
+:is(.report-list > .issue-card,.profile-report-list > .profile-report-card,.snapshot-watch-rows > .snapshot-watch-entry,.snapshot-activity > .snapshot-activity-row,.people-list > *,.comments > .comment,.admin-report-item):nth-child(10) { --cw-motion-order: 10; }
+:is(.report-list > .issue-card,.profile-report-list > .profile-report-card,.snapshot-watch-rows > .snapshot-watch-entry,.snapshot-activity > .snapshot-activity-row,.people-list > *,.comments > .comment,.admin-report-item):nth-child(11) { --cw-motion-order: 11; }
+:is(.report-list > .issue-card,.profile-report-list > .profile-report-card,.snapshot-watch-rows > .snapshot-watch-entry,.snapshot-activity > .snapshot-activity-row,.people-list > *,.comments > .comment,.admin-report-item):nth-child(12) { --cw-motion-order: 12; }
+
+/* Make compact controls finger-sized on touch hardware. */
+@media (pointer: coarse) {
+  #root .mobile-topbar-actions > button,
+  #root .modal-header .icon-button,
+  #root .snapshot-add-button,
+  #root .snapshot-watch-menu-trigger,
+  #root .snapshot-full-map-link,
+  #root .profile-settings-trigger,
+  #root .category-select-toggle { min-width: 44px; min-height: 44px; }
+  #root .category-chips button,
+  #root .profile-report-tabs button,
+  #root .watch-reports-sections button,
+  #root .admin-section-tabs button { min-height: 44px; }
+}
+.theme-control button {
+  transition: background-color var(--cw-motion-in) var(--cw-motion-enter-ease),
+    color var(--cw-motion-in) var(--cw-motion-enter-ease),
+    box-shadow var(--cw-motion-in) var(--cw-motion-enter-ease),
+    transform var(--cw-motion-out) var(--cw-motion-enter-ease);
+}
+.theme-control button.selected svg {
+  animation: cw-icon-crossfade var(--cw-motion-out) var(--cw-motion-enter-ease) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .theme-control button { transition: none !important; }
+  .theme-control button.selected svg { animation: none !important; }
+}

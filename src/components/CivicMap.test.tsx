@@ -3,6 +3,16 @@ import { act, useState } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import L from "leaflet";
+vi.mock("../map/atlasLeaflet", async () => {
+  const leaflet = await import("leaflet");
+  return {
+    createAtlasLeafletLayer: vi.fn(async () => Object.assign(leaflet.layerGroup(), {
+      getMaplibreMap: () => ({
+        loaded: () => true, on: () => {}, off: () => {}, once: () => {},
+      }),
+    })),
+  };
+});
 import { CivicMap } from "./CivicMap";
 import { categories } from "../data/categories";
 import type { Coordinate, Issue, LocationCluster } from "../domain/types";
@@ -190,4 +200,74 @@ it("activates map dragging on a tap and restores page scrolling when tapping out
   await act(async () => { root.render(<CivicMap categories={categories} scrollFriendly={false} />); });
   expect(instance.dragging.enabled()).toBe(true);
   expect(instance.scrollWheelZoom.enabled()).toBe(true);
+});
+
+
+it("uses 44px hit areas and small centered cluster counts, preserving access to reports", async () => {
+  const make = (id: string, categoryId: string): Issue => ({
+    id, categoryId, cityId: "test", title: id + " report", description: "",
+    address: "Station Road", location: { lat: 26.17, lng: 91.76 },
+    attachments: [], status: "reported", authorId: id, organizationId: null,
+    confirmationUserIds: [], createdAt: "2026-11-04T00:00:00Z",
+    updatedAt: "2026-11-04T00:00:00Z",
+  });
+  const reports = Array.from({ length: 105 }, (_, i) =>
+    make("report-" + i, i === 0 ? "streetlight" : "garbage"));
+  const cluster: LocationCluster = {
+    id: "crowded", location: reports[0]!.location, issues: reports, totalPeople: 105,
+  };
+  const onSelect = vi.fn();
+  await act(async () => {
+    root.render(<CivicMap categories={categories} clusters={[cluster]} onSelect={onSelect} />);
+  });
+  const marker = container.querySelector<HTMLElement>(".civic-marker-cluster")!;
+  expect(marker).not.toBeNull();
+  expect(marker.classList.contains("leaflet-marker-icon")).toBe(true);
+  expect(marker.style.width).toBe("44px");
+  expect(marker.style.height).toBe("44px");
+  expect(marker.querySelector(".pin-body")?.getAttribute("style")).toContain("--pin-color:");
+  expect(marker.querySelector(".pin-count")?.textContent).toBe("99+");
+  expect(marker.querySelector(".pin-count")?.getAttribute("aria-hidden")).toBe("true");
+  expect(marker.getAttribute("aria-label")).toContain("105 issues");
+  expect(marker.getAttribute("aria-label")).toContain("105 people");
+  await act(async () => { marker.click(); });
+  expect(onSelect).toHaveBeenCalledWith(cluster);
+});
+
+it("shows a resolved badge only for resolved issue markers", async () => {
+  const item: Issue = {
+    id: "closed-issue", categoryId: "pothole", cityId: "test",
+    title: "Fixed pothole", description: "", address: "Main Road",
+    location: { lat: 26.17, lng: 91.76 }, attachments: [], status: "resolved",
+    authorId: "resident", organizationId: null, confirmationUserIds: [],
+    createdAt: "2026-11-04T00:00:00Z", updatedAt: "2026-11-04T00:00:00Z",
+  };
+  await act(async () => {
+    root.render(<CivicMap categories={categories}
+      clusters={[{ id: item.id, issues: [item], location: item.location, totalPeople: 1 }]}
+      highlightedIssueId={item.id} pick={{ lat: 26.18, lng: 91.75 }} />);
+  });
+  const selected = container.querySelector(".civic-marker-highlighted.civic-marker-resolved");
+  expect(selected?.querySelector(".pin-resolved svg")).not.toBeNull();
+  expect(selected?.querySelector(".pin-count")).toBeNull();
+  expect(container.querySelector(".chosen-marker")).not.toBeNull();
+  expect(selected?.getAttribute("aria-label")).toContain("Resolved.");
+});
+
+
+it("uses a compact disclosure instead of the default Leaflet attribution strip", async () => {
+  await act(async () => { root.render(<CivicMap categories={categories} />); });
+  expect(container.querySelector(".leaflet-control-attribution")).toBeNull();
+  const credits = container.querySelector<HTMLElement>(".map-credits")!;
+  expect(credits).not.toBeNull();
+  expect(credits.textContent).toContain("OpenStreetMap contributors");
+  expect(credits.querySelector('a[href="https://www.openstreetmap.org/copyright"]')).not.toBeNull();
+  const button = container.querySelector<HTMLButtonElement>(".map-credits-toggle")!;
+  expect(button.getAttribute("aria-expanded")).toBe("true");
+  await act(async () => button.click());
+  expect(button.getAttribute("aria-expanded")).toBe("false");
+  expect(credits.textContent).not.toContain("OpenStreetMap contributors");
+  await act(async () => button.click());
+  expect(button.getAttribute("aria-expanded")).toBe("true");
+  expect(credits.textContent).toContain("OpenStreetMap contributors");
 });

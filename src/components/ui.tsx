@@ -92,7 +92,21 @@ export function Modal({
   const ref = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     const dialog = ref.current;
-    if (dialog && !dialog.open) dialog.showModal();
+    if (dialog && !dialog.open) {
+      const trigger = document.activeElement;
+      dialog.showModal();
+      // Orient the entry to the control that opened the native dialog.
+      if (trigger instanceof HTMLElement && trigger !== document.body) {
+        const source = trigger.getBoundingClientRect();
+        const target = dialog.getBoundingClientRect();
+        if (source.width && source.height && target.width && target.height) {
+          const x = Math.max(12, Math.min(88, 100 * (source.left + source.width / 2 - target.left) / target.width));
+          const y = Math.max(12, Math.min(88, 100 * (source.top + source.height / 2 - target.top) / target.height));
+          dialog.style.setProperty("--cw-motion-origin-x", String(x) + "%");
+          dialog.style.setProperty("--cw-motion-origin-y", String(y) + "%");
+        }
+      }
+    }
     const before = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {

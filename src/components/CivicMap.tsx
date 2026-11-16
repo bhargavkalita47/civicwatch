@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { LocateFixed, Minus, Plus, Layers, RotateCcw } from "lucide-react";
+import { MapCredits } from "./MapCredits";
 import type { Category, Coordinate, LocationCluster } from "../domain/types";
 import { normalizedPoint, type MapBounds } from "../domain/geography";
 import { markerColor, peopleCount } from "../domain/logic";
@@ -86,6 +87,9 @@ export function CivicMap({
   scrollFriendlyRef.current = scrollFriendly;
   const [legend, setLegend] = useState(false),
     [tileError, setTileError] = useState(false),
+    [atlasFailed, setAtlasFailed] = useState(false),
+    [atlasReady, setAtlasReady] = useState(false),
+    [basemapRetry, setBasemapRetry] = useState(0),
     [locating, setLocating] = useState(false),
     [locatedPoint, setLocatedPoint] = useState<Coordinate | null>(null),
     [mapZoom, setMapZoom] = useState(13);
@@ -95,25 +99,14 @@ export function CivicMap({
       center: [center.lat, center.lng],
       zoom: 13,
       zoomControl: false,
+      minZoom: 1,
+      maxZoom: config.tileMaxZoom,
       dragging: !scrollFriendly,
       scrollWheelZoom: !compact && !scrollFriendly,
-      attributionControl: true,
+      // The compact MapCredits disclosure retains all provider licence links.
+      attributionControl: false,
     });
     map.current = instance;
-    // The basemap always stays light, regardless of the surrounding UI theme.
-    L.tileLayer(config.tileUrl, {
-      maxZoom: config.tileMaxZoom,
-      // OSM uses a single HTTPS host. A custom provider may use {s}.
-      subdomains: "abcd",
-      // Request only tiles needed for the viewed area; avoid speculative
-      // pan prefetches on public community-funded map infrastructure.
-      updateWhenIdle: true,
-      keepBuffer: 1,
-      attribution: config.tileAttribution,
-    })
-      .on("tileerror", () => setTileError(true))
-      .on("load", () => setTileError(false))
-      .addTo(instance);
     markers.current = L.layerGroup().addTo(instance);
     instance.on("click", (event: L.LeafletMouseEvent) => {
       // On mobile, the first empty-map tap activates browsing instead of
@@ -144,6 +137,97 @@ export function CivicMap({
       map.current = null;
     };
   }, [compact]);
+
+  // Atlas is the identical basemap in light and dark mode. Leaflet retains
+  // existing report pins, grouping, GPS, selection and mobile tap gestures.
+  // Raster OSM remains visible until vector style loads and as a safe fallback.
+  useEffect(() => {
+    const instance = map.current;
+    if (!instance) return;
+    let active = true;
+    let vector: L.Layer | null = null;
+    type VectorMap = {
+      loaded: () => boolean;
+      once: (event: string, fn: () => void) => void;
+      on: (event: string, fn: () => void) => void;
+      off: (event: string, fn: () => void) => void;
+    };
+    let renderer: VectorMap | null = null;
+    let timeout: ReturnType<typeof setTimeout> | null = null;
+    let finished = false;
+    setTileError(false);
+    setAtlasFailed(false);
+    setAtlasReady(false);
+    let raster: L.TileLayer | null = null;
+    const startRaster = () => {
+      if (!active || raster) return;
+      raster = L.tileLayer(config.tileUrl, {
+        maxZoom: config.tileMaxZoom,
+        subdomains: "abcd",
+        updateWhenIdle: true,
+        keepBuffer: 1,
+        attribution: config.tileAttribution,
+      })
+        .on("tileerror", () => { if (active && !finished) setTileError(true); })
+        .on("load", () => { if (active) setTileError(false); })
+        .addTo(instance);
+    };
+    // Avoid hitting two public tile services on every fast Atlas load.
+    // A slow vector response gets the usable raster map after a short delay.
+    const rasterDelay = setTimeout(() => {
+      if (!finished) startRaster();
+    }, 1400);
+    const succeeded = () => {
+      if (!active || finished) return;
+      finished = true;
+      if (timeout) clearTimeout(timeout);
+      clearTimeout(rasterDelay);
+      if (raster && instance.hasLayer(raster)) instance.removeLayer(raster);
+      setAtlasReady(true);
+      renderer?.off("error", failed);
+      setTileError(false);
+      setAtlasFailed(false);
+    };
+    const failed = () => {
+      if (!active || finished) return;
+      finished = true;
+      if (timeout) clearTimeout(timeout);
+      if (vector && instance.hasLayer(vector)) instance.removeLayer(vector);
+      vector = null;
+      clearTimeout(rasterDelay);
+      startRaster();
+      setTileError(false);
+      setAtlasReady(false);
+      setAtlasFailed(true);
+    };
+    void import("../map/atlasLeaflet")
+      .then(({ createAtlasLeafletLayer }) => createAtlasLeafletLayer())
+      .then(layer => {
+        if (!active) return;
+        vector = layer;
+        layer.addTo(instance);
+        renderer = (layer as L.Layer & {getMaplibreMap?: () => VectorMap}).getMaplibreMap?.() ?? null;
+        if (!renderer) {
+          failed(); // Never treat a missing WebGL renderer as a loaded map.
+        } else if (renderer.loaded()) {
+          succeeded();
+        } else {
+          renderer.once("load", succeeded);
+          renderer.on("error", failed);
+          timeout = setTimeout(failed, 15000);
+        }
+      })
+      .catch(failed);
+    return () => {
+      active = false;
+      if (timeout) clearTimeout(timeout);
+      clearTimeout(rasterDelay);
+      renderer?.off("load", succeeded);
+      renderer?.off("error", failed);
+      if (vector && instance.hasLayer(vector)) instance.removeLayer(vector);
+      if (raster && instance.hasLayer(raster)) instance.removeLayer(raster);
+    };
+  }, [compact, basemapRetry]);
 
   // Mobile map defaults to page scrolling, activates on the first empty-map
   // tap and deactivates on a tap outside the map shell.
@@ -184,12 +268,22 @@ export function CivicMap({
       if (!category) continue;
       const base = categoryMarkerColor(category),
         bg = markerColor(base, cluster.totalPeople),
-        n = cluster.issues.length;
+        n = cluster.issues.length,
+        resolved = cluster.issues.every((issue) => issue.status === "resolved");
+      const count = n > 99 ? "99+" : String(n);
       const icon = L.divIcon({
-        className: "civic-marker" + (highlighted ? " civic-marker-highlighted" : ""),
-        html: `<div class="pin-body" style="--pin-color:${bg};--pin-ink:${markerIconColor(bg)};--pin-rgb:${markerRgb(bg)};--pin-ring:${Math.min(0.24, cluster.totalPeople / 100)}"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="${paths[category.symbol] || paths.pin}"/></svg>${n > 1 ? `<sup aria-hidden="true">${n}</sup>` : ""}</div>`,
-        iconSize: [38, 45],
-        iconAnchor: [19, 42],
+        // Preserve Leaflet positioning; animate only the inner artwork.
+        className: [
+          "civic-marker",
+          highlighted ? "civic-marker-highlighted" : "",
+          resolved ? "civic-marker-resolved" : "",
+          n > 1 ? "civic-marker-cluster" : "",
+        ].filter(Boolean).join(" "),
+        html: `<span class="pin-body" style="--pin-color:${bg};--pin-ink:${markerIconColor(bg)};--pin-rgb:${markerRgb(bg)}"><span class="pin-symbol" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="${paths[category.symbol] || paths.pin}"/></svg></span>${n > 1 ? `<span class="pin-count" aria-hidden="true">${count}</span>` : ""}${resolved ? '<span class="pin-resolved" aria-hidden="true"><svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m2 6 2.5 2.5L10 3"/></svg></span>' : ""}</span>`,
+        // Visible circle is 28px, but the full 44px square stays tappable.
+        // A circular marker is centered on the exact report coordinates.
+        iconSize: [44, 44],
+        iconAnchor: [22, 22],
       });
       const marker = L.marker([cluster.location.lat, cluster.location.lng], {
         icon,
@@ -207,7 +301,7 @@ export function CivicMap({
         details.textContent = `${cluster.totalPeople} ${cluster.totalPeople === 1 ? "person" : "people"} · ${n} ${n === 1 ? "report" : "reports"}`;
         content.append(label, details);
         return content;
-      }, { className: "civic-tooltip", direction: "top", offset: [0, -19], opacity: 1 });
+      }, { className: "civic-tooltip", direction: "top", offset: [0, -45], opacity: 1 });
       if (highlighted) {
         marker.getElement()?.setAttribute("aria-label", "Highlighted report: " + highlighted.title + (highlighted.status === "resolved" ? ". Resolved. " : ". ") + "Open discussion.");
       }
@@ -340,18 +434,20 @@ export function CivicMap({
           </div>
         </div>
       )}
-      {tileError && (
+      <MapCredits provider={atlasReady ? "atlas" : "raster"} rasterAttribution={config.tileAttribution} />
+      {(tileError || atlasFailed) && (
         <button
           type="button"
           className="tile-warning"
           onClick={() => {
             setTileError(false);
-            map.current?.eachLayer((l) => {
-              if (l instanceof L.TileLayer) l.redraw();
-            });
+            setAtlasFailed(false);
+            setBasemapRetry(value => value + 1);
           }}
         >
-          Map tiles unavailable. Check connection and retry.
+          {atlasFailed
+            ? "Atlas map unavailable. Basic map shown. Tap to retry."
+            : "Map tiles unavailable. Check connection and retry."}
         </button>
       )}
 

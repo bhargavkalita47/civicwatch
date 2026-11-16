@@ -765,15 +765,11 @@ useEffect(() => {
           )}
         </div>
       </header>
-      <main id="main" inert={isMobile && menuOpen}>
+      <main id="main" data-current-section={tab} inert={isMobile && menuOpen}>
         <section className={tab === "overview" ? "intro intro-overview" : tab === "snapshots" ? "intro intro-watchlist" : tab === "explore" ? "intro intro-explore" : "intro"}>
-          <div>
-            <h1>
-              {copy.pages[tab].title}
-            </h1>
-            <p>
-              {copy.pages[tab].subtitle}
-            </p>
+          <div className="intro-copy" key={tab}>
+            <h1>{copy.pages[tab].title}</h1>
+            <p>{copy.pages[tab].subtitle}</p>
           </div>
           <button
             className="button report-button"
