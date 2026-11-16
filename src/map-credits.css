@@ -77,3 +77,14 @@
 @media (prefers-reduced-motion: reduce) {
   #root .map-shell .map-credits-toggle { transition: none; }
 }
+
+/* In mobile Explore, the bottom reports sheet overlays the map. Keep the
+ * credit disclosure reachable above the sheet and below the location badge. */
+@media (max-width: 790px) {
+  #root .map-workspace[aria-label="Explore report map"] .map-credits {
+    top: 63px;
+    bottom: auto;
+    left: 12px;
+    max-width: min(320px, calc(100% - 92px));
+  }
+}
