@@ -203,7 +203,7 @@ it("activates map dragging on a tap and restores page scrolling when tapping out
 });
 
 
-it("shows category icons and compact cluster counts without covering the marker symbol", async () => {
+it("uses 44px hit areas and small centered cluster counts, preserving access to reports", async () => {
   const make = (id: string, categoryId: string): Issue => ({
     id, categoryId, cityId: "test", title: id + " report", description: "",
     address: "Station Road", location: { lat: 26.17, lng: 91.76 },
@@ -223,7 +223,8 @@ it("shows category icons and compact cluster counts without covering the marker 
   const marker = container.querySelector<HTMLElement>(".civic-marker-cluster")!;
   expect(marker).not.toBeNull();
   expect(marker.classList.contains("leaflet-marker-icon")).toBe(true);
-  expect(marker.querySelector(".pin-symbol svg path")).not.toBeNull();
+  expect(marker.style.width).toBe("44px");
+  expect(marker.style.height).toBe("44px");
   expect(marker.querySelector(".pin-body")?.getAttribute("style")).toContain("--pin-color:");
   expect(marker.querySelector(".pin-count")?.textContent).toBe("99+");
   expect(marker.querySelector(".pin-count")?.getAttribute("aria-hidden")).toBe("true");

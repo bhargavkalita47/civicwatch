@@ -1,186 +1,196 @@
-/* CivicWatch / Atlas map markers
- * Compact cartographic pins: white enamel shell, category tile, exact-location
- * stem, and uncluttered count badge. Colors retain the existing category palette.
- * This file loads after legacy styles so the old rotated droplets are replaced.
+/* CivicWatch minimalist map markers.
+ * 28px visible artwork within an independent 44px tap target.
+ * One circle only: category glyph for individual reports, count for clusters.
+ * Leaflet positions the 44px outer element; never animate that element.
  */
 #root .map-shell .civic-marker {
-  width: 48px !important;
-  height: 56px !important;
-  background: transparent;
+  width: 44px !important;
+  height: 44px !important;
   border: 0;
+  background: transparent;
   cursor: pointer;
   overflow: visible;
   -webkit-tap-highlight-color: transparent;
 }
 #root .map-shell .civic-marker .pin-body {
   position: absolute;
-  top: 4px;
-  left: 5px;
+  top: 8px;
+  left: 8px;
   display: grid;
   place-items: center;
-  width: 38px;
-  height: 38px;
-  padding: 3px;
   box-sizing: border-box;
-  border: 1.5px solid rgba(36, 67, 73, .21);
-  border-radius: 13px;
-  background: #fffefa;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 2px solid #fffefa;
+  border-radius: 50%;
+  background: var(--pin-color, #91a3ad);
   color: var(--pin-ink, #211a30);
+  filter: none;
   isolation: isolate;
   transform: none;
-  filter: none;
-  box-shadow: 0 3px 9px rgba(21, 61, 68, .17), 0 1px 2px rgba(21, 61, 68, .12);
-  transition: box-shadow 160ms cubic-bezier(.2,.78,.2,1),
-    border-color 160ms ease, transform 160ms cubic-bezier(.2,.78,.2,1);
+  box-shadow: 0 1px 5px rgba(25, 57, 62, .24);
+  transition: transform 140ms cubic-bezier(.2,.78,.2,1),
+    box-shadow 140ms ease, outline-color 140ms ease;
 }
-/* Pointer lands on the precise Leaflet lat/lng, not the middle of the tile. */
+/* No pointer stem or stacked white square: the circle's center is its lat/lng. */
 #root .map-shell .civic-marker .pin-body::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  bottom: -6px;
-  width: 12px;
-  height: 12px;
-  box-sizing: border-box;
-  border-right: 1.5px solid rgba(36,67,73,.21);
-  border-bottom: 1.5px solid rgba(36,67,73,.21);
-  border-radius: 0 0 3px 0;
-  background: #fffefa;
-  transform: translateX(-50%) rotate(45deg);
-  z-index: -1;
+  content: none;
 }
 #root .map-shell .civic-marker .pin-symbol {
   display: grid;
   place-items: center;
-  position: relative;
-  z-index: 1;
-  width: 30px;
-  height: 30px;
-  border-radius: 10px;
-  background: var(--pin-color, #9ea8ba);
-  color: var(--pin-ink, #211a30);
+  width: 100%;
+  height: 100%;
+  position: static;
+  background: transparent;
+  border: 0;
+  border-radius: 50%;
+  color: inherit;
 }
 #root .map-shell .civic-marker .pin-symbol svg {
   display: block;
-  width: 19px;
-  height: 19px;
+  width: 15px;
+  height: 15px;
   transform: none;
+  flex: none;
+}
+/* Cluster count REPLACES the pictogram inside the same circle.
+ * No overlapping bubble or enlarged white card.
+ */
+#root .map-shell .civic-marker-cluster .pin-symbol {
+  display: none;
 }
 #root .map-shell .civic-marker .pin-count {
+  display: none;
+}
+#root .map-shell .civic-marker-cluster .pin-count {
+  position: static;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  width: auto;
+  height: auto;
+  padding: 0 1px;
+  box-sizing: border-box;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--pin-ink, #211a30);
+  font: 750 11px/1 "DM Sans", sans-serif;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -.04em;
+  white-space: nowrap;
+}
+#root .map-shell .civic-marker-cluster:has(.pin-count) .pin-body {
+  /* Three-character counts still fit without creating a second badge. */
+  min-width: 28px;
+}
+/* Resolved is a tiny corner check, not a second large icon.
+ * Mixed-status clusters do not get a resolved mark.
+ */
+#root .map-shell .civic-marker-resolved .pin-resolved {
   position: absolute;
-  top: -8px;
-  right: -11px;
+  right: -3px;
+  bottom: -3px;
   z-index: 2;
   display: grid;
   place-items: center;
-  min-width: 21px;
-  height: 21px;
   box-sizing: border-box;
-  padding: 0 4px;
-  border-radius: 8px;
-  border: 1px solid rgba(35,64,69,.16);
-  background: #fffefa;
-  color: #26434a;
-  font: 750 10px/1 "DM Sans", sans-serif;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: -.02em;
-  box-shadow: 0 2px 6px rgba(19,55,61,.16);
-}
-#root .map-shell .civic-marker-resolved .pin-resolved {
-  position: absolute;
-  bottom: -5px;
-  left: -7px;
-  z-index: 3;
-  display: grid;
-  place-items: center;
-  width: 18px;
-  height: 18px;
-  border: 2px solid #fffefa;
-  border-radius: 7px;
-  box-sizing: border-box;
+  width: 12px;
+  height: 12px;
+  padding: 0;
+  border: 1.5px solid #fffefa;
+  border-radius: 50%;
   background: #286d67;
   color: #fff;
-  box-shadow: 0 1px 5px rgba(21,61,68,.2);
+  box-shadow: none;
+}
+#root .map-shell .civic-marker-resolved .pin-resolved svg {
+  width: 9px;
+  height: 9px;
 }
 #root .map-shell .civic-marker:is(:hover, :focus-visible) .pin-body {
-  transform: translateY(-2px);
-  border-color: #275c63;
-  box-shadow: 0 5px 14px rgba(21,61,68,.22),
-    0 0 0 3px rgb(var(--pin-rgb, 145 112 186) / .13);
+  border-color: #fffefa;
+  filter: none;
+  transform: scale(1.07);
+  box-shadow: 0 2px 7px rgba(25, 57, 62, .28);
 }
 #root .map-shell .civic-marker:active .pin-body {
-  transform: translateY(0) scale(.97);
+  transform: scale(.96);
   transition-duration: 0ms;
 }
-#root .map-shell .civic-marker:focus-visible {
-  outline: none;
-}
+#root .map-shell .civic-marker:focus-visible { outline: none; }
 #root .map-shell .civic-marker:focus-visible .pin-body {
-  outline: 3px solid #164c55;
+  outline: 2px solid #164c55;
   outline-offset: 3px;
 }
+/* Only the selected marker gets a ring; ordinary pins remain a quiet 28px. */
 #root .map-shell .civic-marker-highlighted .pin-body {
-  border: 2px solid #23444b;
-  transform: translateY(-2px) scale(1.06);
-  box-shadow: 0 5px 15px rgba(21,61,68,.22),
-    0 0 0 4px rgb(var(--pin-rgb, 145 112 186) / .24);
+  border-color: #fffefa;
+  outline: 2px solid #23444b;
+  outline-offset: 2px;
+  transform: scale(1.08);
+  box-shadow: 0 2px 7px rgba(25, 57, 62, .28);
 }
 #root .map-shell .civic-marker-highlighted:is(:hover, :focus-visible) .pin-body {
-  transform: translateY(-3px) scale(1.06);
+  transform: scale(1.08);
 }
-#root .map-shell .civic-marker-highlighted .pin-body::after {
-  border-color: #23444b;
-}
-/* Visual density reduces, but touch target stays 48×56 at every zoom. */
 #root .map-shell.map-zoom-dense .civic-marker:not(.civic-marker-highlighted) .pin-body {
-  transform: scale(.9);
-  transform-origin: 50% 85%;
+  transform: scale(.86);
+  transform-origin: 50% 50%;
 }
 #root .map-shell.map-zoom-dense .civic-marker:not(.civic-marker-highlighted) .pin-symbol svg {
   transform: none;
 }
-/* Location being reported uses a target, not a category icon. */
+/* Selected report coordinates are separate from category markers. */
 #root .map-shell .chosen-marker {
   display: grid;
   place-items: center;
-  width: 32px !important;
-  height: 32px !important;
-  border: 2px solid #fffefa;
-  border-radius: 11px;
-  background: #e97680;
-  box-shadow: 0 0 0 4px rgba(46,69,73,.18), 0 2px 9px rgba(21,61,68,.23);
-}
-#root .map-shell .chosen-marker span {
-  display: block;
-  position: relative;
-  width: 12px;
-  height: 12px;
-  box-sizing: border-box;
+  width: 26px !important;
+  height: 26px !important;
+  padding: 0;
   border: 2px solid #fffefa;
   border-radius: 50%;
+  background: #e97680;
+  box-shadow: 0 0 0 3px rgba(46,69,73,.14),
+    0 2px 6px rgba(21,61,68,.18);
+}
+#root .map-shell .chosen-marker span {
+  display: grid;
+  place-items: center;
+  width: 10px;
+  height: 10px;
+  border: 2px solid #fffefa;
+  border-radius: 50%;
+  box-sizing: border-box;
   background: transparent;
 }
 #root .map-shell .chosen-marker span::after {
   content: "";
-  position: absolute;
-  inset: 3px;
+  width: 2px;
+  height: 2px;
+  inset: auto;
   border-radius: 50%;
   background: #fffefa;
 }
+/* Current position stays recognizable without a bulky halo. */
 #root .map-shell .current-location-marker {
-  border: 3px solid #fffefa;
+  border: 2px solid #fffefa;
   border-radius: 50%;
   background: #237b99;
-  box-shadow: 0 0 0 5px rgba(35,123,153,.22), 0 2px 7px rgba(21,61,68,.25);
+  box-shadow: 0 0 0 3px rgba(35,123,153,.15),
+    0 1px 5px rgba(21,61,68,.2);
 }
-/* Tooltip stays readable on both Tropical Island and dark UI overlays. */
 #root .map-shell .leaflet-tooltip.civic-tooltip {
   border: 1px solid rgba(36,67,73,.14);
-  border-radius: 10px;
-  padding: 8px 10px;
+  border-radius: 9px;
+  padding: 7px 9px;
   background: #fffefa;
   color: #26434a;
-  box-shadow: 0 6px 18px rgba(21,61,68,.14);
+  box-shadow: 0 5px 14px rgba(21,61,68,.14);
 }
 #root .map-shell .leaflet-tooltip.civic-tooltip strong {
   display: block;
@@ -194,7 +204,11 @@
   font-size: 11px;
 }
 @media (prefers-reduced-motion: reduce) {
-  #root .map-shell .civic-marker .pin-body { transition: none !important; }
+  #root .map-shell .civic-marker .pin-body {
+    transition: none !important;
+  }
   #root .map-shell .civic-marker:is(:hover, :focus-visible) .pin-body,
-  #root .map-shell .civic-marker-highlighted .pin-body { transform: none; }
+  #root .map-shell .civic-marker-highlighted .pin-body {
+    transform: none;
+  }
 }

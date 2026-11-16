@@ -280,8 +280,10 @@ export function CivicMap({
           n > 1 ? "civic-marker-cluster" : "",
         ].filter(Boolean).join(" "),
         html: `<span class="pin-body" style="--pin-color:${bg};--pin-ink:${markerIconColor(bg)};--pin-rgb:${markerRgb(bg)}"><span class="pin-symbol" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="${paths[category.symbol] || paths.pin}"/></svg></span>${n > 1 ? `<span class="pin-count" aria-hidden="true">${count}</span>` : ""}${resolved ? '<span class="pin-resolved" aria-hidden="true"><svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m2 6 2.5 2.5L10 3"/></svg></span>' : ""}</span>`,
-        iconSize: [48, 56],
-        iconAnchor: [24, 53],
+        // Visible circle is 28px, but the full 44px square stays tappable.
+        // A circular marker is centered on the exact report coordinates.
+        iconSize: [44, 44],
+        iconAnchor: [22, 22],
       });
       const marker = L.marker([cluster.location.lat, cluster.location.lng], {
         icon,
@@ -325,8 +327,8 @@ export function CivicMap({
         icon: L.divIcon({
           className: "chosen-marker",
           html: "<span></span>",
-          iconSize: [32, 32],
-          iconAnchor: [16, 16],
+          iconSize: [26, 26],
+          iconAnchor: [13, 13],
         }),
         keyboard: false,
         title: "Selected report location",
