@@ -33,7 +33,7 @@ assert.match(overview, /stats\.platform/);
 assert.match(overview, /Explore map/);
 assert.doesNotMatch(overview, /<CivicMap/);
 assert.match(watchlist, /summarizeWatchlist/);
-assert.match(watchlist, /copy\.watchlist\.noData/);
+assert.match(watchlist, /copy\.watchlist\.noReports/);
 assert.match(watchlist, /onPointerDown=/);
 assert.match(thread, /copy\.discussion\.heading/);
 assert.match(thread, /issue\.description/); // Resident-written content is unchanged
