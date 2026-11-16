@@ -1,7 +1,7 @@
 import {getAtlasPreset,type AtlasPresetDefinition} from "./presets";
 import {isLightMapSurface,LIGHT_ROAD_OPACITY_FLOOR} from "./roadLegibility";
 import {
-  ROAD_TIERS,DETAIL_FEATURES,createMapDetailSettings,
+  ROAD_TIERS,createMapDetailSettings,
   type MapDetailSettings,type RoadTier,type DetailFeature,type DetailLevel
 } from "./detailControls";
 

@@ -1,5 +1,5 @@
 import {
-  type AtlasStyleDocument,type JsonRecord,type JsonValue,type StyleLayerDescriptor,
+  type AtlasStyleDocument,type JsonValue,type StyleLayerDescriptor,
   type LayerOverride,type StyleGroup
 } from "./index";
 

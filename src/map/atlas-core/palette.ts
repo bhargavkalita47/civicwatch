@@ -1,6 +1,6 @@
 import {
   createAtlasPresetDocument,getAtlasPreset,
-  type AtlasPresetDefinition,type AtlasPresetDocumentOptions
+  type AtlasPresetDocumentOptions
 } from "./presets";
 import type {AtlasStyleDocument,StyleGroup,StyleLayerDescriptor} from "./index";
 import {applyMapDetailControls} from "./detailControls";

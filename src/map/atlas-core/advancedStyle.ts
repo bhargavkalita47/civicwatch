@@ -219,7 +219,7 @@ export function applyAdvancedStyleControls(
             const points=new Set<number>([0]);
             for(const t of ROAD_TIERS)for(const z of [settings.roads[t].zoom.min,settings.roads[t].zoom.max])if(z!==null)points.add(z);
             const stops=[...points].sort((a,b)=>a-b);
-            const at=(z:number):JsonValue=>matchRoad(baseOpacity,(t,old)=>{
+            const at=(z:number):JsonValue=>matchRoad(baseOpacity,(t)=>{
               const row=settings.roads[t];
               const disabled=row.visible===false||(row.zoom.min!==null&&z<row.zoom.min)||(row.zoom.max!==null&&z>=row.zoom.max);
               return disabled?0:null;

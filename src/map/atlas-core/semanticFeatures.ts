@@ -1,4 +1,4 @@
-import type {AtlasStyleDocument,StyleLayerDescriptor,JsonValue,JsonRecord,LayerOverride} from "./index";
+import type {AtlasStyleDocument,StyleLayerDescriptor,JsonValue} from "./index";
 
 /**
  * Provider-aware Stage 3 cartography. A category describes real OSM vector
