@@ -3,7 +3,11 @@
  * 220ms ease-out entrances; 175ms (~20% shorter) exits; 30ms capped stagger.
  * Avoid springs on everyday controls and avoid moving live map geometry.
  */
+/* Android Chrome/WebView paints a blue rectangle on touch by default.
+ * Remove only that browser tap flash. Keep text selection, :focus-visible
+ * outlines, and our own pressed-state feedback for accessibility. */
 :root {
+  -webkit-tap-highlight-color: transparent;
   --cw-motion-in: 220ms;
   --cw-motion-out: 175ms;
   --cw-motion-menu: 190ms;
