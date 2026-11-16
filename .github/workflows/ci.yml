@@ -14,16 +14,6 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: npm
-      - run: npm install --no-audit --no-fund
-      # Temporary lock regeneration; restored to npm ci after committing lock.
-      - name: Emit resolved lockfile
-        run: |
-          node - <<'NODE'
-          const fs = require('node:fs');
-          const content = JSON.stringify(JSON.parse(fs.readFileSync('package-lock.json','utf8')));
-          for (let i=0;i<content.length;i+=3500)
-            console.log('CW_LOCK_CHUNK_'+String(i/3500).padStart(4,'0')+':'+content.slice(i,i+3500));
-          console.log('CW_LOCK_END');
-          NODE
+      - run: npm ci
       - run: npm run verify
       - run: python3 scripts/check_schema.py
