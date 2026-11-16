@@ -1,10 +1,22 @@
 import atlasExport from "./atlas-theme.json";
+import {
+  compileAtlasStyle,
+  inspectStyleLayers,
+  resolveAtlasThemeBundle,
+  validateAtlasThemeBundle,
+  type AtlasThemeBundle,
+} from "./atlas-core";
 
-/** Compile the provided Atlas v1 export against its authored Positron
- * provider. Layer IDs are exact. Map palette is independent of the UI theme. */
+/** The uploaded Atlas Tropical Island file is an authoring bundle rather
+ * than a MapLibre style. Resolve it through the SAME three-stage Atlas style
+ * engine used in Atlas Lab: detail, advanced roads/labels, and semantics.
+ * UI light/dark mode must never change this map's palette or renderer.
+ */
 export const ATLAS_POSITRON_STYLE = "https://tiles.openfreemap.org/styles/positron";
 type AtlasLayer = {
-  id: string; type: string; paint?: Record<string, unknown>;
+  id: string;
+  type: string;
+  paint?: Record<string, unknown>;
   [key: string]: unknown;
 };
 export type AtlasVectorStyle = {
@@ -13,47 +25,31 @@ export type AtlasVectorStyle = {
   layers: AtlasLayer[];
   [key: string]: unknown;
 };
-function valid(input: unknown): input is AtlasVectorStyle {
-  if (!input || typeof input !== "object") return false;
-  const s = input as Record<string, unknown>;
-  return s.version === 8 && !!s.sources && typeof s.sources === "object" &&
-    Array.isArray(s.layers) && s.layers.every(l =>
-      !!l && typeof l === "object" && typeof (l as AtlasLayer).id === "string");
+
+const bundle = atlasExport as unknown as AtlasThemeBundle;
+const bundleErrors = validateAtlasThemeBundle(bundle);
+if (bundleErrors.length) {
+  throw new Error("Invalid Atlas theme export: " + bundleErrors.join("; "));
 }
+
 export function applyAtlasTheme(base: unknown): AtlasVectorStyle {
-  if (!valid(base)) throw new Error("Atlas requires a valid MapLibre v8 vector style");
-  if (atlasExport.format !== "atlas-theme" ||
-    atlasExport.schemaVersion !== 1 || atlasExport.styleDocumentVersion !== 2 ||
-    atlasExport.document.baseStyle !== "positron") {
-    throw new Error("Unsupported Atlas theme export");
+  // inspectStyleLayers rejects malformed MapLibre styles and duplicate IDs.
+  const layers = inspectStyleLayers(base);
+  // The export's explicit group bindings and tuned preset are both necessary.
+  // Empty sparse overrides mean "use the curated tropical-island defaults",
+  // NOT "omit those controls."
+  const document = resolveAtlasThemeBundle(bundle, layers, base);
+  const result = compileAtlasStyle(base, document);
+  const errors = result.diagnostics.filter(d => d.severity === "error");
+  if (errors.length) {
+    throw new Error("Atlas could not compile this provider style: " +
+      errors.map(d => d.message).join("; "));
   }
-  const style: AtlasVectorStyle = JSON.parse(JSON.stringify(base));
-  const byId = new Map(style.layers.map(l => [l.id, l]));
-  const groups = atlasExport.document.groups;
-  for (const [group, ids] of Object.entries(atlasExport.document.bindings)) {
-    const color = groups[group as keyof typeof groups]?.color;
-    if (!color) continue;
-    for (const id of ids) {
-      const layer = byId.get(id);
-      if (!layer) continue;
-      const property = layer.type === "background" ? "background-color" :
-        layer.type === "fill" ? "fill-color" :
-        layer.type === "line" ? "line-color" :
-        layer.type === "symbol" ? "text-color" :
-        layer.type === "circle" ? "circle-color" :
-        layer.type === "fill-extrusion" ? "fill-extrusion-color" : null;
-      if (!property) continue;
-      layer.paint = { ...layer.paint, [property]: color };
-      if (layer.type === "symbol" && layer.paint["icon-color"] !== undefined) {
-        layer.paint["icon-color"] = color;
-      }
-    }
-  }
-  // The uploaded export has no individual layer or density overrides.
-  return style;
+  return result.style as unknown as AtlasVectorStyle;
 }
+
 let stylePromise: Promise<AtlasVectorStyle> | undefined;
-/** Fetch once across maps; return independent style objects for each renderer. */
+/** Fetch the provider once; give each Leaflet/MapLibre instance its own copy. */
 export async function loadAtlasThemeStyle(): Promise<AtlasVectorStyle> {
   if (!stylePromise) {
     stylePromise = fetch(ATLAS_POSITRON_STYLE)
@@ -62,7 +58,7 @@ export async function loadAtlasThemeStyle(): Promise<AtlasVectorStyle> {
         return applyAtlasTheme(await response.json());
       })
       .catch(error => {
-        stylePromise = undefined;
+        stylePromise = undefined; // User can retry a failed provider request.
         throw error;
       });
   }
